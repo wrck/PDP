@@ -12,13 +12,13 @@
 - [X] T004 [P] 创建动态数据源、独立 HikariCP 和单写主权 ADR，文件：`docs/adr/0003-dynamic-datasource.md`
 - [X] T005 [P] 创建 MySQL 历史迁移、上线切换和本地事务边界 ADR，文件：`docs/adr/0004-data-migration.md`
 - [X] T006 [P] 创建平台工作流与 Flowable 边界 ADR，记录平台基础能力定位、BPMN 标准、四类稳定端口、事实权威、事务、MySQL schema、升级和退出条件，文件：`docs/adr/0005-platform-workflow-flowable.md`
-- [ ] T007 建立 ISO 21500 系列、PMI Lexicon、BPMN 与 PDP 扩展的受控术语目录和术语偏离审批机制，文件：`specs/002-pdp-product/terminology.md`、`docs/governance/terminology-governance.md`
-- [ ] T008 创建平台威胁模型与数据分类目录，覆盖信任边界、字段、附件、签名、导出、迁移、凭据和审计，文件：`docs/security/threat-model.md`、`docs/security/data-classification.md`
-- [ ] T009 创建传输与存储保护、密钥引用、轮换、职责分离和审计防篡改基线，文件：`docs/security/security-baseline.md`
-- [ ] T010 创建 P1 业务闭环与核心状态机验证矩阵，定义前置条件、权限、并发、失败原因和证据，文件：`specs/002-pdp-product/state-machine-matrix.md`
-- [ ] T011 创建关键能力服务等级档案，定义请求类别、时限、SLI/SLO、容量、失败模式、告警、责任人和运行手册，文件：`docs/service-levels/p1-service-catalog.md`
-- [ ] T012 建立 P1 用户故事、FR、SC、契约和任务的基础追踪矩阵，校验 OpenAPI、事件、领域包 Schema 和迁移报告 Schema 完整一致，并登记消费者、版本、兼容影响及弃用窗口，文件：`specs/002-pdp-product/traceability.md`、`specs/002-pdp-product/contracts/coverage.md`、`specs/002-pdp-product/contracts/migration-report.schema.json`
-- [ ] T013 创建高风险操作目录和统一预览、确认、不可逆点及补偿交互规范，预注册认证数据库切换类型、禁用原因和 P2 启用条件但不提供执行入口，文件：`docs/ux/high-risk-operations.md`
+- [X] T007 建立 ISO 21500 系列、PMI Lexicon、BPMN 与 PDP 扩展的受控术语目录和术语偏离审批机制，文件：`specs/002-pdp-product/terminology.md`、`docs/governance/terminology-governance.md`
+- [X] T008 创建平台威胁模型与数据分类目录，覆盖信任边界、字段、附件、签名、导出、迁移、凭据和审计，文件：`docs/security/threat-model.md`、`docs/security/data-classification.md`
+- [X] T009 创建传输与存储保护、密钥引用、轮换、职责分离和审计防篡改基线，文件：`docs/security/security-baseline.md`
+- [X] T010 创建 P1 业务闭环与核心状态机验证矩阵，定义前置条件、权限、并发、失败原因和证据，文件：`specs/002-pdp-product/state-machine-matrix.md`
+- [X] T011 创建关键能力服务等级档案，定义请求类别、时限、SLI/SLO、容量、失败模式、告警、责任人和运行手册，文件：`docs/service-levels/p1-service-catalog.md`
+- [X] T012 建立 P1 用户故事、FR、SC、契约和任务的基础追踪矩阵，校验 OpenAPI、事件、领域包 Schema 和迁移报告 Schema 完整一致，并登记消费者、版本、兼容影响及弃用窗口，文件：`specs/002-pdp-product/traceability.md`、`specs/002-pdp-product/contracts/coverage.md`、`specs/002-pdp-product/contracts/migration-report.schema.json`
+- [X] T013 创建高风险操作目录和统一预览、确认、不可逆点及补偿交互规范，预注册认证数据库切换类型、禁用原因和 P2 启用条件但不提供执行入口，文件：`docs/ux/high-risk-operations.md`
 - [ ] T014 执行实现前 `/speckit-analyze`，由评审人归档结果并要求 CRITICAL/HIGH 为 0，文件：`specs/002-pdp-product/evidence/analysis-pre-implementation.md`
 
 ## 阶段 1：工程初始化

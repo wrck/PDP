@@ -8,7 +8,7 @@
 
 - [ ] T001 关闭规格质量清单并确认 P1 规格状态、业务闭环、状态机和成功标准已批准，文件：`specs/002-pdp-product/checklists/requirements.md`、`specs/002-pdp-product/spec.md`
 - [ ] T002 [P] 创建模块化单体架构 ADR，记录边界、替代方案、质量属性和拆分触发条件，文件：`docs/adr/0001-modular-monolith.md`
-- [ ] T003 [P] 创建 P1 MySQL 持久化与数据库独立边界 ADR，记录 PostgreSQL 下移 P2，文件：`docs/adr/0002-mysql-portability-boundary.md`
+- [ ] T003 [P] 创建 P1 MySQL 持久化与数据库独立边界 ADR，定义适配器注册、能力画像、部署事实、启动校验、单写主权和数据库切换治理扩展点，并记录第二种数据库、跨库迁移执行器及 PostgreSQL 下移 P2，文件：`docs/adr/0002-mysql-portability-boundary.md`
 - [ ] T004 [P] 创建动态数据源、独立 HikariCP 和单写主权 ADR，文件：`docs/adr/0003-dynamic-datasource.md`
 - [ ] T005 [P] 创建 MySQL 历史迁移、上线切换和本地事务边界 ADR，文件：`docs/adr/0004-data-migration.md`
 - [ ] T006 [P] 创建平台工作流与 Flowable 边界 ADR，记录平台基础能力定位、BPMN 标准、四类稳定端口、事实权威、事务、MySQL schema、升级和退出条件，文件：`docs/adr/0005-platform-workflow-flowable.md`
@@ -17,8 +17,8 @@
 - [ ] T009 创建传输与存储保护、密钥引用、轮换、职责分离和审计防篡改基线，文件：`docs/security/security-baseline.md`
 - [ ] T010 创建 P1 业务闭环与核心状态机验证矩阵，定义前置条件、权限、并发、失败原因和证据，文件：`specs/002-pdp-product/state-machine-matrix.md`
 - [ ] T011 创建关键能力服务等级档案，定义请求类别、时限、SLI/SLO、容量、失败模式、告警、责任人和运行手册，文件：`docs/service-levels/p1-service-catalog.md`
-- [ ] T012 校验 P1 契约覆盖矩阵、OpenAPI、事件、领域包 Schema 和迁移报告 Schema 完整一致，并登记消费者、版本、兼容影响及弃用窗口，文件：`specs/002-pdp-product/contracts/coverage.md`、`specs/002-pdp-product/contracts/migration-report.schema.json`
-- [ ] T013 创建高风险操作目录和统一预览、确认、不可逆点及补偿交互规范，文件：`docs/ux/high-risk-operations.md`
+- [ ] T012 建立 P1 用户故事、FR、SC、契约和任务的基础追踪矩阵，校验 OpenAPI、事件、领域包 Schema 和迁移报告 Schema 完整一致，并登记消费者、版本、兼容影响及弃用窗口，文件：`specs/002-pdp-product/traceability.md`、`specs/002-pdp-product/contracts/coverage.md`、`specs/002-pdp-product/contracts/migration-report.schema.json`
+- [ ] T013 创建高风险操作目录和统一预览、确认、不可逆点及补偿交互规范，预注册认证数据库切换类型、禁用原因和 P2 启用条件但不提供执行入口，文件：`docs/ux/high-risk-operations.md`
 - [ ] T014 执行实现前 `/speckit-analyze`，由评审人归档结果并要求 CRITICAL/HIGH 为 0，文件：`specs/002-pdp-product/evidence/analysis-pre-implementation.md`
 
 ## 阶段 1：工程初始化
@@ -69,7 +69,7 @@
 - [ ] T050 创建迁移目标库专用 DataSource、SqlSessionFactory 和 Mapper 扫描，文件：`modules/datamigration/src/main/java/com/pdp/datamigration/config/PdpTargetMybatisConfig.java`
 - [ ] T051 创建源库只读事务管理器、目标库本地事务管理器和批次边界，文件：`modules/datamigration/src/main/java/com/pdp/datamigration/config/MigrationTransactionConfig.java`
 - [ ] T052 创建迁移源/目标连接、Mapper、事务和凭据隔离测试，文件：`tests/backend/integration/datamigration/MigrationDataSourceIsolationTest.java`
-- [ ] T053 创建数据库产品、版本、字符集、时区、引擎和权限启动校验，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/config/DatabaseCapabilityValidator.java`
+- [ ] T053 创建持久化适配器注册表、数据库能力画像、部署事实，以及产品、版本、字符集、时区、引擎和权限启动校验；P1 仅允许一个已认证适配器激活，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/provider/`、`modules/public-persistence/src/main/java/com/pdp/persistence/config/DatabaseCapabilityValidator.java`
 
 ### 数据访问、事件和投影基础
 
@@ -85,8 +85,8 @@
 - [ ] T063 创建公共审计摘要链、Outbox、幂等和后台作业表，文件：`modules/public-persistence/src/main/resources/db/changelog/common/002-platform-foundation.xml`
 - [ ] T064 [P] 创建 MySQL 8.4 专用索引和约束，文件：`modules/public-persistence/src/main/resources/db/changelog/mysql/001-platform-indexes.xml`
 - [ ] T065 创建空库、升级库和回滚演练的 Liquibase MySQL 测试，文件：`tests/backend/contract/persistence/LiquibaseMySqlMatrixTest.java`
-- [ ] T066 创建 MySQL 8.4 公共仓储和 SQL 方言适配器，文件：`modules/persistence-mysql/src/main/java/com/pdp/mysql/`
-- [ ] T067 创建仓储端口禁止泄漏 MyBatis、MySQL 驱动和数据库专有类型的架构测试，文件：`tests/backend/architecture/PersistenceBoundaryTest.java`
+- [ ] T066 创建实现公共持久化提供方扩展契约的 MySQL 8.4 仓储和 SQL 方言适配器，文件：`modules/persistence-mysql/src/main/java/com/pdp/mysql/`
+- [ ] T067 创建仓储端口禁止泄漏 MyBatis、MySQL 驱动和数据库专有类型的架构测试，并使用模拟适配器验证注册、唯一激活、未知能力拒绝和边界兼容，文件：`tests/backend/architecture/PersistenceBoundaryTest.java`、`tests/backend/contract/persistence/PersistenceProviderExtensionContractTest.java`
 - [ ] T068 创建权限过滤的搜索投影端口、文档和统一分析器，文件：`modules/experience/src/main/java/com/pdp/experience/search/`
 - [ ] T069 创建搜索投影 30 秒可见和撤权过滤测试，文件：`tests/backend/integration/search/SearchProjectionConsistencyTest.java`
 - [ ] T070 创建后台作业协调器以及批量导入、导出、归档、统计、投影重建、断点恢复、进度和失败明细能力，文件：`modules/operations/src/main/java/com/pdp/operations/job/BackgroundJobCoordinator.java`、`modules/operations/src/main/java/com/pdp/operations/projection/ProjectionRebuildJob.java`
@@ -94,7 +94,7 @@
 - [ ] T072 创建对象存储、短时签名 URL、病毒扫描和隔离适配器，文件：`modules/experience/src/main/java/com/pdp/experience/storage/`
 - [ ] T073 创建 Redis 缓存降级、失效和防击穿组件，文件：`modules/operations/src/main/java/com/pdp/operations/cache/`
 - [ ] T074 创建日志、指标、链路追踪及 FR-165 可用性 SLI 采集，文件：`modules/operations/src/main/java/com/pdp/operations/observability/`
-- [ ] T075 创建高风险操作影响预览、版本确认、不可逆点和补偿端口及公共组件，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/operation/`、`apps/web/src/components/high-risk-operation/`
+- [ ] T075 创建高风险操作影响预览、版本确认、不可逆点和补偿端口及公共组件；支持注册未来认证数据库切换操作类型并在 P1 返回稳定禁用原因，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/operation/`、`apps/web/src/components/high-risk-operation/`
 - [ ] T076 创建影响预览过期、并发版本变化、确认和补偿通用测试，文件：`tests/backend/integration/operation/HighRiskOperationTest.java`、`tests/e2e/high-risk-operation.spec.ts`
 
 ### 平台工作流基础能力
@@ -391,7 +391,7 @@
 ## 阶段 18：横向质量门禁与发布准备
 
 - [ ] T317 [P] 执行 OpenAPI、JSON Schema、事件样例和实现路由的双向差异检查，文件：`tests/contracts/implementation-contract-diff.spec.ts`
-- [ ] T318 [P] 执行 MySQL 8.4 全量数据库契约、空库安装和升级矩阵并归档报告，文件：`specs/002-pdp-product/evidence/mysql-contract-matrix.md`
+- [ ] T318 [P] 执行 MySQL 8.4 全量数据库契约、空库安装和升级矩阵，并验证持久化适配器注册、能力画像、唯一激活、单写主权及跨库切换禁用契约，文件：`specs/002-pdp-product/evidence/mysql-contract-matrix.md`
 - [ ] T319 [P] 执行静态分析、依赖漏洞、许可证和密钥扫描，文件：`.github/workflows/security.yml`
 - [ ] T320 复核并更新平台威胁模型、数据分类和遗留风险处置状态，并执行跨工作空间越权、对象字段授权、导出再鉴权、附件签名及审计防篡改安全测试，文件：`docs/security/threat-model.md`、`docs/security/data-classification.md`、`tests/backend/security/PlatformAuthorizationSecurityTest.java`
 - [ ] T321 执行所有权限撤销路径 SLA 测试并证明 100% 达标，文件：`specs/002-pdp-product/evidence/sc-036-permission-revocation.md`
@@ -402,7 +402,7 @@
 - [ ] T326 执行高风险操作目录端到端抽查，验证影响预览、版本确认、不可逆点、审计及补偿路径覆盖率为 100%，文件：`specs/002-pdp-product/evidence/p1-high-risk-operations.md`
 - [ ] T327 执行平台工作流 MySQL 初始化/升级、流程迁移、引擎故障、异步积压、死信重放、备份恢复和无重复业务结果门禁，文件：`specs/002-pdp-product/evidence/platform-workflow-acceptance.md`
 - [ ] T328 执行不少于 20 名目标用户的可用性测试，验证至少 90% 独立完成核心任务，并测量 5 分钟内建立 10 个任务、2 个里程碑和依赖计划，文件：`specs/002-pdp-product/evidence/sc-003-sc-019-usability-study.md`
-- [ ] T329 完成 P1 用户故事、FR、SC、契约、代码和测试追踪矩阵，文件：`specs/002-pdp-product/traceability.md`
+- [ ] T329 更新阶段 0 建立的 P1 追踪矩阵，补齐代码、自动化测试、运行手册和验收证据并关闭全部断链，文件：`specs/002-pdp-product/traceability.md`
 - [ ] T330 完成生产配置、密钥轮换、连接池容量和动态数据源清单审查，文件：`docs/production-readiness.md`
 - [ ] T331 完成 MySQL 历史迁移、上线切换和业务连续性运行手册，文件：`docs/runbooks/data-cutover.md`
 - [ ] T332 完成权限撤销、事件积压、死信、投影重建、导出、人工补偿和降级恢复运行手册，并提供无责复盘模板，文件：`docs/runbooks/platform-operations.md`、`docs/runbooks/postmortem-template.md`
@@ -421,7 +421,7 @@
 
 ## 依赖顺序
 
-1. 阶段 0 的 ADR、统一术语、威胁模型、状态机、服务等级、完整契约和实现前一致性分析全部通过后，才能进入阶段 1。
+1. 阶段 0 的 ADR、统一术语、威胁模型、状态机、服务等级、基础追踪矩阵、完整契约和实现前一致性分析全部通过后，才能进入阶段 1。
 2. 阶段 1 完成后才能进入阶段 2；阶段 2 的平台工作流基础能力、持久化、权限、事件和架构测试是全部 P1 用户故事的共同门禁。
 3. US1 提供工作空间和权限上下文；US2 复用平台工作流并提供领域定制运行时。
 4. US3 依赖 US1、US2；US4 至 US11 依赖 US3 已提供项目上下文。

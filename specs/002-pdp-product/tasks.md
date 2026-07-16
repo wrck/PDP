@@ -153,7 +153,7 @@
 - [ ] T119 [US2] 创建领域包 MySQL Mapper、XML 和适配器，文件：`modules/persistence-mysql/src/main/java/com/pdp/mysql/domainconfig/`、`modules/persistence-mysql/src/main/resources/mapper/domainconfig/`
 - [ ] T120 [US2] 创建 JSON、版本、唯一性、继承、核心字段冲突和分页 MySQL 契约测试，文件：`tests/backend/contract/domainconfig/DomainPackageDatabaseContractTest.java`
 - [X] T121 [US2] 实现核心字段复用、顶层生命周期映射、元模型、规则引用、权限和兼容性校验服务，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/application/DomainPackageValidationService.java`
-- [ ] T122 [US2] 实现三层继承、差异、冲突检测和版本快照服务，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/application/DomainPackageCompositionService.java`
+- [X] T122 [US2] 实现三层继承、差异、冲突检测和版本快照服务，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/application/DomainPackageCompositionService.java`
 - [ ] T123 [US2] 实现职责分离的测试、审核、发布、冻结和回滚服务，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/application/DomainPackageLifecycleService.java`
 - [ ] T124 [US2] 使用高风险操作框架实现升级影响预览、分批迁移、失败隔离和回滚服务，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/application/DomainPackageMigrationService.java`
 - [ ] T125 [US2] 实现领域包对平台流程定义的版本化绑定、变量映射、启动条件、权限声明和迁移校验，不允许领域包嵌入 Flowable 专有 API，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/application/WorkflowBindingService.java`

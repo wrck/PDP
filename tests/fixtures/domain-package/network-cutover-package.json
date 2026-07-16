@@ -1,0 +1,282 @@
+{
+  "schemaVersion": "1.1",
+  "stableKey": "network.cutover",
+  "name": "网络设备割接示例包",
+  "description": "用于验证领域状态、日志指标追踪、独立审核、影响预览和发布迁移闭环。",
+  "layer": "INDUSTRY",
+  "version": "1.0.0",
+  "extends": {
+    "packageKey": "pdp.standard-delivery",
+    "versionRange": "^1.0.0"
+  },
+  "objects": [
+    {
+      "stableKey": "cutover.plan",
+      "kind": "NEW_OBJECT",
+      "label": {
+        "zh-CN": "割接计划"
+      },
+      "titleFieldKey": "cutover.title",
+      "fields": [
+        {
+          "stableKey": "cutover.title",
+          "label": {
+            "zh-CN": "割接标题"
+          },
+          "dataType": "TEXT",
+          "required": true,
+          "indexMode": "SEARCH"
+        },
+        {
+          "stableKey": "cutover.window",
+          "label": {
+            "zh-CN": "割接窗口"
+          },
+          "dataType": "DATETIME",
+          "required": true,
+          "indexMode": "SORT"
+        },
+        {
+          "stableKey": "cutover.rollback-plan",
+          "label": {
+            "zh-CN": "回退方案"
+          },
+          "dataType": "LONG_TEXT",
+          "required": true,
+          "sensitive": true
+        }
+      ],
+      "relations": [],
+      "states": [
+        {
+          "stableKey": "draft",
+          "label": {
+            "zh-CN": "草稿"
+          },
+          "topLifecycleState": "PLANNING",
+          "initial": true
+        },
+        {
+          "stableKey": "reviewing",
+          "label": {
+            "zh-CN": "审核中"
+          },
+          "topLifecycleState": "PLANNING"
+        },
+        {
+          "stableKey": "executing",
+          "label": {
+            "zh-CN": "执行中"
+          },
+          "topLifecycleState": "EXECUTING"
+        },
+        {
+          "stableKey": "verified",
+          "label": {
+            "zh-CN": "验证完成"
+          },
+          "topLifecycleState": "ACCEPTING",
+          "terminal": true
+        },
+        {
+          "stableKey": "rolled-back",
+          "label": {
+            "zh-CN": "已回退"
+          },
+          "topLifecycleState": "CANCELLED",
+          "terminal": true
+        }
+      ],
+      "transitions": [
+        {
+          "stableKey": "submit-review",
+          "from": "draft",
+          "to": "reviewing",
+          "requiredPermission": "cutover.submit",
+          "workflowBindingKey": "cutover.approval"
+        },
+        {
+          "stableKey": "start-cutover",
+          "from": "reviewing",
+          "to": "executing",
+          "requiredPermission": "cutover.execute",
+          "guardRuleKey": "cutover.precheck"
+        },
+        {
+          "stableKey": "complete-verification",
+          "from": "executing",
+          "to": "verified",
+          "requiredPermission": "cutover.verify"
+        },
+        {
+          "stableKey": "execute-rollback",
+          "from": "executing",
+          "to": "rolled-back",
+          "requiredPermission": "cutover.rollback",
+          "guardRuleKey": "cutover.rollback-required"
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "stableKey": "cutover.detail",
+      "objectKey": "cutover.plan",
+      "layout": {
+        "sections": [
+          "basic",
+          "precheck",
+          "execution",
+          "verification",
+          "rollback"
+        ]
+      },
+      "visibilityRuleKey": "cutover.readable"
+    }
+  ],
+  "views": [
+    {
+      "stableKey": "cutover.board",
+      "objectKey": "cutover.plan",
+      "viewType": "BOARD",
+      "columns": [
+        "cutover.title",
+        "cutover.window"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "stableKey": "cutover.precheck",
+      "event": "transition.start-cutover",
+      "condition": {
+        "allRequiredChecksPassed": true
+      },
+      "actions": [
+        {
+          "type": "CALL_EXTENSION",
+          "parameters": {
+            "extensionKey": "device.precheck"
+          }
+        },
+        {
+          "type": "EMIT_EVENT",
+          "parameters": {
+            "eventType": "pdp.cutover.precheck-completed"
+          }
+        }
+      ],
+      "executionIdentity": "CURRENT_USER",
+      "mode": "SYNCHRONOUS"
+    },
+    {
+      "stableKey": "cutover.rollback-required",
+      "event": "transition.execute-rollback",
+      "condition": {
+        "rollbackPlanPresent": true
+      },
+      "actions": [
+        {
+          "type": "EMIT_EVENT",
+          "parameters": {
+            "eventType": "pdp.cutover.rollback-started"
+          }
+        }
+      ],
+      "executionIdentity": "CURRENT_USER",
+      "mode": "SYNCHRONOUS"
+    }
+  ],
+  "workflowBindings": [
+    {
+      "stableKey": "cutover.approval",
+      "processDefinitionKey": "network.cutover.approval",
+      "businessVersion": "1.0.0",
+      "bpmnResource": "workflow/network-cutover-approval.bpmn20.xml",
+      "trigger": "STATE_TRANSITION",
+      "objectTypeKey": "cutover.plan",
+      "authorizationPolicyKey": "cutover.approve",
+      "variableMappings": {
+        "businessObjectId": "object.id",
+        "workspaceId": "object.workspaceId"
+      },
+      "instanceMigrationPolicy": "PINNED"
+    }
+  ],
+  "permissions": [
+    {
+      "capabilityKey": "cutover.read",
+      "objectKey": "cutover.plan",
+      "operations": [
+        "READ"
+      ]
+    },
+    {
+      "capabilityKey": "cutover.submit",
+      "objectKey": "cutover.plan",
+      "operations": [
+        "TRANSITION"
+      ]
+    },
+    {
+      "capabilityKey": "cutover.execute",
+      "objectKey": "cutover.plan",
+      "operations": [
+        "TRANSITION",
+        "EXECUTE"
+      ]
+    },
+    {
+      "capabilityKey": "cutover.verify",
+      "objectKey": "cutover.plan",
+      "operations": [
+        "TRANSITION"
+      ]
+    },
+    {
+      "capabilityKey": "cutover.rollback",
+      "objectKey": "cutover.plan",
+      "operations": [
+        "TRANSITION",
+        "ROLLBACK"
+      ],
+      "fieldKeys": [
+        "cutover.rollback-plan"
+      ]
+    }
+  ],
+  "extensions": [
+    {
+      "stableKey": "device.precheck",
+      "artifact": "sha256:7d22b757ce4318a4d4f41ab22f078b83b285a89cb2ef1b88d5e9958855d4f918",
+      "entrypoint": "com.pdp.cutover.PrecheckExtension",
+      "permissions": [
+        "device.inventory.read"
+      ],
+      "timeoutMs": 5000,
+      "memoryMb": 128,
+      "isolation": "PROCESS",
+      "signature": "pdp-signed-example"
+    }
+  ],
+  "overrides": [],
+  "migrations": [
+    {
+      "fromVersion": "0.9.0",
+      "toVersion": "1.0.0",
+      "steps": [
+        {
+          "type": "SET_DEFAULT",
+          "parameters": {
+            "field": "cutover.rollback-plan",
+            "value": "按原设备配置快照恢复"
+          }
+        }
+      ],
+      "rollback": {
+        "type": "RESTORE_SNAPSHOT",
+        "snapshot": "runtimeSnapshotId"
+      }
+    }
+  ]
+}

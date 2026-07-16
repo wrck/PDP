@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.mysql.identity.ExternalIdentityMapper">
+
+  <resultMap id="externalIdentityRow" type="com.pdp.mysql.identity.ExternalIdentityRow">
+    <constructor>
+      <idArg column="id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="user_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="issuer" javaType="java.lang.String"/>
+      <arg column="subject" javaType="java.lang.String"/>
+      <arg column="email" javaType="java.lang.String"/>
+      <arg column="email_verified" javaType="boolean"/>
+      <arg column="status" javaType="com.pdp.identity.domain.ExternalIdentity$Status"/>
+      <arg column="bound_at" javaType="java.time.Instant"
+          typeHandler="com.pdp.mysql.typehandler.InstantUtcTypeHandler"/>
+      <arg column="last_synchronized_at" javaType="java.time.Instant"
+          typeHandler="com.pdp.mysql.typehandler.InstantUtcTypeHandler"/>
+    </constructor>
+  </resultMap>
+
+  <sql id="columns">
+    id, user_id, issuer, subject, email, email_verified, status, bound_at,
+    last_synchronized_at
+  </sql>
+
+  <select id="findByIssuerAndSubject" resultMap="externalIdentityRow">
+    SELECT <include refid="columns"/>
+    FROM pdp_external_identity
+    WHERE issuer = #{issuer} AND subject = #{subject}
+  </select>
+
+  <insert id="insert">
+    INSERT INTO pdp_external_identity (
+      id, user_id, issuer, subject, email, email_verified, status, bound_at,
+      last_synchronized_at, revision
+    ) VALUES (
+      #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{userId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{issuer}, #{subject}, #{email}, #{emailVerified}, #{status},
+      #{boundAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+      #{lastSynchronizedAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler}, 0
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE pdp_external_identity
+    SET user_id = #{userId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+        email = #{email},
+        email_verified = #{emailVerified},
+        status = #{status},
+        last_synchronized_at =
+          #{lastSynchronizedAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+        revision = revision + 1
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+  </update>
+</mapper>

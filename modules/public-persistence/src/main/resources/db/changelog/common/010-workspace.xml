@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="010-01-workspace" author="pdp">
+    <createTable tableName="pdp_workspace">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="code" type="VARCHAR(32)"><constraints nullable="false" unique="true"/></column>
+      <column name="name" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="owner_user_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="status" type="VARCHAR(20)"><constraints nullable="false"/></column>
+      <column name="default_locale" type="VARCHAR(20)"><constraints nullable="false"/></column>
+      <column name="default_timezone" type="VARCHAR(64)"><constraints nullable="false"/></column>
+      <column name="data_classification_policy_id" type="CHAR(36)"/>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="created_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+      <column name="updated_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="010-02-organization" author="pdp">
+    <createTable tableName="pdp_organization_unit">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="workspace_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="parent_id" type="CHAR(36)"/>
+      <column name="code" type="VARCHAR(32)"><constraints nullable="false"/></column>
+      <column name="name" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="type" type="VARCHAR(20)"><constraints nullable="false"/></column>
+      <column name="region_code" type="VARCHAR(30)"/>
+      <column name="path" type="VARCHAR(1000)"><constraints nullable="false"/></column>
+      <column name="status" type="VARCHAR(20)"><constraints nullable="false"/></column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="pdp_organization_unit"
+        columnNames="workspace_id,code" constraintName="uk_org_workspace_code"/>
+    <createIndex tableName="pdp_organization_unit" indexName="idx_org_workspace_path">
+      <column name="workspace_id"/><column name="path"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="010-03-role-data-scope" author="pdp">
+    <createTable tableName="pdp_workspace_role">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="workspace_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="stable_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="name" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="allowed_actions" type="CLOB"><constraints nullable="false"/></column>
+      <column name="status" type="VARCHAR(20)"><constraints nullable="false"/></column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="pdp_workspace_role"
+        columnNames="workspace_id,stable_key" constraintName="uk_role_workspace_key"/>
+    <createTable tableName="pdp_data_scope">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="workspace_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="stable_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="name" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="resource_types" type="CLOB"><constraints nullable="false"/></column>
+      <column name="condition_definition" type="CLOB"><constraints nullable="false"/></column>
+      <column name="status" type="VARCHAR(20)"><constraints nullable="false"/></column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="pdp_data_scope"
+        columnNames="workspace_id,stable_key" constraintName="uk_scope_workspace_key"/>
+  </changeSet>
+
+  <changeSet id="010-04-membership" author="pdp">
+    <createTable tableName="pdp_workspace_membership">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="workspace_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="user_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="organization_id" type="CHAR(36)"/>
+      <column name="membership_type" type="VARCHAR(20)"><constraints nullable="false"/></column>
+      <column name="status" type="VARCHAR(20)"><constraints nullable="false"/></column>
+      <column name="valid_from" type="TIMESTAMP"><constraints nullable="false"/></column>
+      <column name="valid_until" type="TIMESTAMP"/>
+      <column name="role_ids" type="CLOB"><constraints nullable="false"/></column>
+      <column name="data_scope_ids" type="CLOB"><constraints nullable="false"/></column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="pdp_workspace_membership"
+        columnNames="workspace_id,user_id" constraintName="uk_membership_workspace_user"/>
+  </changeSet>
+
+  <changeSet id="010-05-collaboration-grant" author="pdp">
+    <createTable tableName="pdp_collaboration_grant">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="owner_workspace_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="collaborator_workspace_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="target_type" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="target_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="role_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="allowed_actions" type="CLOB"><constraints nullable="false"/></column>
+      <column name="valid_from" type="TIMESTAMP"><constraints nullable="false"/></column>
+      <column name="valid_until" type="TIMESTAMP"><constraints nullable="false"/></column>
+      <column name="granted_by" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="status" type="VARCHAR(20)"><constraints nullable="false"/></column>
+      <column name="revoked_at" type="TIMESTAMP"/>
+      <column name="revocation_reason" type="VARCHAR(500)"/>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+    </createTable>
+    <createIndex tableName="pdp_collaboration_grant" indexName="idx_grant_owner_status">
+      <column name="owner_workspace_id"/><column name="status"/><column name="valid_until"/>
+    </createIndex>
+    <createIndex tableName="pdp_collaboration_grant" indexName="idx_grant_collaborator_status">
+      <column name="collaborator_workspace_id"/><column name="status"/><column name="valid_until"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

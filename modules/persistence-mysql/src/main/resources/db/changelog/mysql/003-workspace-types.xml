@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="003-workspace-types" author="pdp" dbms="mysql">
+    <sql>
+      ALTER TABLE pdp_workspace
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY owner_user_id BINARY(16) NOT NULL,
+        MODIFY data_classification_policy_id BINARY(16) NULL,
+        MODIFY created_at DATETIME(6) NOT NULL,
+        MODIFY updated_at DATETIME(6) NOT NULL;
+
+      ALTER TABLE pdp_organization_unit
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY workspace_id BINARY(16) NOT NULL,
+        MODIFY parent_id BINARY(16) NULL;
+
+      ALTER TABLE pdp_workspace_role
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY workspace_id BINARY(16) NOT NULL,
+        MODIFY allowed_actions JSON NOT NULL;
+
+      ALTER TABLE pdp_data_scope
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY workspace_id BINARY(16) NOT NULL,
+        MODIFY resource_types JSON NOT NULL,
+        MODIFY condition_definition JSON NOT NULL;
+
+      ALTER TABLE pdp_workspace_membership
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY workspace_id BINARY(16) NOT NULL,
+        MODIFY user_id BINARY(16) NOT NULL,
+        MODIFY organization_id BINARY(16) NULL,
+        MODIFY valid_from DATETIME(6) NOT NULL,
+        MODIFY valid_until DATETIME(6) NULL,
+        MODIFY role_ids JSON NOT NULL,
+        MODIFY data_scope_ids JSON NOT NULL;
+
+      ALTER TABLE pdp_collaboration_grant
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY owner_workspace_id BINARY(16) NOT NULL,
+        MODIFY collaborator_workspace_id BINARY(16) NOT NULL,
+        MODIFY target_id BINARY(16) NOT NULL,
+        MODIFY role_id BINARY(16) NOT NULL,
+        MODIFY allowed_actions JSON NOT NULL,
+        MODIFY valid_from DATETIME(6) NOT NULL,
+        MODIFY valid_until DATETIME(6) NOT NULL,
+        MODIFY granted_by BINARY(16) NOT NULL,
+        MODIFY revoked_at DATETIME(6) NULL;
+    </sql>
+    <rollback>
+      <sql>
+        ALTER TABLE pdp_collaboration_grant
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY owner_workspace_id CHAR(36) NOT NULL,
+          MODIFY collaborator_workspace_id CHAR(36) NOT NULL,
+          MODIFY target_id CHAR(36) NOT NULL,
+          MODIFY role_id CHAR(36) NOT NULL,
+          MODIFY allowed_actions LONGTEXT NOT NULL,
+          MODIFY valid_from TIMESTAMP NOT NULL,
+          MODIFY valid_until TIMESTAMP NOT NULL,
+          MODIFY granted_by CHAR(36) NOT NULL,
+          MODIFY revoked_at TIMESTAMP NULL;
+
+        ALTER TABLE pdp_workspace_membership
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY workspace_id CHAR(36) NOT NULL,
+          MODIFY user_id CHAR(36) NOT NULL,
+          MODIFY organization_id CHAR(36) NULL,
+          MODIFY valid_from TIMESTAMP NOT NULL,
+          MODIFY valid_until TIMESTAMP NULL,
+          MODIFY role_ids LONGTEXT NOT NULL,
+          MODIFY data_scope_ids LONGTEXT NOT NULL;
+
+        ALTER TABLE pdp_data_scope
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY workspace_id CHAR(36) NOT NULL,
+          MODIFY resource_types LONGTEXT NOT NULL,
+          MODIFY condition_definition LONGTEXT NOT NULL;
+
+        ALTER TABLE pdp_workspace_role
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY workspace_id CHAR(36) NOT NULL,
+          MODIFY allowed_actions LONGTEXT NOT NULL;
+
+        ALTER TABLE pdp_organization_unit
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY workspace_id CHAR(36) NOT NULL,
+          MODIFY parent_id CHAR(36) NULL;
+
+        ALTER TABLE pdp_workspace
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY owner_user_id CHAR(36) NOT NULL,
+          MODIFY data_classification_policy_id CHAR(36) NULL,
+          MODIFY created_at TIMESTAMP NOT NULL,
+          MODIFY updated_at TIMESTAMP NOT NULL;
+      </sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

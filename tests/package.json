@@ -1,0 +1,21 @@
+{
+  "name": "@pdp/tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --max-warnings=0 && pnpm lint:contracts",
+    "lint:contracts": "spectral lint -r .spectral.yaml ../specs/002-pdp-product/contracts/openapi.yaml",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm test:contracts && pnpm test:workflow-contracts && pnpm test:contract-baseline",
+    "test:contracts": "node scripts/validate-contracts.mjs",
+    "test:workflow-contracts": "node --test contracts/platform-workflow.spec.ts",
+    "test:contract-baseline": "node --test contracts/contract-baseline.spec.ts",
+    "test:e2e": "playwright test",
+    "build": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.1",
+    "@types/node": "^24.1.0"
+  }
+}

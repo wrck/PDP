@@ -1,0 +1,42 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.flowable.spring.boot.ProcessEngineAutoConfiguration
+      - org.flowable.spring.boot.ProcessEngineServicesAutoConfiguration
+      - org.flowable.spring.boot.RestApiAutoConfiguration
+      - org.flowable.spring.boot.idm.IdmEngineAutoConfiguration
+      - org.flowable.spring.boot.idm.IdmEngineServicesAutoConfiguration
+      - org.flowable.spring.boot.FlowableJpaAutoConfiguration
+
+flowable:
+  rest-api-enabled: false
+  jpa-enabled: false
+  db-identity-used: false
+  database-schema-update: "false"
+  check-process-definitions: false
+  idm:
+    enabled: false
+
+pdp:
+  workflow:
+    engine:
+      enabled: ${PDP_WORKFLOW_ENABLED:false}
+      schema: ${PDP_WORKFLOW_SCHEMA:pdp_workflow}
+      table-prefix: ${PDP_WORKFLOW_TABLE_PREFIX:pdp_workflow.}
+      table-prefix-is-schema: true
+      async-executor-activate: ${PDP_WORKFLOW_ASYNC_ENABLED:true}
+      async-core-pool-size: ${PDP_WORKFLOW_ASYNC_CORE_POOL_SIZE:2}
+      async-max-pool-size: ${PDP_WORKFLOW_ASYNC_MAX_POOL_SIZE:8}
+      async-queue-capacity: ${PDP_WORKFLOW_ASYNC_QUEUE_CAPACITY:500}
+      async-retries: ${PDP_WORKFLOW_ASYNC_RETRIES:3}
+      datasource:
+        jdbc-url: ${PDP_WORKFLOW_DB_URL:}
+        username: ${PDP_WORKFLOW_DB_USERNAME:}
+        password: ${PDP_WORKFLOW_DB_PASSWORD:}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        pool-name: pdp-workflow-engine
+        minimum-idle: ${PDP_WORKFLOW_DB_MIN_IDLE:1}
+        maximum-pool-size: ${PDP_WORKFLOW_DB_MAX_POOL_SIZE:10}
+        connection-timeout-ms: ${PDP_WORKFLOW_DB_CONNECTION_TIMEOUT_MS:3000}
+        validation-timeout-ms: ${PDP_WORKFLOW_DB_VALIDATION_TIMEOUT_MS:2000}
+        max-lifetime-ms: ${PDP_WORKFLOW_DB_MAX_LIFETIME_MS:1740000}

@@ -5,7 +5,7 @@
 - [openapi.yaml](openapi.yaml)：P1 同步 HTTP API 契约；不得存在实现已暴露但契约未登记的路由。
 - [domain-package.schema.json](domain-package.schema.json)：领域包清单及声明式元数据结构。
 - [events.md](events.md)：平台业务事件信封、兼容规则和 P1 事件目录。
-- [migration-report.schema.json](migration-report.schema.json)：P1 MySQL 历史迁移与上线切换报告契约；后续数据库切换由 P2 扩展。
+- [migration-report.schema.json](migration-report.schema.json)：P1 MySQL 历史迁移、上线切换及受管 MySQL 部署切换报告契约；P2 仅扩展数据库产品组合。
 - [coverage.md](coverage.md)：P1 用户故事、HTTP、事件、Schema、消费者和验证任务覆盖矩阵。
 - [openapi.yaml](openapi.yaml) 中的“搜索与通知”接口：权限过滤搜索、站内通知查询和已读操作。
 - [openapi.yaml](openapi.yaml) 中的“平台工作流”接口：BPMN 定义校验/部署、实例诊断和受控管理动作；

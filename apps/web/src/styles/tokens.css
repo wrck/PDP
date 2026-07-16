@@ -1,0 +1,22 @@
+:root {
+  --pdp-color-brand: #1769e0;
+  --pdp-color-brand-strong: #0f4ea8;
+  --pdp-color-text: #172033;
+  --pdp-color-muted: #657089;
+  --pdp-color-surface: #fff;
+  --pdp-color-canvas: #f3f6fb;
+  --pdp-color-border: #d9e2f2;
+  --pdp-color-success: #18794e;
+  --pdp-color-warning: #8a4b08;
+  --pdp-color-error: #b42318;
+  --pdp-radius-sm: 6px;
+  --pdp-radius-md: 12px;
+  --pdp-radius-lg: 24px;
+  --pdp-shadow-panel: 0 24px 80px rgb(34 64 120 / 12%);
+  --pdp-space-1: 4px;
+  --pdp-space-2: 8px;
+  --pdp-space-3: 12px;
+  --pdp-space-4: 16px;
+  --pdp-space-6: 24px;
+  --pdp-space-8: 32px;
+}

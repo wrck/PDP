@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="mysql-001-01-uuid-json-types" author="pdp" dbms="mysql">
+    <sql splitStatements="true" stripComments="true">
+      ALTER TABLE pdp_audit_digest
+        MODIFY COLUMN id BINARY(16) NOT NULL,
+        MODIFY COLUMN workspace_id BINARY(16) NOT NULL,
+        MODIFY COLUMN object_id BINARY(16) NOT NULL,
+        MODIFY COLUMN actor_id BINARY(16) NULL;
+      ALTER TABLE pdp_idempotency_record
+        MODIFY COLUMN workspace_id BINARY(16) NOT NULL,
+        MODIFY COLUMN response_body JSON NULL;
+      ALTER TABLE pdp_background_job
+        MODIFY COLUMN id BINARY(16) NOT NULL,
+        MODIFY COLUMN workspace_id BINARY(16) NULL,
+        MODIFY COLUMN checkpoint_data JSON NULL;
+    </sql>
+    <rollback>
+      <sql splitStatements="true" stripComments="true">
+        ALTER TABLE pdp_audit_digest
+          MODIFY COLUMN id CHAR(36) NOT NULL,
+          MODIFY COLUMN workspace_id CHAR(36) NOT NULL,
+          MODIFY COLUMN object_id CHAR(36) NOT NULL,
+          MODIFY COLUMN actor_id CHAR(36) NULL;
+        ALTER TABLE pdp_idempotency_record
+          MODIFY COLUMN workspace_id CHAR(36) NOT NULL,
+          MODIFY COLUMN response_body LONGTEXT NULL;
+        ALTER TABLE pdp_background_job
+          MODIFY COLUMN id CHAR(36) NOT NULL,
+          MODIFY COLUMN workspace_id CHAR(36) NULL,
+          MODIFY COLUMN checkpoint_data LONGTEXT NULL;
+      </sql>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="mysql-001-02-operational-indexes" author="pdp" dbms="mysql">
+    <createIndex tableName="pdp_audit_digest" indexName="idx_audit_workspace_recorded">
+      <column name="workspace_id"/>
+      <column name="recorded_at"/>
+      <column name="id"/>
+    </createIndex>
+    <createIndex tableName="EVENT_PUBLICATION" indexName="idx_event_status_date">
+      <column name="STATUS"/>
+      <column name="PUBLICATION_DATE"/>
+      <column name="ID"/>
+    </createIndex>
+    <createIndex tableName="pdp_idempotency_record" indexName="idx_idempotency_expiry">
+      <column name="expires_at"/>
+    </createIndex>
+    <createIndex tableName="pdp_background_job" indexName="idx_job_status_updated">
+      <column name="status"/>
+      <column name="updated_at"/>
+      <column name="id"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

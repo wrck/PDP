@@ -1,0 +1,33 @@
+{
+  "name": "pdp-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "build": "pnpm -r --if-present build",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "test:contracts": "pnpm --filter @pdp/tests test:contracts",
+    "test:e2e": "pnpm --filter @pdp/tests test:e2e",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "@stoplight/spectral-cli": "^6.15.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "eslint": "^9.31.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.3.0",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
+    "postcss-html": "^1.8.0",
+    "stylelint": "^16.22.0",
+    "stylelint-config-standard": "^38.0.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0",
+    "yaml": "^2.8.0"
+  }
+}

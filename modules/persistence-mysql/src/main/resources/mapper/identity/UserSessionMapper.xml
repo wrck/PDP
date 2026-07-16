@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.mysql.identity.UserSessionMapper">
+
+  <resultMap id="userSessionRow" type="com.pdp.mysql.identity.UserSessionRow">
+    <constructor>
+      <idArg column="id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="user_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="identity_provider_session_id" javaType="java.lang.String"/>
+      <arg column="refresh_credential_reference" javaType="java.lang.String"/>
+      <arg column="issued_at" javaType="java.time.Instant"
+          typeHandler="com.pdp.mysql.typehandler.InstantUtcTypeHandler"/>
+      <arg column="last_seen_at" javaType="java.time.Instant"
+          typeHandler="com.pdp.mysql.typehandler.InstantUtcTypeHandler"/>
+      <arg column="expires_at" javaType="java.time.Instant"
+          typeHandler="com.pdp.mysql.typehandler.InstantUtcTypeHandler"/>
+      <arg column="authorization_version" javaType="long"/>
+      <arg column="status" javaType="com.pdp.identity.domain.UserSession$Status"/>
+      <arg column="revoked_at" javaType="java.time.Instant"
+          typeHandler="com.pdp.mysql.typehandler.InstantUtcTypeHandler"/>
+      <arg column="revocation_reason" javaType="java.lang.String"/>
+    </constructor>
+  </resultMap>
+
+  <sql id="columns">
+    id, user_id, identity_provider_session_id, refresh_credential_reference,
+    issued_at, last_seen_at, expires_at, authorization_version, status,
+    revoked_at, revocation_reason
+  </sql>
+
+  <select id="findById" resultMap="userSessionRow">
+    SELECT <include refid="columns"/>
+    FROM pdp_user_session
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+  </select>
+
+  <select id="findActiveByUserId" resultMap="userSessionRow">
+    SELECT <include refid="columns"/>
+    FROM pdp_user_session
+    WHERE user_id = #{userId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND status = 'ACTIVE'
+      AND expires_at &gt; CURRENT_TIMESTAMP(6)
+    ORDER BY issued_at ASC, id ASC
+  </select>
+
+  <insert id="insert">
+    INSERT INTO pdp_user_session (
+      id, user_id, identity_provider_session_id, refresh_credential_reference,
+      issued_at, last_seen_at, expires_at, authorization_version, status,
+      revoked_at, revocation_reason, revision
+    ) VALUES (
+      #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{userId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{identityProviderSessionId}, #{refreshCredentialReference},
+      #{issuedAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+      #{lastSeenAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+      #{expiresAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+      #{authorizationVersion}, #{status},
+      #{revokedAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+      #{revocationReason}, 0
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE pdp_user_session
+    SET last_seen_at =
+          #{lastSeenAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+        expires_at = #{expiresAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+        authorization_version = #{authorizationVersion},
+        status = #{status},
+        revoked_at = #{revokedAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+        revocation_reason = #{revocationReason},
+        revision = revision + 1
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+  </update>
+</mapper>

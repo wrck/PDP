@@ -58,9 +58,11 @@
 | `pdp.change.approved` | 变更批准 | 计划/范围更新协调器 |
 | `pdp.audit.export.requested` | 审计导出获准 | 后台导出执行器 |
 | `pdp.integration.delivery.failed` | 外部投递达到告警条件 | 集成健康度、值守通知 |
-| `pdp.migration.run.progressed` | 历史或跨数据库迁移运行进度、源/目标类型、位点或状态变化 | 迁移控制台、告警 |
+| `pdp.migration.run.progressed` | 迁移运行进度、`migrationKind`、源/目标部署、产品类型、位点或状态变化；P1 支持 `LEGACY_CUTOVER` 与 `DATABASE_SWITCH`，其中数据库组合限定为 `MYSQL→MYSQL` | 迁移控制台、告警 |
 | `pdp.migration.issue.detected` | 发现阻断、冲突或隔离数据 | 数据责任人、上线门禁 |
 | `pdp.migration.cutover.decided` | Go/No-Go、开放写入、回退或前向修复决策形成 | 流量控制、审计、值守通知 |
+
+`migrationKind` 使用稳定值 `LEGACY_CUTOVER` 或 `DATABASE_SWITCH`。P2 新增数据库产品时不得增加同义事件或改变状态语义，只扩展事件中的数据库产品与获批组合。
 
 ## 4. 事件外部化
 

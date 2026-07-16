@@ -36,6 +36,7 @@
         "REHEARSAL",
         "RECONCILIATION",
         "CUTOVER",
+        "DATABASE_SWITCH",
         "ROLLBACK",
         "FORWARD_REPAIR",
         "DATABASE_CERTIFICATION"

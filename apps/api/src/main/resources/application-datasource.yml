@@ -1,0 +1,45 @@
+spring:
+  datasource:
+    dynamic:
+      enabled: true
+      primary: pdpPrimary
+      strict: true
+      grace-destroy: true
+      datasource:
+        pdpPrimary:
+          url: jdbc:mysql://${PDP_DB_HOST:localhost}:${PDP_DB_PORT:3306}/${PDP_DB_NAME:pdp}?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+          username: ${PDP_DB_USER:pdp}
+          password: ${PDP_DB_PASSWORD:}
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          hikari:
+            pool-name: pdp-primary
+            minimum-idle: ${PDP_PRIMARY_POOL_MIN_IDLE:4}
+            maximum-pool-size: ${PDP_PRIMARY_POOL_MAX_SIZE:40}
+            connection-timeout: ${PDP_PRIMARY_POOL_CONNECTION_TIMEOUT_MS:3000}
+            validation-timeout: ${PDP_PRIMARY_POOL_VALIDATION_TIMEOUT_MS:1000}
+            idle-timeout: ${PDP_PRIMARY_POOL_IDLE_TIMEOUT_MS:600000}
+            max-lifetime: ${PDP_PRIMARY_POOL_MAX_LIFETIME_MS:1800000}
+            keepalive-time: ${PDP_PRIMARY_POOL_KEEPALIVE_MS:300000}
+            leak-detection-threshold: ${PDP_PRIMARY_POOL_LEAK_DETECTION_MS:20000}
+            register-mbeans: true
+        pdpRead:
+          url: jdbc:mysql://${PDP_READ_DB_HOST:${PDP_DB_HOST:localhost}}:${PDP_READ_DB_PORT:${PDP_DB_PORT:3306}}/${PDP_READ_DB_NAME:${PDP_DB_NAME:pdp}}?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+          username: ${PDP_READ_DB_USER:${PDP_DB_USER:pdp}}
+          password: ${PDP_READ_DB_PASSWORD:${PDP_DB_PASSWORD:}}
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          hikari:
+            pool-name: pdp-read
+            read-only: true
+            minimum-idle: ${PDP_READ_POOL_MIN_IDLE:2}
+            maximum-pool-size: ${PDP_READ_POOL_MAX_SIZE:20}
+            connection-timeout: ${PDP_READ_POOL_CONNECTION_TIMEOUT_MS:3000}
+            validation-timeout: ${PDP_READ_POOL_VALIDATION_TIMEOUT_MS:1000}
+            idle-timeout: ${PDP_READ_POOL_IDLE_TIMEOUT_MS:600000}
+            max-lifetime: ${PDP_READ_POOL_MAX_LIFETIME_MS:1800000}
+            keepalive-time: ${PDP_READ_POOL_KEEPALIVE_MS:300000}
+            leak-detection-threshold: ${PDP_READ_POOL_LEAK_DETECTION_MS:20000}
+            register-mbeans: true
+
+pdp:
+  persistence:
+    online-data-source-keys: pdpPrimary,pdpRead

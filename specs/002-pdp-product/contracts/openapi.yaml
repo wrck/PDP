@@ -60,7 +60,203 @@ paths:
                 $ref: '#/components/schemas/Workspace'
         '409':
           $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}:
+    get:
+      tags: [工作空间]
+      summary: 获取工作空间治理详情
+      operationId: getWorkspace
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+      responses:
+        '200':
+          description: 工作空间详情
+          headers:
+            ETag:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '404':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/actions:
+    post:
+      tags: [工作空间]
+      summary: 执行工作空间状态迁移
+      operationId: applyWorkspaceAction
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceActionCommand'
+      responses:
+        '200':
+          description: 状态迁移成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/organizations:
+    get:
+      tags: [工作空间]
+      summary: 查询工作空间组织结构
+      operationId: listOrganizationUnits
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+      responses:
+        '200':
+          description: 组织单元
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrganizationUnit'
+    post:
+      tags: [工作空间]
+      summary: 创建组织单元
+      operationId: createOrganizationUnit
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrganizationUnitCommand'
+      responses:
+        '201':
+          description: 组织单元已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationUnit'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/members:
+    get:
+      tags: [工作空间]
+      summary: 查询工作空间成员
+      operationId: listWorkspaceMembers
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+      responses:
+        '200':
+          description: 成员列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceMembership'
+    post:
+      tags: [工作空间]
+      summary: 添加工作空间成员
+      operationId: addWorkspaceMember
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddWorkspaceMemberCommand'
+      responses:
+        '201':
+          description: 成员已添加
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMembership'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/roles:
+    get:
+      tags: [工作空间]
+      summary: 查询工作空间角色
+      operationId: listWorkspaceRoles
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+      responses:
+        '200':
+          description: 角色列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceRole'
+    post:
+      tags: [工作空间]
+      summary: 创建工作空间角色
+      operationId: createWorkspaceRole
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRoleCommand'
+      responses:
+        '201':
+          description: 角色已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceRole'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/data-scopes:
+    post:
+      tags: [工作空间]
+      summary: 创建数据范围
+      operationId: createDataScope
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDataScopeCommand'
+      responses:
+        '201':
+          description: 数据范围已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataScope'
+        '409':
+          $ref: '#/components/responses/Problem'
   /workspaces/{workspaceId}/collaboration-grants:
+    get:
+      tags: [工作空间]
+      summary: 查询跨工作空间协作授权
+      operationId: listCollaborationGrants
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+      responses:
+        '200':
+          description: 授权列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollaborationGrant'
     post:
       tags: [工作空间]
       summary: 授予跨工作空间协作权限
@@ -148,6 +344,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DomainPackage'
+  /domain-packages/{packageId}/versions:
+    post:
+      tags: [领域包]
+      summary: 创建领域包版本草稿
+      operationId: createDomainPackageVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDomainPackageVersionCommand'
+      responses:
+        '201':
+          description: 版本草稿已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
   /domain-packages/{packageId}/versions/{versionId}/validate:
     post:
       tags: [领域包]
@@ -159,15 +379,40 @@ paths:
         - $ref: '#/components/parameters/VersionIdPath'
         - $ref: '#/components/parameters/IfMatch'
       responses:
-        '202':
-          description: 校验作业已创建
+        '200':
+          description: 校验完成
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JobAccepted'
+                $ref: '#/components/schemas/DomainPackageValidationReport'
         '409':
           $ref: '#/components/responses/Problem'
         '422':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/review:
+    post:
+      tags: [领域包]
+      summary: 审核领域包版本
+      operationId: reviewDomainPackageVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewDomainPackageCommand'
+      responses:
+        '200':
+          description: 审核完成
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersion'
+        '409':
           $ref: '#/components/responses/Problem'
   /domain-packages/{packageId}/versions/{versionId}/publish:
     post:
@@ -195,6 +440,101 @@ paths:
         '409':
           $ref: '#/components/responses/Problem'
         '422':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/retire:
+    post:
+      tags: [领域包]
+      summary: 退役领域包版本
+      operationId: retireDomainPackageVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonCommand'
+      responses:
+        '200':
+          description: 已退役
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersion'
+  /domain-packages/{packageId}/versions/{versionId}/rollback:
+    post:
+      tags: [领域包]
+      summary: 回滚领域包版本
+      operationId: rollbackDomainPackageVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RollbackDomainPackageCommand'
+      responses:
+        '200':
+          description: 已回滚
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/migration-preview:
+    post:
+      tags: [领域包]
+      summary: 预览领域包升级影响
+      operationId: previewDomainPackageMigration
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreviewDomainPackageMigrationCommand'
+      responses:
+        '200':
+          description: 影响预览
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageMigrationPreview'
+  /domain-packages/{packageId}/versions/{versionId}/migrations:
+    post:
+      tags: [领域包]
+      summary: 启动领域包实例迁移
+      operationId: startDomainPackageMigration
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartDomainPackageMigrationCommand'
+      responses:
+        '202':
+          description: 迁移作业已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageMigrationJob'
+        '409':
           $ref: '#/components/responses/Problem'
   /projects:
     get:
@@ -876,6 +1216,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AvailabilityReport'
+  /database-deployments:
+    get:
+      tags: [数据库]
+      summary: 查询已登记的受管数据库部署及其认证状态
+      operationId: listDatabaseDeployments
+      responses:
+        '200':
+          description: 受管数据库部署列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DatabaseDeployment'
   /database-deployments/current:
     get:
       tags: [数据库]
@@ -891,7 +1245,7 @@ paths:
   /database-switches:
     post:
       tags: [数据库]
-      summary: 创建受控数据库切换任务
+      summary: 创建统一受控数据库切换任务；P1 认证 MYSQL 到 MYSQL
       operationId: createDatabaseSwitch
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -1371,7 +1725,7 @@ components:
           default: Asia/Shanghai
     Workspace:
       type: object
-      required: [id, code, name, status, revision]
+      required: [id, code, name, ownerUserId, status, defaultLocale, defaultTimezone, revision]
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1379,11 +1733,175 @@ components:
           type: string
         name:
           type: string
+        ownerUserId:
+          $ref: '#/components/schemas/Uuid'
         status:
           type: string
           enum: [DRAFT, ACTIVE, SUSPENDED, ARCHIVED]
         revision:
           type: integer
+          minimum: 0
+    WorkspaceActionCommand:
+      type: object
+      required: [action, reason]
+      properties:
+        action:
+          type: string
+          enum: [ACTIVATE, SUSPEND, ARCHIVE]
+        reason:
+          type: string
+          minLength: 5
+          maxLength: 500
+    CreateOrganizationUnitCommand:
+      type: object
+      required: [code, name, type]
+      properties:
+        parentId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        code:
+          type: string
+          pattern: '^[A-Z][A-Z0-9_-]{1,31}$'
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        type:
+          type: string
+          enum: [COMPANY, DEPARTMENT, TEAM, REGION, EXTERNAL]
+        regionCode:
+          type: [string, 'null']
+    OrganizationUnit:
+      allOf:
+        - $ref: '#/components/schemas/CreateOrganizationUnitCommand'
+        - type: object
+          required: [id, workspaceId, path, status, revision]
+          properties:
+            id:
+              $ref: '#/components/schemas/Uuid'
+            workspaceId:
+              $ref: '#/components/schemas/Uuid'
+            path:
+              type: string
+            status:
+              type: string
+              enum: [ACTIVE, DISABLED]
+            revision:
+              type: integer
+              minimum: 0
+    AddWorkspaceMemberCommand:
+      type: object
+      required: [userId, roleIds, dataScopeIds, membershipType]
+      properties:
+        userId:
+          $ref: '#/components/schemas/Uuid'
+        organizationUnitId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        roleIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Uuid'
+        dataScopeIds:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Uuid'
+        membershipType:
+          type: string
+          enum: [INTERNAL, EXTERNAL]
+        validUntil:
+          type: [string, 'null']
+          format: date-time
+    WorkspaceMembership:
+      allOf:
+        - $ref: '#/components/schemas/AddWorkspaceMemberCommand'
+        - type: object
+          required: [id, workspaceId, status, revision]
+          properties:
+            id:
+              $ref: '#/components/schemas/Uuid'
+            workspaceId:
+              $ref: '#/components/schemas/Uuid'
+            status:
+              type: string
+              enum: [INVITED, ACTIVE, SUSPENDED, EXPIRED, REVOKED]
+            revision:
+              type: integer
+              minimum: 0
+    CreateWorkspaceRoleCommand:
+      type: object
+      required: [stableKey, name, allowedActions]
+      properties:
+        stableKey:
+          type: string
+          pattern: '^[a-z][a-z0-9.-]{2,99}$'
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        allowedActions:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+    WorkspaceRole:
+      allOf:
+        - $ref: '#/components/schemas/CreateWorkspaceRoleCommand'
+        - type: object
+          required: [id, workspaceId, status, revision]
+          properties:
+            id:
+              $ref: '#/components/schemas/Uuid'
+            workspaceId:
+              $ref: '#/components/schemas/Uuid'
+            status:
+              type: string
+              enum: [ACTIVE, RETIRED]
+            revision:
+              type: integer
+              minimum: 0
+    CreateDataScopeCommand:
+      type: object
+      required: [stableKey, name, resourceTypes, condition]
+      properties:
+        stableKey:
+          type: string
+          pattern: '^[a-z][a-z0-9.-]{2,99}$'
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        resourceTypes:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+        condition:
+          type: object
+          additionalProperties: true
+    DataScope:
+      allOf:
+        - $ref: '#/components/schemas/CreateDataScopeCommand'
+        - type: object
+          required: [id, workspaceId, status, revision]
+          properties:
+            id:
+              $ref: '#/components/schemas/Uuid'
+            workspaceId:
+              $ref: '#/components/schemas/Uuid'
+            status:
+              type: string
+              enum: [ACTIVE, RETIRED]
+            revision:
+              type: integer
+              minimum: 0
     CreateCollaborationGrantCommand:
       type: object
       required: [collaboratorWorkspaceId, target, roleId, allowedActions, validUntil]
@@ -1455,9 +1973,23 @@ components:
             status:
               type: string
               enum: [DRAFT, ACTIVE, DEPRECATED, RETIRED]
+    CreateDomainPackageVersionCommand:
+      type: object
+      required: [semanticVersion, manifest]
+      properties:
+        semanticVersion:
+          type: string
+          pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+        manifest:
+          type: object
+          description: 必须符合 domain-package.schema.json
+          additionalProperties: true
+        changeSummary:
+          type: string
+          maxLength: 2000
     DomainPackageVersion:
       type: object
-      required: [id, packageId, semanticVersion, contentHash, status, revision]
+      required: [id, packageId, semanticVersion, contentHash, status, frozen, revision]
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1470,9 +2002,12 @@ components:
           type: string
         status:
           type: string
-          enum: [DRAFT, VALIDATING, REVIEW_PENDING, PUBLISHED, REJECTED, DEPRECATED, RETIRED]
+          enum: [DRAFT, VALIDATED, REVIEW_PENDING, APPROVED, PUBLISHED, RETIRED, ROLLED_BACK]
+        frozen:
+          type: boolean
         revision:
           type: integer
+          minimum: 0
     DomainPackagePage:
       type: object
       required: [items, nextCursor]
@@ -1486,14 +2021,122 @@ components:
           description: 下一页不透明 keyset 游标；为 null 表示没有下一页
     PublishPackageCommand:
       type: object
-      required: [validationJobId, reviewComment]
+      required: [reviewComment]
       properties:
-        validationJobId:
-          $ref: '#/components/schemas/Uuid'
         reviewComment:
           type: string
           minLength: 2
           maxLength: 1000
+    ReviewDomainPackageCommand:
+      type: object
+      required: [decision, comment]
+      properties:
+        decision:
+          type: string
+          enum: [APPROVE, REJECT]
+        comment:
+          type: string
+          minLength: 2
+          maxLength: 1000
+    RollbackDomainPackageCommand:
+      type: object
+      required: [targetVersionId, reason]
+      properties:
+        targetVersionId:
+          $ref: '#/components/schemas/Uuid'
+        reason:
+          type: string
+          minLength: 2
+          maxLength: 1000
+    DomainPackageValidationReport:
+      type: object
+      required: [valid, errors, warnings, compatibility]
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        compatibility:
+          type: string
+          enum: [COMPATIBLE, MIGRATION_REQUIRED, BREAKING]
+    PreviewDomainPackageMigrationCommand:
+      type: object
+      required: [sourceVersionId, scope]
+      properties:
+        sourceVersionId:
+          $ref: '#/components/schemas/Uuid'
+        scope:
+          type: object
+          additionalProperties: true
+        batchSize:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+    DomainPackageMigrationPreview:
+      type: object
+      required: [previewId, affectedInstances, conflicts, batches, rollbackAvailable, confirmationToken]
+      properties:
+        previewId:
+          $ref: '#/components/schemas/Uuid'
+        affectedInstances:
+          type: integer
+          minimum: 0
+        conflicts:
+          type: array
+          items:
+            type: string
+        batches:
+          type: integer
+          minimum: 0
+        rollbackAvailable:
+          type: boolean
+        confirmationToken:
+          type: string
+    StartDomainPackageMigrationCommand:
+      type: object
+      required: [previewId, confirmationToken, batchSize, reason]
+      properties:
+        previewId:
+          $ref: '#/components/schemas/Uuid'
+        confirmationToken:
+          type: string
+        batchSize:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        reason:
+          type: string
+          minLength: 2
+          maxLength: 1000
+    DomainPackageMigrationJob:
+      type: object
+      required: [id, sourceVersionId, targetVersionId, status, migrated, failed, revision]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        sourceVersionId:
+          $ref: '#/components/schemas/Uuid'
+        targetVersionId:
+          $ref: '#/components/schemas/Uuid'
+        status:
+          type: string
+          enum: [PLANNED, RUNNING, PARTIALLY_FAILED, COMPLETED, ROLLING_BACK, ROLLED_BACK, FAILED]
+        migrated:
+          type: integer
+          minimum: 0
+        failed:
+          type: integer
+          minimum: 0
+        revision:
+          type: integer
+          minimum: 0
     CreateProjectCommand:
       type: object
       required: [name, managerId, plannedStart, plannedEnd]
@@ -2075,8 +2718,13 @@ components:
           enum: [MEETING, AT_RISK, BREACHED]
     DatabaseDeployment:
       type: object
-      required: [databaseType, databaseVersion, certificationBaseline, writeAuthority, status, revision]
+      required: [id, stableKey, databaseType, databaseVersion, certificationBaseline, writeAuthority, status, switchCapabilities, revision]
       properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        stableKey:
+          type: string
+          pattern: '^[a-z][a-z0-9-]{2,63}$'
         databaseType:
           type: string
           enum: [MYSQL]
@@ -2090,13 +2738,43 @@ components:
         status:
           type: string
           enum: [CERTIFIED, DEGRADED, UNSUPPORTED]
+        switchCapabilities:
+          type: array
+          description: 从当前部署出发的获批切换组合；P1 仅返回目标产品为 MYSQL 的组合
+          items:
+            $ref: '#/components/schemas/DatabaseSwitchCapability'
         revision:
           type: integer
           minimum: 0
+    DatabaseSwitchCapability:
+      type: object
+      required: [sourceDatabaseType, targetDatabaseType, minimumSourceVersion, minimumTargetVersion, status]
+      properties:
+        sourceDatabaseType:
+          type: string
+          enum: [MYSQL]
+        targetDatabaseType:
+          type: string
+          enum: [MYSQL]
+        minimumSourceVersion:
+          type: string
+        minimumTargetVersion:
+          type: string
+        status:
+          type: string
+          enum: [CERTIFIED, SUSPENDED, UNSUPPORTED]
+        constraintSummary:
+          type: array
+          items:
+            type: string
     CreateDatabaseSwitchCommand:
       type: object
-      required: [targetDatabaseType, targetDatabaseVersion, previewToken, reconciliationRunId, reason]
+      required: [sourceDeploymentId, targetDeploymentId, targetDatabaseType, targetDatabaseVersion, previewToken, reconciliationRunId, reason]
       properties:
+        sourceDeploymentId:
+          $ref: '#/components/schemas/Uuid'
+        targetDeploymentId:
+          $ref: '#/components/schemas/Uuid'
         targetDatabaseType:
           type: string
           enum: [MYSQL]
@@ -2112,9 +2790,13 @@ components:
           maxLength: 2000
     DatabaseSwitch:
       type: object
-      required: [id, sourceDatabaseType, targetDatabaseType, status, writeAuthority, revision]
+      required: [id, sourceDeploymentId, targetDeploymentId, sourceDatabaseType, targetDatabaseType, status, writeAuthority, revision]
       properties:
         id:
+          $ref: '#/components/schemas/Uuid'
+        sourceDeploymentId:
+          $ref: '#/components/schemas/Uuid'
+        targetDeploymentId:
           $ref: '#/components/schemas/Uuid'
         sourceDatabaseType:
           type: string
@@ -2404,6 +3086,33 @@ components:
         revision:
           type: integer
           minimum: 0
+        incidents:
+          type: array
+          description: 用于平台诊断的 incident 与 dead-letter 摘要；业务接口不得直接暴露引擎表。
+          items:
+            $ref: '#/components/schemas/WorkflowIncidentSummary'
+    WorkflowIncidentSummary:
+      type: object
+      required: [id, code, message, status, attempts, occurredAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        code:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+          enum: [OPEN, RETRYING, RESOLVED, DEAD_LETTER]
+        attempts:
+          type: integer
+          minimum: 0
+        occurredAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: [string, 'null']
+          format: date-time
     WorkflowAdminActionCommand:
       type: object
       required: [action, reason, expectedRevision]

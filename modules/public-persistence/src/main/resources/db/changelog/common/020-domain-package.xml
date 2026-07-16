@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="020-01-core-field-catalog" author="pdp">
+    <createTable tableName="pdp_core_field_catalog">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="stable_key" type="VARCHAR(100)"><constraints nullable="false" unique="true"/></column>
+      <column name="object_type" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="semantic_name" type="VARCHAR(200)"><constraints nullable="false"/></column>
+      <column name="data_type" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="data_source" type="VARCHAR(200)"><constraints nullable="false" unique="true"/></column>
+      <column name="aliases" type="CLOB"><constraints nullable="false"/></column>
+      <column name="extensible" type="BOOLEAN"><constraints nullable="false"/></column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="020-02-domain-package" author="pdp">
+    <createTable tableName="pdp_domain_package">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="workspace_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="stable_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="name" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="layer" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="parent_package_id" type="CHAR(36)"/>
+      <column name="status" type="VARCHAR(20)"><constraints nullable="false"/></column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="pdp_domain_package"
+        columnNames="workspace_id,stable_key" constraintName="uk_domain_package_workspace_key"/>
+  </changeSet>
+
+  <changeSet id="020-03-domain-package-version" author="pdp">
+    <createTable tableName="pdp_domain_package_version">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="package_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="semantic_version" type="VARCHAR(50)"><constraints nullable="false"/></column>
+      <column name="manifest" type="CLOB"><constraints nullable="false"/></column>
+      <column name="content_hash" type="VARCHAR(128)"><constraints nullable="false"/></column>
+      <column name="status" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="frozen" type="BOOLEAN"><constraints nullable="false"/></column>
+      <column name="created_by" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="reviewed_by" type="CHAR(36)"/>
+      <column name="approved_by" type="CHAR(36)"/>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="created_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="pdp_domain_package_version"
+        columnNames="package_id,semantic_version" constraintName="uk_package_semantic_version"/>
+    <addUniqueConstraint tableName="pdp_domain_package_version"
+        columnNames="package_id,content_hash" constraintName="uk_package_content_hash"/>
+  </changeSet>
+
+  <changeSet id="020-04-metamodel" author="pdp">
+    <createTable tableName="pdp_object_definition">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="version_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="stable_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="kind" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="core_object_type" type="VARCHAR(100)"/>
+      <column name="definition" type="CLOB"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="pdp_object_definition"
+        columnNames="version_id,stable_key" constraintName="uk_object_definition_version_key"/>
+    <createTable tableName="pdp_field_definition">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="object_definition_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="stable_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="semantic_name" type="VARCHAR(200)"><constraints nullable="false"/></column>
+      <column name="data_type" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="data_source" type="VARCHAR(200)"><constraints nullable="false"/></column>
+      <column name="definition" type="CLOB"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="pdp_field_definition"
+        columnNames="object_definition_id,stable_key" constraintName="uk_field_definition_object_key"/>
+    <createTable tableName="pdp_relation_definition">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="object_definition_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="stable_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="definition" type="CLOB"><constraints nullable="false"/></column>
+    </createTable>
+    <createTable tableName="pdp_page_definition">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="version_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="stable_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="object_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="definition" type="CLOB"><constraints nullable="false"/></column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="020-05-behavior" author="pdp">
+    <createTable tableName="pdp_behavior_definition">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="version_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="definition_type" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="stable_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="definition" type="CLOB"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="pdp_behavior_definition"
+        columnNames="version_id,definition_type,stable_key"
+        constraintName="uk_behavior_version_type_key"/>
+    <createTable tableName="pdp_package_override">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="version_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="target_stable_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="property_path" type="VARCHAR(500)"><constraints nullable="false"/></column>
+      <column name="old_value" type="CLOB"/>
+      <column name="new_value" type="CLOB"><constraints nullable="false"/></column>
+      <column name="reason" type="VARCHAR(1000)"><constraints nullable="false"/></column>
+      <column name="responsible_actor" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="applicable_version" type="VARCHAR(50)"><constraints nullable="false"/></column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="020-06-snapshot-migration" author="pdp">
+    <createTable tableName="pdp_domain_package_snapshot">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="package_version_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="layer_chain" type="CLOB"><constraints nullable="false"/></column>
+      <column name="snapshot" type="CLOB"><constraints nullable="false"/></column>
+      <column name="content_hash" type="VARCHAR(128)"><constraints nullable="false"/></column>
+      <column name="created_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+    </createTable>
+    <createTable tableName="pdp_domain_package_migration">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="source_version_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="target_version_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="preview_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="status" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="batch_size" type="INTEGER"><constraints nullable="false"/></column>
+      <column name="migrated_count" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="failed_count" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="failure_details" type="CLOB"/>
+      <column name="rollback_plan" type="CLOB"><constraints nullable="false"/></column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="created_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+    </createTable>
+    <createIndex tableName="pdp_domain_package_migration" indexName="idx_package_migration_status">
+      <column name="status"/><column name="created_at"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

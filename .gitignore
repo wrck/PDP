@@ -1,0 +1,35 @@
+# Java / Maven
+target/
+*.class
+*.jar
+.mvn/timing.properties
+
+# Node.js / Vue
+node_modules/
+.pnpm-store/
+.maven-user/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Runtime and local configuration
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+*.swp
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Local infrastructure data
+.data/
+infra/compose/data/

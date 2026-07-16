@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="001-01-user-account" author="pdp">
+    <createTable tableName="pdp_user_account">
+      <column name="id" type="CHAR(36)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="external_subject" type="VARCHAR(500)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="display_name" type="VARCHAR(200)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="email" type="VARCHAR(320)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="status" type="VARCHAR(30)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="locale" type="VARCHAR(35)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="timezone" type="VARCHAR(80)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="last_login_at" type="TIMESTAMP"/>
+      <column name="authorization_version" type="BIGINT" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addUniqueConstraint
+        tableName="pdp_user_account"
+        columnNames="external_subject"
+        constraintName="uk_user_account_external_subject"/>
+    <createIndex tableName="pdp_user_account" indexName="idx_user_account_status">
+      <column name="status"/>
+      <column name="id"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="001-02-external-identity" author="pdp">
+    <createTable tableName="pdp_external_identity">
+      <column name="id" type="CHAR(36)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="user_id" type="CHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="issuer" type="VARCHAR(500)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="subject" type="VARCHAR(500)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="email" type="VARCHAR(320)"/>
+      <column name="email_verified" type="BOOLEAN" defaultValueBoolean="false">
+        <constraints nullable="false"/>
+      </column>
+      <column name="status" type="VARCHAR(30)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="bound_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="last_synchronized_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addUniqueConstraint
+        tableName="pdp_external_identity"
+        columnNames="issuer,subject"
+        constraintName="uk_external_identity_issuer_subject"/>
+    <addForeignKeyConstraint
+        baseTableName="pdp_external_identity"
+        baseColumnNames="user_id"
+        referencedTableName="pdp_user_account"
+        referencedColumnNames="id"
+        constraintName="fk_external_identity_user"
+        onDelete="RESTRICT"/>
+    <createIndex tableName="pdp_external_identity" indexName="idx_external_identity_user">
+      <column name="user_id"/>
+      <column name="status"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="001-03-user-session" author="pdp">
+    <createTable tableName="pdp_user_session">
+      <column name="id" type="CHAR(36)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="user_id" type="CHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="identity_provider_session_id" type="VARCHAR(500)"/>
+      <column name="refresh_credential_reference" type="VARCHAR(500)"/>
+      <column name="issued_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="last_seen_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="expires_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="authorization_version" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="status" type="VARCHAR(30)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="revoked_at" type="TIMESTAMP"/>
+      <column name="revocation_reason" type="VARCHAR(1000)"/>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="pdp_user_session"
+        baseColumnNames="user_id"
+        referencedTableName="pdp_user_account"
+        referencedColumnNames="id"
+        constraintName="fk_user_session_user"
+        onDelete="RESTRICT"/>
+    <createIndex tableName="pdp_user_session" indexName="idx_user_session_active">
+      <column name="user_id"/>
+      <column name="status"/>
+      <column name="expires_at"/>
+      <column name="id"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

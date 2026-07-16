@@ -7,8 +7,8 @@
 
 | 故事/门禁 | HTTP 契约 | 事件或 Schema | 主要消费者 | 兼容与验证 |
 |---|---|---|---|---|
-| US1 工作空间治理 | `/workspaces`、协作授权及撤销 | 工作空间与授权事件 | Web、权限、审计、搜索 | US1 契约测试、撤权与隔离测试 |
-| US2 领域包定制 | `/domain-packages`、校验、发布、影响预览 | `domain-package.schema.json`、领域包发布/迁移事件 | 设计器、运行时、迁移器 | Schema 校验、兼容差异、状态机测试 |
+| US1 工作空间治理 | `/workspaces`、状态迁移、组织、成员、角色、数据范围、协作授权及撤销 | 工作空间、成员与授权事件 | Web、权限、审计、搜索、导出与附件 | US1 状态机/API 契约测试、撤权时限与跨空间隔离测试 |
+| US2 领域包定制 | `/domain-packages`、版本草稿、校验、审核、发布、退役、回滚、迁移预览与分批迁移 | `domain-package.schema.json` 1.1、领域包校验/审核/发布/退役/回滚/迁移事件 | 设计器、元数据运行时、平台工作流目录、迁移器 | 三层继承、核心字段复用、引用完整性、职责分离、兼容差异、扩展隔离、状态机、失败隔离与回滚测试 |
 | US3 模板与创建 | `/project-templates`、`/projects` | 项目创建事件 | Web、项目、计划、通知 | 模板版本、幂等和快照测试 |
 | US4 项目生命周期 | 项目详情与 `/projects/{id}/transitions` | 项目状态事件 | Web、计划、交付、审计 | 状态机、版本冲突和关闭门禁 |
 | US5 任务协作 | 任务创建、转换和协作接口 | 任务状态事件 | Web、进度、通知、搜索 | 状态机、并发、权限和事件兼容 |
@@ -21,7 +21,7 @@
 | US14 搜索通知 | `/search`、`/notifications` | 核心业务事件目录 | Web、投影器、通知器 | 幂等、撤权时限、稳定排序 |
 | US18 连续性 | 健康、恢复、服务等级和可用性接口 | 告警和恢复事件 | 运维控制台、值守系统 | SLI/SLO、故障注入和恢复演练 |
 | US20 历史迁移 | `/data-migrations`、核对和切换决策 | `migration-report.schema.json`、迁移事件 | 迁移控制台、审计、值守 | 重跑、核对、回退和来源追踪 |
-| US21 多数据库 | 当前部署、认证和数据库切换接口 | `migration-report.schema.json`、切换事件 | 运维控制台、迁移器 | 当前数据库语义、单写和双向切换 |
+| US21 数据库切换 | `/database-deployments`、`/database-deployments/current`、`/database-switches` | 部署能力、`DATABASE_SWITCH` 运行和切换事件 | 运维控制台、迁移器 | P1 `MYSQL→MYSQL` 双向切换、单写主权、未认证组合拒绝；P2 复用契约扩展产品组合 |
 | 横向高风险操作 | `/operation-previews` 及对应确认命令 | 审计事件 | 所有高风险页面和服务 | 预览过期、版本冲突、确认和补偿测试 |
 | 横向工作流编排 | `/workflow-definitions/validate`、`/workflow-definitions/deploy`、`/workflow-instances/{id}` 及受控管理动作；不暴露 Flowable API | `pdp.workflow.orchestration.requested/failed` | `workflow`、审批、项目、领域包、运维 | BPMN 校验、版本固定、幂等关联、权限复核、死信和 MySQL 升级 |
 

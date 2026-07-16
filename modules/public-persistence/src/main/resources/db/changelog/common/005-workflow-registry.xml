@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.31.xsd">
+  <changeSet id="005-workflow-registry" author="pdp">
+    <createTable tableName="workflow_definition">
+      <column name="id" type="BINARY(16)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="process_definition_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="business_version" type="VARCHAR(32)"><constraints nullable="false"/></column>
+      <column name="content_hash" type="CHAR(64)"><constraints nullable="false"/></column>
+      <column name="domain_package_version_id" type="BINARY(16)"/>
+      <column name="status" type="VARCHAR(24)"><constraints nullable="false"/></column>
+      <column name="deployed_at" type="TIMESTAMP(6)"/>
+    </createTable>
+    <addUniqueConstraint tableName="workflow_definition"
+                         columnNames="process_definition_key,business_version"
+                         constraintName="uk_workflow_definition_key_version"/>
+    <createTable tableName="workflow_deployment">
+      <column name="id" type="BINARY(16)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="definition_id" type="BINARY(16)"><constraints nullable="false"/></column>
+      <column name="adapter_deployment_ref" type="VARCHAR(255)"><constraints nullable="false"/></column>
+      <column name="idempotency_key" type="VARCHAR(200)"><constraints nullable="false" unique="true"/></column>
+      <column name="deployed_at" type="TIMESTAMP(6)"><constraints nullable="false"/></column>
+    </createTable>
+    <createTable tableName="workflow_instance_ref">
+      <column name="id" type="BINARY(16)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="definition_id" type="BINARY(16)"><constraints nullable="false"/></column>
+      <column name="workspace_id" type="BINARY(16)"><constraints nullable="false"/></column>
+      <column name="business_object_type" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="business_object_id" type="BINARY(16)"><constraints nullable="false"/></column>
+      <column name="state" type="VARCHAR(24)"><constraints nullable="false"/></column>
+      <column name="start_idempotency_key" type="VARCHAR(200)"/>
+      <column name="incident_count" type="INT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="updated_at" type="TIMESTAMP(6)"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="workflow_instance_ref"
+                         columnNames="start_idempotency_key"
+                         constraintName="uk_workflow_instance_start_key"/>
+    <createTable tableName="workflow_instance_activity">
+      <column name="workflow_instance_id" type="BINARY(16)"><constraints nullable="false"/></column>
+      <column name="activity_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+    </createTable>
+    <addPrimaryKey tableName="workflow_instance_activity"
+                   columnNames="workflow_instance_id,activity_key"
+                   constraintName="pk_workflow_instance_activity"/>
+    <createTable tableName="workflow_task_ref">
+      <column name="id" type="BINARY(16)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="workflow_instance_id" type="BINARY(16)"><constraints nullable="false"/></column>
+      <column name="task_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="name" type="VARCHAR(255)"><constraints nullable="false"/></column>
+      <column name="assignee_id" type="BINARY(16)"/>
+      <column name="state" type="VARCHAR(24)"><constraints nullable="false"/></column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="created_at" type="TIMESTAMP(6)"><constraints nullable="false"/></column>
+      <column name="due_at" type="TIMESTAMP(6)"/>
+    </createTable>
+    <createTable tableName="workflow_task_candidate">
+      <column name="workflow_task_id" type="BINARY(16)"><constraints nullable="false"/></column>
+      <column name="actor_id" type="BINARY(16)"><constraints nullable="false"/></column>
+    </createTable>
+    <addPrimaryKey tableName="workflow_task_candidate"
+                   columnNames="workflow_task_id,actor_id"
+                   constraintName="pk_workflow_task_candidate"/>
+    <createTable tableName="workflow_incident">
+      <column name="id" type="BINARY(16)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="workflow_instance_id" type="BINARY(16)"><constraints nullable="false"/></column>
+      <column name="code" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="message" type="VARCHAR(2000)"><constraints nullable="false"/></column>
+      <column name="status" type="VARCHAR(24)"><constraints nullable="false"/></column>
+      <column name="attempts" type="INT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="occurred_at" type="TIMESTAMP(6)"><constraints nullable="false"/></column>
+      <column name="resolved_at" type="TIMESTAMP(6)"/>
+    </createTable>
+  </changeSet>
+</databaseChangeLog>

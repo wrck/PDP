@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="002-01-audit-digest" author="pdp">
+    <createTable tableName="pdp_audit_digest">
+      <column name="id" type="CHAR(36)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="workspace_id" type="CHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="operation_key" type="VARCHAR(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="object_type" type="VARCHAR(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="object_id" type="CHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="actor_id" type="CHAR(36)"/>
+      <column name="result" type="VARCHAR(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="digest" type="VARCHAR(128)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="previous_digest" type="VARCHAR(128)"/>
+      <column name="recorded_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="trace_id" type="VARCHAR(64)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="002-02-event-publication" author="pdp">
+    <!-- Spring Modulith JDBC 2.x uses this fixed table and column contract. -->
+    <createTable tableName="EVENT_PUBLICATION">
+      <column name="ID" type="VARCHAR(36)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="LISTENER_ID" type="VARCHAR(512)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="EVENT_TYPE" type="VARCHAR(512)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="SERIALIZED_EVENT" type="CLOB">
+        <constraints nullable="false"/>
+      </column>
+      <column name="PUBLICATION_DATE" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="COMPLETION_DATE" type="TIMESTAMP"/>
+      <column name="STATUS" type="VARCHAR(20)"/>
+      <column name="COMPLETION_ATTEMPTS" type="INT"/>
+      <column name="LAST_RESUBMISSION_DATE" type="TIMESTAMP"/>
+    </createTable>
+    <createIndex
+        tableName="EVENT_PUBLICATION"
+        indexName="EVENT_PUBLICATION_BY_COMPLETION_DATE_IDX">
+      <column name="COMPLETION_DATE"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="002-03-idempotency" author="pdp">
+    <createTable tableName="pdp_idempotency_record">
+      <column name="idempotency_key" type="VARCHAR(100)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="workspace_id" type="CHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="operation_key" type="VARCHAR(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="request_digest" type="VARCHAR(128)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="response_status" type="INT"/>
+      <column name="response_body" type="CLOB"/>
+      <column name="created_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="expires_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="002-04-background-job" author="pdp">
+    <createTable tableName="pdp_background_job">
+      <column name="id" type="CHAR(36)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="workspace_id" type="CHAR(36)"/>
+      <column name="job_type" type="VARCHAR(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="status" type="VARCHAR(30)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="progress" type="DECIMAL(5,2)" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="checkpoint_data" type="CLOB"/>
+      <column name="failure_count" type="INT" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="failure_summary" type="VARCHAR(2000)"/>
+      <column name="created_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+</databaseChangeLog>

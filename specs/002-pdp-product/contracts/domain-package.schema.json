@@ -15,7 +15,7 @@
   "additionalProperties": false,
   "properties": {
     "schemaVersion": {
-      "const": "1.0"
+      "const": "1.1"
     },
     "stableKey": {
       "$ref": "#/$defs/stableKey"
@@ -121,6 +121,20 @@
       "default": []
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "layer": {
+            "enum": ["INDUSTRY", "WORKSPACE_CUSTOMER"]
+          }
+        }
+      },
+      "then": {
+        "required": ["extends"]
+      }
+    }
+  ],
   "$defs": {
     "stableKey": {
       "type": "string",
@@ -633,7 +647,9 @@
         "artifact",
         "entrypoint",
         "permissions",
-        "timeoutMs"
+        "timeoutMs",
+        "isolation",
+        "signature"
       ],
       "additionalProperties": false,
       "properties": {
@@ -660,6 +676,13 @@
           "minimum": 100,
           "maximum": 30000
         },
+        "isolation": {
+          "enum": [
+            "PROCESS",
+            "CONTAINER",
+            "REMOTE_SERVICE"
+          ]
+        },
         "memoryMb": {
           "type": "integer",
           "minimum": 16,
@@ -676,7 +699,9 @@
         "targetStableKey",
         "propertyPath",
         "newValue",
-        "reason"
+        "reason",
+        "responsibleActor",
+        "applicableVersion"
       ],
       "additionalProperties": false,
       "properties": {
@@ -693,6 +718,16 @@
           "type": "string",
           "minLength": 2,
           "maxLength": 1000
+        },
+        "responsibleActor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "applicableVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
         }
       }
     },
@@ -742,6 +777,18 @@
         },
         "rollback": {
           "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "enum": [
+                "RESTORE_SNAPSHOT",
+                "REVERSE_STEPS",
+                "CUSTOM_EXTENSION"
+              ]
+            }
+          },
           "additionalProperties": true
         }
       }

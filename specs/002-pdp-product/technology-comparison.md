@@ -9,7 +9,7 @@
   模型保存。
 - **P1 只实现并认证 MySQL 8.4 LTS**。数据库独立通过领域/应用端口、逻辑类型和适配器边界实现，不等于首期同时交付两种数据库。
 - PostgreSQL 在 `jsonb`、复杂索引和高级 SQL 上更灵活，作为 P2 首个候选适配器；MySQL 与既有运维体系及历史数据更接近，优先用于 P1。
-- PostgreSQL 适配器、认证矩阵和 PostgreSQL/MySQL 受控切换进入 P2；P1 不支持通过修改连接字符串切换数据库或形成双主。
+- PostgreSQL 适配器、认证矩阵和 PostgreSQL/MySQL 组合进入 P2；P1 使用统一切换接口完整实现两个受管 MySQL 部署之间的受控切换，但不支持通过修改连接字符串直接切换或形成双主。
 
 ## 2. React 与 Vue 详细对比
 
@@ -302,12 +302,13 @@ P2 PostgreSQL 子规格必须额外完成 PostgreSQL 全矩阵及 PostgreSQL ↔
 持久化：MyBatis-Plus + 显式 Mapper SQL，不引入 Hibernate
 数据源：dynamic-datasource 4.5.0 受控路由 + 每数据源独立 HikariCP
 数据库：P1 MySQL 8.4 LTS；PostgreSQL 适配与认证进入 P2
+数据库切换：P1 认证 MYSQL→MYSQL；P2 复用同一接口、状态机和执行器扩展跨产品组合
 工作流：Flowable 8.0.x Process Engine + BPMN 2.0.2，平台基础模块 + 独立 `workflowEngine` HikariCP
 迁移源：现有 MySQL
 ```
 
 前端框架、主持久化框架和工作流引擎决策已经冻结。阶段 A0 验证 Vue 技术原型、MyBatis-Plus MySQL
 Mapper 原型、复杂权限 SQL、Flowable MySQL 部署/升级/恢复和性能预算，不再进行 React/Vue、
-MyBatis-Plus/Hibernate 或自研/Flowable 二选一。数据库冻结公共持久化契约和双认证基线。引入
+MyBatis-Plus/Hibernate 或自研/Flowable 二选一。数据库冻结公共持久化契约和分阶段认证基线。引入
 Hibernate、新增第三种数据库、取消某个认证数据库、启用 Flowable CMMN/DMN/REST/IDM/JPA 或引入
 运行时跨数据库分片，必须提交包含兼容、迁移、任务重排和验收变化的架构决策记录。

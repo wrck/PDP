@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="mysql-002-01-identity-uuid-time-types" author="pdp" dbms="mysql">
+    <dropForeignKeyConstraint
+        baseTableName="pdp_external_identity"
+        constraintName="fk_external_identity_user"/>
+    <dropForeignKeyConstraint
+        baseTableName="pdp_user_session"
+        constraintName="fk_user_session_user"/>
+    <sql splitStatements="true" stripComments="true">
+      ALTER TABLE pdp_user_account
+        MODIFY COLUMN id BINARY(16) NOT NULL,
+        MODIFY COLUMN last_login_at DATETIME(6) NULL,
+        MODIFY COLUMN created_at DATETIME(6) NOT NULL,
+        MODIFY COLUMN updated_at DATETIME(6) NOT NULL;
+      ALTER TABLE pdp_external_identity
+        MODIFY COLUMN id BINARY(16) NOT NULL,
+        MODIFY COLUMN user_id BINARY(16) NOT NULL,
+        MODIFY COLUMN bound_at DATETIME(6) NOT NULL,
+        MODIFY COLUMN last_synchronized_at DATETIME(6) NOT NULL;
+      ALTER TABLE pdp_user_session
+        MODIFY COLUMN id BINARY(16) NOT NULL,
+        MODIFY COLUMN user_id BINARY(16) NOT NULL,
+        MODIFY COLUMN issued_at DATETIME(6) NOT NULL,
+        MODIFY COLUMN last_seen_at DATETIME(6) NOT NULL,
+        MODIFY COLUMN expires_at DATETIME(6) NOT NULL,
+        MODIFY COLUMN revoked_at DATETIME(6) NULL;
+    </sql>
+    <addForeignKeyConstraint
+        baseTableName="pdp_external_identity"
+        baseColumnNames="user_id"
+        referencedTableName="pdp_user_account"
+        referencedColumnNames="id"
+        constraintName="fk_external_identity_user"
+        onDelete="RESTRICT"/>
+    <addForeignKeyConstraint
+        baseTableName="pdp_user_session"
+        baseColumnNames="user_id"
+        referencedTableName="pdp_user_account"
+        referencedColumnNames="id"
+        constraintName="fk_user_session_user"
+        onDelete="RESTRICT"/>
+    <rollback>
+      <dropForeignKeyConstraint
+          baseTableName="pdp_external_identity"
+          constraintName="fk_external_identity_user"/>
+      <dropForeignKeyConstraint
+          baseTableName="pdp_user_session"
+          constraintName="fk_user_session_user"/>
+      <sql splitStatements="true" stripComments="true">
+        ALTER TABLE pdp_user_account
+          MODIFY COLUMN id CHAR(36) NOT NULL,
+          MODIFY COLUMN last_login_at TIMESTAMP NULL,
+          MODIFY COLUMN created_at TIMESTAMP NOT NULL,
+          MODIFY COLUMN updated_at TIMESTAMP NOT NULL;
+        ALTER TABLE pdp_external_identity
+          MODIFY COLUMN id CHAR(36) NOT NULL,
+          MODIFY COLUMN user_id CHAR(36) NOT NULL,
+          MODIFY COLUMN bound_at TIMESTAMP NOT NULL,
+          MODIFY COLUMN last_synchronized_at TIMESTAMP NOT NULL;
+        ALTER TABLE pdp_user_session
+          MODIFY COLUMN id CHAR(36) NOT NULL,
+          MODIFY COLUMN user_id CHAR(36) NOT NULL,
+          MODIFY COLUMN issued_at TIMESTAMP NOT NULL,
+          MODIFY COLUMN last_seen_at TIMESTAMP NOT NULL,
+          MODIFY COLUMN expires_at TIMESTAMP NOT NULL,
+          MODIFY COLUMN revoked_at TIMESTAMP NULL;
+      </sql>
+      <addForeignKeyConstraint
+          baseTableName="pdp_external_identity"
+          baseColumnNames="user_id"
+          referencedTableName="pdp_user_account"
+          referencedColumnNames="id"
+          constraintName="fk_external_identity_user"
+          onDelete="RESTRICT"/>
+      <addForeignKeyConstraint
+          baseTableName="pdp_user_session"
+          baseColumnNames="user_id"
+          referencedTableName="pdp_user_account"
+          referencedColumnNames="id"
+          constraintName="fk_user_session_user"
+          onDelete="RESTRICT"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

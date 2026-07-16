@@ -45,12 +45,12 @@
 - 候选目录：`specs/008-industry-domain-packages/`。
 - 核心范围：售前测试、转包代施、割接、验收回访、维保及客户覆盖治理。
 
-### PostgreSQL 适配与多数据库切换
+### PostgreSQL 适配与跨产品切换组合
 
-- 追溯：US21、FR-151～FR-162、SC-032～SC-035 的 P2 扩展边界。
+- 追溯：US21、FR-151～FR-162、SC-032～SC-035 的 P2 产品组合扩展。
 - 候选目录：`specs/010-postgresql-portability/`。
-- 核心范围：PostgreSQL 适配器、专用 DDL/查询、认证矩阵、性能与恢复验证，以及 PostgreSQL/MySQL 双向受控切换。
-- 约束：不得修改领域模型、领域包或外部契约语义；必须复用 P1 公共持久化端口和契约测试。
+- 核心范围：PostgreSQL 适配器、专用 DDL/查询、认证矩阵、性能与恢复验证，以及在 P1 统一 `DATABASE_SWITCH` 能力上登记 PostgreSQL/MySQL 获批组合。
+- 约束：不得修改数据库切换接口、状态机、迁移运行、领域模型、领域包或外部契约语义；必须复用 P1 公共持久化端口、切换执行器和契约测试。
 
 ## P3 候选子规格
 

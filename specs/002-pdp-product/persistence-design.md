@@ -22,6 +22,8 @@
 | `pdpRead` | 明确允许最终一致的查询 | 否 | 可选，只能与主库同引擎且来自受管复制 |
 | `migrationSource` | 历史 MySQL 或数据库切换源 | 否 | 迁移计划批准后加载，使用独立只读会话工厂，结束后卸载并撤权 |
 | `migrationTarget` | 数据库切换目标的预装载和核对 | 仅迁移执行器 | 使用独立目标会话工厂，开放业务写入前不得作为 `pdpPrimary` |
+
+P1 的 `DATABASE_SWITCH` 使用两个独立 MySQL 受管部署作为源和目标，完成全量、增量、核对和冻结后，才可将 `pdpPrimary` 写入主权从源部署转移至目标部署。P2 新增数据库产品时复用相同路由角色和事务边界，只增加对应适配器与认证组合。
 | `workflowEngine` | Flowable Process Engine 运行表、作业和历史 | 仅 `workflow` 模块 | 必需；使用 MySQL 8.4，但独立 schema/账号/池/事务管理器，不加入普通业务动态路由 |
 
 路由规则：
@@ -102,7 +104,7 @@ WHERE id = :id
 | 金额/权重 | `BigDecimal` | `decimal(p,s)` | 精度、舍入和溢出由字段定义控制 |
 | `ObjectRef`/`ActorRef` | 值对象 | 分列或规范化 JSON | 核心引用优先分列，不以数据库对象类型保存 |
 
-TypeHandler 在 `persistence-common` 注册；数据库专用 JSON/UUID 处理位于对应适配器。复杂字段必须使用显式 XML `resultMap` 或已验证的 `autoResultMap`。NULL、空字符串、空 JSON 对象和空数组保持不同语义。MyBatis 二级缓存和懒加载关闭，`localCacheScope=STATEMENT`，未知列映射设为失败。
+公共逻辑类型契约定义在 `public-persistence`；MySQL UUID、JSON、枚举、时间和值对象 TypeHandler 及其注册全部位于 `persistence-mysql`。复杂字段必须使用显式 XML `resultMap` 或已验证的 `autoResultMap`。NULL、空字符串、空 JSON 对象和空数组保持不同语义。MyBatis 二级缓存和懒加载关闭，`localCacheScope=STATEMENT`，未知列映射设为失败。
 
 ## 7. 动态字段投影一致性
 

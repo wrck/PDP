@@ -1,0 +1,9 @@
+packages:
+  - apps/web
+  - tests
+
+allowBuilds:
+  "@scarf/scarf": false
+  core-js: false
+  esbuild: true
+  vue-demi: true

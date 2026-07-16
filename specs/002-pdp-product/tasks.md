@@ -45,8 +45,8 @@
 
 ### 身份、权限和审计基础
 
-- [ ] T032 创建统一错误码、异常和 `application/problem+json` 响应，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/error/`
-- [ ] T033 [P] 创建工作空间、操作者、链路、幂等键和审计上下文值对象，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/context/`
+- [X] T032 创建统一错误码、异常和 `application/problem+json` 响应，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/error/`
+- [X] T033 [P] 创建工作空间、操作者、链路、幂等键和审计上下文值对象，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/context/`
 - [ ] T034 创建请求上下文过滤器并强制校验工作空间边界，文件：`apps/api/src/main/java/com/pdp/api/security/RequestContextFilter.java`
 - [ ] T035 创建用户账户、外部身份、用户会话领域模型及仓储端口，文件：`modules/identity/src/main/java/com/pdp/identity/domain/`、`modules/identity/src/main/java/com/pdp/identity/port/`
 - [ ] T036 创建用户账户、身份映射和会话公共变更集，文件：`modules/public-persistence/src/main/resources/db/changelog/common/001-identity.xml`
@@ -75,9 +75,9 @@
 
 - [ ] T054 [P] 创建 UUID、JSON、枚举、时间和值对象 TypeHandler，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/typehandler/`
 - [ ] T055 创建 TypeHandler MySQL 往返与公共逻辑语义测试，文件：`tests/backend/contract/persistence/TypeHandlerDatabaseContractTest.java`
-- [ ] T056 创建签名 keyset cursor 与稳定排序组件，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/page/`
+- [X] T056 创建签名 keyset cursor 与稳定排序组件，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/page/`
 - [ ] T057 创建游标分页 MySQL 契约测试，文件：`tests/backend/contract/persistence/CursorPaginationDatabaseContractTest.java`
-- [ ] T058 创建 `revision`、ETag 和乐观并发冲突组件，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/concurrency/`
+- [X] T058 创建 `revision`、ETag 和乐观并发冲突组件，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/concurrency/`
 - [ ] T059 创建并发更新、重试和冲突呈现测试，文件：`tests/backend/integration/concurrency/OptimisticConcurrencyTest.java`
 - [ ] T060 创建领域事件、Outbox、幂等消费和死信基础设施，文件：`modules/integration/src/main/java/com/pdp/integration/event/`
 - [ ] T061 创建重复、乱序、失败重放和死信恢复测试，文件：`tests/backend/integration/event/EventDeliverySemanticsTest.java`

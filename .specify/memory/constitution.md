@@ -1,50 +1,190 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+同步影响报告
+- 版本变更：1.0.0 → 1.1.0
+- 原则调整：
+  - 保留并强化“产品规格与自顶向下追踪”
+  - 将原“P1 范围与增量交付”扩展为“业务闭环与纵向增量交付”
+  - 新增“统一领域语言与确定性状态”
+  - 将模块边界、稳定内核和简单架构合并为“稳定内核、受治理扩展与简单演进”
+  - 将数据库独立纳入契约兼容演进原则
+  - 强化安全设计、质量证据、可观测恢复和用户体验原则
+- 新增章节：
+  - 规格最小完备标准
+  - 当前交付与工程门禁
+  - 进入实现条件（DoR）
+  - 交付完成条件（DoD）
+  - 决策、例外与变更治理
+- 模板同步：
+  - ✅ .specify/templates/checklist-template.md
+  - ✅ .specify/templates/constitution-template.md
+  - ✅ .specify/templates/plan-template.md
+  - ✅ .specify/templates/spec-template.md
+  - ✅ .specify/templates/tasks-template.md
+- 当前交付物同步：
+  - ✅ specs/002-pdp-product/plan.md
+  - ✅ specs/002-pdp-product/tasks.md
+  - ✅ AGENTS.md
+- 工作流说明：
+  - ✅ .agents/skills/speckit-*/SKILL.md 已检查，本次不改变命令语义
+- 延后事项：无
+-->
 
-## Core Principles
+# PDP 项目宪章
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+## 核心原则
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### I. 产品规格与自顶向下追踪
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+`specs/002-pdp-product/spec.md` MUST 作为当前 PDP 产品使命、范围、优先级、统一术语和成功标准的
+L0 唯一可信来源。平台域、能力域、业务领域包和客户差异规格 MUST 声明规格层级、上位规格以及引用
+的用户故事、FR 和 SC，只能细化，不得静默扩大、缩减或改变上位语义。范围、优先级或业务口径变更
+MUST 先修改上位规格并完成影响评审，再依次传播到计划、数据模型、契约、任务、测试和实现。
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. 业务闭环与纵向增量交付
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+每项业务能力 MUST 定义触发条件、参与角色、输入、状态变化、业务规则、输出、异常处理和闭环证据；
+孤立页面、接口或数据表不得被视为已交付能力。每个用户故事和增量 MUST 能独立完成端到端验证，并
+优先形成可运行、可反馈、可运营的纵向切片。首个可演示增量不等同于可上线产品，发布完成度 MUST
+以批准范围内的完整业务闭环和上线门禁为准。
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### III. 统一领域语言与确定性状态
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+规格、模型、接口、界面、报表和审计 MUST 使用统一领域词汇，并明确核心对象、身份、关系、生命周期、
+所有权和关键业务不变量。业务状态 MUST 由可测试的领域状态机定义；工作流、自动化或审批引擎负责
+协调，不得成为核心业务事实的唯一存储。每个状态迁移 MUST 定义前置条件、授权、并发语义、输出和
+失败结果；非法或冲突迁移 MUST 被拒绝并留下可诊断证据。
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### IV. 稳定内核、受治理扩展与简单演进
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+平台身份、工作空间归属、权限、审计、版本、核心字段、统一状态映射和平台保留动作属于稳定内核，
+领域包不得覆盖或绕过。领域差异 SHOULD 优先通过受治理的声明式配置表达；专业算法或设备能力可
+通过隔离、版本化、可停用的扩展接口接入。架构 MUST 从满足当前质量属性的最简单方案开始；新增
+中间件、服务拆分、跨库协同或自研框架 MUST 由容量、隔离、合规或组织边界证据驱动，并通过 ADR
+记录背景、选项、后果和退出条件。
 
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+### V. 契约优先、兼容演进与数据库独立
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+外部 HTTP、事件、领域包和持久化端口 MUST 先定义版本化契约及可执行契约测试，再实现提供方或消费
+方。兼容性策略 MUST 明确新增、变更、弃用、迁移窗口和消费者影响；破坏性变化不得无版本、无通知
+或无迁移路径发布。领域层和应用层 MUST 与数据库产品、ORM/Mapper 框架和持久化记录解耦；认证
+数据库之间必须保持相同业务语义，专有优化只能位于适配器边界并具有等价实现或可验证降级路径。
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+### VI. 最小授权、隔离、审计与数据治理
+
+系统 MUST 默认拒绝访问，并对每次查询和写入明确工作空间、数据范围、对象、字段和操作权限。页面、
+搜索、报表、导出、附件、通知、自动化、集成、缓存和后台任务 MUST 使用同一授权语义。设计和发布
+MUST 包含威胁建模、职责分离、跨空间隔离、越权测试、敏感数据分类、传输与存储保护、保留和处置
+规则。关键权限、配置、审批、下载、迁移和集成活动 MUST 形成防篡改、可关联、可检索的审计证据；
+凭据、签名、敏感字段、迁移原始数据和生产导出不得进入日志或仓库。
+
+### VII. 可执行质量与证据化验收
+
+质量要求 MUST 转化为可重复执行的测试、检查、监控或验收证据。测试按风险分层覆盖单元、状态机、
+模块边界、契约、持久化、权限、并发、集成、端到端、性能、迁移和恢复；缺陷修复 MUST 先建立能够
+复现问题的回归测试。每个用户故事 MUST 先定义独立验收方式，高风险失败场景和恢复路径不得只依赖
+人工判断。未提供需求、测试、结果和证据之间的追踪关系，不得宣称完成。
+
+### VIII. 可观测、可恢复与安全迁移
+
+每项关键能力 MUST 定义 SLI/SLO、容量假设、失败模式、告警条件、关联标识和运行手册。日志、指标、
+追踪、审计和作业状态 MUST 能支持从用户影响定位到责任组件；非关键能力故障不得破坏已提交业务
+事实，并必须支持明确降级、重试、死信或人工补偿。数据迁移和数据库切换 MUST 可追溯、可核对、
+可重放、可暂停，并具有回退点和不可逆点。重大故障 MUST 完成无责复盘，改进项必须进入可追踪计划。
+
+### IX. 结果导向与可解释的用户体验
+
+界面和交互 MUST 围绕角色目标、业务决策和行动闭环组织，而不是暴露底层模块结构。列表、详情、
+工作台、视图和报表 MUST 使用一致的数据、权限、状态和术语，并支持从异常发现到责任定位再到处理
+结果。状态、进度、规则命中、权限拒绝和失败反馈 MUST 可理解、可追溯并给出下一步行动。高风险
+操作 MUST 提供预览、影响说明、确认以及撤销或补偿路径；核心旅程必须通过可访问性和代表性用户
+可用性验证。
+
+## 规格完备与交付门禁
+
+### 规格最小完备标准
+
+进入计划前，规格 MUST 至少具备：
+
+- 规格层级、上位追踪、范围、非目标、优先级和主要利益相关者；
+- 统一词汇、核心对象、关系、所有权、生命周期、状态机和关键不变量；
+- 主要业务闭环、正常路径、失败路径、并发冲突、权限边界和闭环证据；
+- 唯一、可测试且不绑定实现的 FR，以及可量化、可验证的 SC；
+- 安全、隔离、审计、数据分类、保留、兼容、迁移和恢复要求；
+- 性能、可用性、容量、可观测性、可访问性和可运营性目标；
+- 假设、依赖、风险、验收方法、责任人和证据保存位置。
+
+### 当前交付与工程门禁
+
+- 当前实施计划和 `tasks.md` MUST 只包含已批准的 P1 可上线范围及必要基础设施、迁移和上线门禁；
+  P2/P3 只能进入独立 backlog 或子规格。
+- 当前后端采用模块化单体；模块只能通过公开应用服务、只读查询端口或领域事件协作，不得访问其他
+  模块的内部表、Mapper 或实现类。
+- 领域层和应用层不得依赖 MyBatis-Plus、数据源、数据库方言或持久化记录；框架类型只能位于基础
+  设施适配器边界。
+- OpenAPI、事件和领域包契约变更 MUST 早于 Controller、消费者或扩展实现，并通过兼容性校验。
+- PostgreSQL 与 MySQL MUST 作为同等级认证数据库；每个持久化用户故事同时交付公共 DDL、仓储
+  端口、Mapper/适配器和两种数据库的契约测试。任一生产部署同一时刻只能有一个业务写入主库。
+- 动态数据源 MUST 使用严格路由；每个数据源使用独立 HikariCP 池，并定义连接预算、超时、健康
+  检查和指标。
+- 迁移源、迁移目标和在线主库 MUST 使用独立账号、连接池、`SqlSessionFactory`、Mapper 包和
+  本地事务管理器；禁止 XA、跨库两阶段提交和事务开始后切换数据源。
+- 规格、计划、任务、清单、ADR、技术债、运行手册、验收证据和贡献指南 MUST 使用中文与 UTF-8；
+  代码标识、路径、命令和行业通用缩写可保留英文。
+- P1 发布 MUST 完成标准实施试点、性能、安全、容量、备份恢复、历史迁移和 PostgreSQL/MySQL
+  双向切换演练，并保留可审计证据。
+- `/speckit-analyze` 存在 CRITICAL 或 HIGH 问题时不得进入 `/speckit-implement`。
+
+### 进入实现条件（DoR）
+
+只有同时满足以下条件，用户故事或实施阶段才能进入实现：
+
+- 规格不存在 `NEEDS CLARIFICATION`、`TODO`、`TBD` 等未决标记，FR/SC 编号唯一；
+- 上位追踪、业务闭环、领域模型、状态机、不变量和验收场景已评审；
+- 契约、权限、威胁、数据、兼容、迁移、可观测和恢复影响已识别；
+- 架构边界、依赖、容量假设、测试策略、责任人和证据路径明确；
+- 任务已按依赖排序，并覆盖失败测试、实现、文档、运行和验收工作；
+- 宪章检查和一致性分析没有未处理的 CRITICAL 或 HIGH 问题。
+
+### 交付完成条件（DoD）
+
+只有同时满足以下条件，能力才能标记为完成：
+
+- 批准范围内的正常、失败、权限、并发和恢复场景全部通过独立验收；
+- 自动化测试、契约、双数据库矩阵、质量扫描和必要的人工验证全部通过；
+- 兼容策略、迁移或回退路径已验证，且不存在未说明的数据或消费者影响；
+- 日志、指标、追踪、审计、告警、运行手册和人工补偿路径可用；
+- 安全、性能、容量、备份恢复、迁移和可用性门禁达到批准目标；
+- 文档、ADR、追踪矩阵和验收证据完整，已知技术债具有责任人和整改期限；
+- 产品、领域/业务验收、架构、质量、运维及适用的安全/合规责任人完成所需签字。
+
+## 决策、例外与变更治理
+
+1. 关键技术选择、架构边界和不可逆决策 MUST 使用 ADR 记录背景、决策、替代方案、质量属性影响、
+   数据与迁移影响、验证方式和复审条件。技术债 MUST 标记风险等级、责任人、整改期限和触发条件。
+2. 宪章例外 MUST 书面说明违反的原则、业务理由、影响范围、已拒绝替代方案、补偿控制、验证证据、
+   责任人、批准人、生效日期、失效日期和复审日期。未经产品、架构及适用的安全/合规责任人批准，
+   不得进入生产；永久例外必须通过宪章修订或正式架构决策处理，不得无限延期。
+3. 变更 MUST 从 L0 产品规格向子规格、计划、模型、契约、任务、测试和实现逐层传播。修改原则或
+   强制门禁必须先修订本宪章，其他文档不得以局部说明弱化宪章中的 MUST。
+4. P2/P3 能力必须建立独立子规格或 backlog，获批后重新执行 clarify、plan、tasks 和 analyze。
+5. 宪章至少每季度复核一次；发生重大生产事故、监管变化、产品战略调整、认证数据库变化或架构
+   边界变化时 MUST 触发专项复核。复核必须记录继续有效、修订或例外结论及责任人。
+
+## 治理
+
+本宪章优先于仓库中的实施习惯、局部计划和框架默认行为。产品负责人对范围和成功标准负责，领域
+负责人对术语、规则、不变量和边界负责，业务验收人对场景真实性和上线接受负责，架构负责人对边界
+和质量属性负责，安全/合规负责人对安全与数据治理负责，质量负责人对证据化门禁负责，交付负责人
+对计划、风险和闭环交付负责，运维/SRE 对容量、可靠性、恢复和生产准备负责；责任可以兼任，但不得
+省略。
+
+修订 MUST 说明版本变化、受影响原则、模板和当前交付物同步、兼容与迁移影响，并遵循语义化版本：
+
+- MAJOR：删除或重新定义不兼容的原则与治理权威；
+- MINOR：新增原则、门禁或实质性扩大治理范围；
+- PATCH：不改变语义的澄清、错字和示例修订。
+
+每次规格、计划、任务和合并请求评审 MUST 检查宪章一致性，并提供需求追踪、验证结果以及数据库、
+权限、兼容、迁移和运行影响。无法满足 MUST 的变更必须停止，先修订方案或完成正式例外/宪章修订。
+
+**版本**：1.1.0 | **批准日期**：2026-07-16 | **最后修订日期**：2026-07-16

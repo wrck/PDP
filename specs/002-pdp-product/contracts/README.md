@@ -5,6 +5,7 @@
 - [openapi.yaml](openapi.yaml)：核心同步 HTTP API 的代表性契约。
 - [domain-package.schema.json](domain-package.schema.json)：领域包清单及声明式元数据结构。
 - [events.md](events.md)：平台业务事件信封、兼容规则和 P1 事件目录。
+- [openapi.yaml](openapi.yaml) 中的“搜索与通知”接口：权限过滤搜索、站内通知查询和已读操作。
 - [openapi.yaml](openapi.yaml) 中的“数据迁移”接口：迁移计划、试运行、核对和切换门禁。
 - [../persistence-design.md](../persistence-design.md)：游标、乐观锁、类型映射、投影、搜索、动态数据源、连接池和事件存储约束。
 
@@ -18,6 +19,8 @@
 - 分页默认使用签名 keyset cursor；游标绑定排序、过滤和权限范围，客户端不得解析或构造。批量导入、导出、迁移和统计返回后台作业。
 - API 契约只定义平台稳定语义。领域字段通过 `extensionData` 和领域包元数据扩展，不为每个客户复制接口。
 - API、事件和领域包不得暴露数据库表名、专有类型、方言函数或物理分页方式；同一契约在 PostgreSQL 和 MySQL 上必须保持一致。
+- 权限撤销后，新请求立即使用最新授权，本地缓存 5 秒内失效，搜索和报表投影 30 秒内移除，实时连接 30 秒内刷新或断开，活动会话和刷新凭据 1 分钟内撤销。
+- 搜索结果打开时必须再次校验对象与字段权限；站内通知按事件标识幂等生成，失败允许安全重提。
 
 ## 兼容性规则
 

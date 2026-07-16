@@ -1,39 +1,41 @@
-# Specification Quality Checklist: PMS 项目交付管理系统（归纳版）
+# PMS 项目交付管理系统（归纳版）规格质量检查表
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2026-07-16
-**Feature**: [spec.md](../spec.md)
+**目的**：在进入规划前验证规格的完整性与质量
 
-## Content Quality
+**创建日期**：2026-07-16
 
-- [ ] No implementation details (languages, frameworks, APIs)
-- [x] Focused on user value and business needs
-- [ ] Written for non-technical stakeholders
-- [x] All mandatory sections completed
+**特性**：[spec.md](../spec.md)
 
-## Requirement Completeness
+## 内容质量
 
-- [x] No [NEEDS CLARIFICATION] markers remain
-- [ ] Requirements are testable and unambiguous
-- [x] Success criteria are measurable
-- [ ] Success criteria are technology-agnostic (no implementation details)
-- [x] All acceptance scenarios are defined
-- [x] Edge cases are identified
-- [x] Scope is clearly bounded
-- [x] Dependencies and assumptions identified
+- [ ] 不包含语言、框架和 API 等实现细节
+- [x] 聚焦用户价值和业务需要
+- [ ] 非技术干系人能够理解
+- [x] 所有必需章节均已完成
 
-## Feature Readiness
+## 需求完整性
 
-- [ ] All functional requirements have clear acceptance criteria
-- [x] User scenarios cover primary flows
-- [x] Feature meets measurable outcomes defined in Success Criteria
-- [ ] No implementation details leak into specification
+- [x] 不存在未决澄清标记
+- [ ] 需求可测试且表述明确
+- [x] 成功标准可量化
+- [ ] 成功标准不绑定技术实现
+- [x] 所有验收场景均已定义
+- [x] 已识别边界场景
+- [x] 范围边界明确
+- [x] 已识别依赖和假设
 
-## Notes
+## 特性就绪度
+
+- [ ] 所有功能需求具有明确验收条件
+- [x] 用户场景覆盖主要流程
+- [x] 特性满足成功标准中的可衡量结果
+- [ ] 规格未泄漏实现细节
+
+## 备注
 
 - 2026-07-16：根据《执行摘要》补充协同计划、项目组合、资源统筹、自定义仪表盘、开放扩展、国际化、组织隔离、业务连续性、安全与合规要求。
 - 新增能力已明确分为“后续阶段”和“演进能力”，不阻塞既有 P1/P2 核心业务首期上线。
 - “开放集成能力”描述的是业务能力与权限边界，不限定具体协议或技术实现。
-- 待清理：既有 FR 中仍包含“乐观锁、LDAP/AD、OCR、Token、SQL、API”等实现或协议级表述，应在后续规格整理中改写为技术无关的业务约束，或迁移至 plan。
+- 待清理：既有 FR 中仍包含“乐观锁、LDAP/AD、OCR、Token、SQL、API”等实现或协议级表述，应在后续规格整理中改写为技术无关的业务约束，或迁移至计划。
 - 待量化：既有条目中的“约定时长、常见故障、40+ 集成点、及时率”等口径仍需给出明确基线、统计周期或样本定义。
 - 本轮未大范围重写上述历史条目，以避免在未确认业务口径的情况下改变原规格语义；建议下一步执行 `/speckit-clarify` 后再进入 `/speckit-plan`。

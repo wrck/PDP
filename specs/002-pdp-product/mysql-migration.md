@@ -46,9 +46,10 @@ PDP 受控装载层
 
 应用内动态数据源只负责受控连接路由，不提供跨数据库事务：
 
-- `migrationSource` 只读连接历史 MySQL 或当前迁移源，使用独立 HikariCP 池；
-- `migrationTarget` 连接尚未取得在线写入主权的目标库，使用独立 HikariCP 池；
+- `migrationSource` 只读连接历史 MySQL 或当前迁移源，使用独立 HikariCP 池、只读账号、`SqlSessionFactory`、Mapper 扫描包和事务管理器；
+- `migrationTarget` 连接尚未取得在线写入主权的目标库，使用独立 HikariCP 池、写入账号、`SqlSessionFactory`、Mapper 扫描包和本地事务管理器；
 - 当前在线业务始终通过 `pdpPrimary` 写入；可选 `pdpRead` 不参与迁移门禁与核对；
+- 迁移 Mapper 不得注入在线业务会话工厂，在线业务 Mapper 不得访问迁移源或迁移目标；
 - 迁移批次以“读取源批次并持久化位点 → 独立目标事务幂等写入 → 核对并推进检查点”执行，不使用 XA 或跨库两阶段提交；
 - 任何迁移事务开始后不得切换数据源，路由上下文必须在批次结束时清理，重试必须从持久化检查点恢复；
 - 迁移池连接预算不得挤占在线连接保留量，达到在线池等待或数据库负载阈值时自动限流或暂停迁移。
@@ -136,7 +137,7 @@ PDP 受控装载层
 - 建立源库只读账号、CDC 账号和网络加密；
 - 冻结源系统破坏性 DDL；迁移期间的 DDL 必须受控登记；
 - 建立迁移版本库、凭据管理、脱敏和审计。
-- 为 `migrationSource`、`migrationTarget` 和 `pdpPrimary` 建立独立账号、连接池、容量预算、路由白名单和故障告警。
+- 为 `migrationSource`、`migrationTarget` 和 `pdpPrimary` 建立独立账号、连接池、`SqlSessionFactory`、Mapper 包、事务管理器、容量预算、路由白名单和故障告警。
 
 ### M1：结构与数据画像
 

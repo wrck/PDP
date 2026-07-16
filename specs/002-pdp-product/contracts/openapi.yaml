@@ -17,6 +17,7 @@ tags:
   - name: 交付件
   - name: 审批
   - name: 治理
+  - name: 搜索与通知
   - name: 数据迁移
   - name: 作业
 paths:
@@ -630,6 +631,78 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BackgroundJob'
+  /search:
+    get:
+      tags: [搜索与通知]
+      summary: 在当前工作空间和授权范围内搜索对象
+      operationId: searchObjects
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+        - name: objectTypes
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 权限过滤后的稳定排序搜索结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchPage'
+  /notifications:
+    get:
+      tags: [搜索与通知]
+      summary: 查询当前用户的站内通知
+      operationId: listNotifications
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 站内通知分页
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPage'
+  /notifications/{notificationId}/read:
+    post:
+      tags: [搜索与通知]
+      summary: 将站内通知标记为已读
+      operationId: markNotificationRead
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: 已更新通知
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '409':
+          $ref: '#/components/responses/Problem'
 components:
   securitySchemes:
     oidc:
@@ -732,6 +805,74 @@ components:
           pattern: '^[a-z][a-z0-9.-]{1,99}$'
         objectId:
           $ref: '#/components/schemas/Uuid'
+    SearchResult:
+      type: object
+      required: [object, title, objectType, indexedAt]
+      properties:
+        object:
+          $ref: '#/components/schemas/ObjectRef'
+        objectType:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        indexedAt:
+          type: string
+          format: date-time
+        revision:
+          type: integer
+    SearchPage:
+      type: object
+      required: [items, nextCursor, indexedAt]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        nextCursor:
+          type: [string, 'null']
+        indexedAt:
+          type: string
+          format: date-time
+    Notification:
+      type: object
+      required: [id, eventId, type, title, createdAt, read, revision]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        eventId:
+          $ref: '#/components/schemas/Uuid'
+        type:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        target:
+          oneOf:
+            - $ref: '#/components/schemas/ObjectRef'
+            - type: 'null'
+        createdAt:
+          type: string
+          format: date-time
+        read:
+          type: boolean
+        readAt:
+          type: [string, 'null']
+          format: date-time
+        revision:
+          type: integer
+    NotificationPage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        nextCursor:
+          type: [string, 'null']
     Problem:
       type: object
       required: [type, title, status, traceId]

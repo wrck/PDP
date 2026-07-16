@@ -1,113 +1,76 @@
-# Implementation Plan: [FEATURE]
+# 实施计划：[特性名称]
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**分支**：`[###-feature-name]` | **日期**：[DATE] | **规格**：[link]
 
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**输入**：`/specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `/speckit-plan` command; its definition describes the execution workflow.
+## 摘要
 
-## Summary
+[提取产品目标、当前优先级边界、业务闭环和技术方案]
 
-[Extract from feature spec: primary requirement + technical approach from research]
+## 技术背景
 
-## Technical Context
+**语言与版本**：[版本或 NEEDS CLARIFICATION]
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
+**主要依赖**：[依赖或 NEEDS CLARIFICATION]
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
+**存储**：[存储或不适用]
 
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
+**测试**：[测试框架、风险分层、数据库矩阵和端到端工具]
 
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+**目标平台**：[目标平台]
 
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
+**项目类型**：[项目类型]
 
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**性能目标**：[可量化目标]
 
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
+**约束**：[安全、可用性、数据、兼容、迁移和范围约束]
 
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
+**规模与范围**：[用户、数据和模块范围]
 
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
+## 宪章检查
 
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+*门禁：研究前检查一次，设计完成后再次检查。*
 
-## Constitution Check
+- [ ] 所有范围追溯到上位规格，且当前可执行范围只包含已批准优先级。
+- [ ] 每项能力定义角色、触发、输入、状态变化、规则、输出、异常和闭环证据。
+- [ ] 统一词汇、核心对象、不变量和确定性状态机已经评审。
+- [ ] 稳定内核与扩展边界明确，方案是满足质量属性的最简单架构，关键决策已有 ADR。
+- [ ] 外部和内部契约先于实现，兼容、弃用、消费者和数据库语义得到验证。
+- [ ] 默认拒绝、工作空间隔离、权限、威胁、审计、敏感数据和保留规则完整。
+- [ ] 测试按风险分层并具有证据；持久化故事覆盖 DDL、仓储、Mapper/适配器和数据库矩阵。
+- [ ] SLI/SLO、容量、日志指标追踪、降级、恢复、迁移和运行手册具有可执行任务。
+- [ ] 核心用户旅程、跨视图一致性、可解释反馈、高风险操作保护和可用性验证明确。
+- [ ] DoR 已满足，且没有未处理的 CRITICAL/HIGH 一致性问题。
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+## 业务闭环与领域设计
 
-[Gates determined based on constitution file]
+[列出角色、触发、输入、正常/异常路径、状态机、不变量、输出和闭环证据]
 
-## Project Structure
+## 架构与模块分解
 
-### Documentation (this feature)
+[列出运行时边界、模块职责、依赖方向、稳定内核、扩展边界、持久化边界和契约边界]
 
-```text
-specs/[###-feature]/
-├── plan.md              # This file (/speckit-plan command output)
-├── research.md          # Phase 0 output (/speckit-plan command)
-├── data-model.md        # Phase 1 output (/speckit-plan command)
-├── quickstart.md        # Phase 1 output (/speckit-plan command)
-├── contracts/           # Phase 1 output (/speckit-plan command)
-└── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
-```
+## 安全、数据与运行设计
 
-### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
+[列出威胁模型、授权隔离、数据治理、兼容迁移、SLI/SLO、容量、可观测、恢复和运行方案]
+
+## 实施阶段
+
+[按技术验证、基础设施、业务闭环、体验验证和上线硬化划分阶段]
+
+## 项目结构
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+[使用真实目录，必须包含代码、数据库变更、Mapper、契约、测试、ADR、运行手册和部署路径]
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**结构决策**：[说明选择及边界]
 
-## Complexity Tracking
+## 复杂度与例外跟踪
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
+> 仅记录宪章例外，并说明补偿控制和退出条件。
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| 例外 | 必要性 | 被拒绝的简化方案 | 补偿控制 | 责任人/批准人 | 失效与复审日期 | 退出条件 |
+|---|---|---|---|---|---|---|
+| [例外] | [原因] | [原因] | [控制] | [人员] | [日期] | [条件] |

@@ -1,50 +1,77 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# [PROJECT_NAME] 项目宪章
 
-## Core Principles
+## 核心原则
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
+### I. [PRINCIPLE_1_NAME]
+
 [PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
+### II. [PRINCIPLE_2_NAME]
+
 [PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
+### III. [PRINCIPLE_3_NAME]
+
 [PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
+### IV. [PRINCIPLE_4_NAME]
+
 [PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
+### V. [PRINCIPLE_5_NAME]
+
 [PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### VI. [PRINCIPLE_6_NAME]
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+[PRINCIPLE_6_DESCRIPTION]
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### VII. [PRINCIPLE_7_NAME]
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+[PRINCIPLE_7_DESCRIPTION]
 
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+### VIII. [PRINCIPLE_8_NAME]
+
+[PRINCIPLE_8_DESCRIPTION]
+
+### IX. [PRINCIPLE_9_NAME]
+
+[PRINCIPLE_9_DESCRIPTION]
+
+## 规格完备与交付门禁
+
+### 规格最小完备标准
+
+[SPECIFICATION_COMPLETENESS_RULES]
+
+### 当前交付与工程门禁
+
+[DELIVERY_AND_ENGINEERING_GATES]
+
+### 进入实现条件（DoR）
+
+[DEFINITION_OF_READY]
+
+### 交付完成条件（DoD）
+
+[DEFINITION_OF_DONE]
+
+## 决策、例外与变更治理
+
+[DECISION_EXCEPTION_CHANGE_RULES]
+
+## 治理
 
 [GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**版本**：[CONSTITUTION_VERSION] | **批准日期**：[RATIFICATION_DATE] | **最后修订日期**：[LAST_AMENDED_DATE]
+
+<!--
+生成要求：
+- 原则必须使用 MUST/SHOULD 等明确规范词，并说明理由、检查方式或质量门禁。
+- 将长期约束写入核心原则，将阶段性框架、版本和部署选择写入当前工程门禁。
+- 规格必须覆盖业务闭环、领域模型、状态机、不变量、安全、质量、运行和体验。
+- 例外必须包含补偿控制、责任人、批准人、有效期、复审日期和退出方案。
+- 宪章优先于局部实施习惯；修订必须记录影响并同步模板及当前交付物。
+- 版本遵循语义化版本规则，日期使用 YYYY-MM-DD。
+-->

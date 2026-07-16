@@ -85,6 +85,13 @@
       },
       "default": []
     },
+    "workflowBindings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/workflowBindingDefinition"
+      },
+      "default": []
+    },
     "permissions": {
       "type": "array",
       "items": {
@@ -386,6 +393,73 @@
         },
         "approvalDefinitionKey": {
           "$ref": "#/$defs/stableKey"
+        },
+        "workflowBindingKey": {
+          "$ref": "#/$defs/stableKey"
+        }
+      }
+    },
+    "workflowBindingDefinition": {
+      "type": "object",
+      "required": [
+        "stableKey",
+        "processDefinitionKey",
+        "businessVersion",
+        "bpmnResource",
+        "trigger",
+        "authorizationPolicyKey"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "stableKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "processDefinitionKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "businessVersion": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "bpmnResource": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_./-]+\\.bpmn20\\.xml$",
+          "maxLength": 300
+        },
+        "trigger": {
+          "enum": [
+            "MANUAL",
+            "OBJECT_CREATED",
+            "STATE_TRANSITION",
+            "DOMAIN_EVENT"
+          ]
+        },
+        "objectTypeKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "eventType": {
+          "type": "string",
+          "pattern": "^pdp\\.[a-z0-9.-]+$",
+          "maxLength": 150
+        },
+        "authorizationPolicyKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "variableMappings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "default": {}
+        },
+        "instanceMigrationPolicy": {
+          "enum": [
+            "PINNED",
+            "MANUAL_REVIEW",
+            "BATCH_MIGRATABLE"
+          ],
+          "default": "PINNED"
         }
       }
     },

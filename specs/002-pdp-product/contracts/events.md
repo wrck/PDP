@@ -35,6 +35,8 @@
 - 每个监听器具有独立发布状态和重试记录；清理任务只能删除超过保留期且所有监听器均已完成的记录。
 - 生产环境由 Liquibase 管理事件发布表，禁止依赖框架启动时自动创建或修改 schema。
 - 增加可选字段属于兼容变更；删除字段、改变含义或改变必填性必须提升 `eventVersion`。
+- Flowable 只能由 `workflow` 模块消费编排事件并通过稳定结果事件回传；业务消费者不得依赖
+  Flowable 类名、表名、内部事件或异常文本。
 
 ## 3. P1 事件目录
 
@@ -50,6 +52,8 @@
 | `pdp.task.state.changed` | 任务状态变化 | 看板投影、进度、通知 |
 | `pdp.milestone.state.changed` | 里程碑状态变化 | 进度、延期预警 |
 | `pdp.deliverable.version.published` | 新交付件版本发布 | 归档清单、通知、外部订阅 |
+| `pdp.workflow.orchestration.requested` | 权威业务事务提交后请求启动、推进或关联 BPMN 流程 | `workflow` 编排适配器 |
+| `pdp.workflow.orchestration.failed` | 流程启动、推进或异步作业达到告警/人工处理条件 | 审批、运维、人工补偿 |
 | `pdp.approval.completed` | 审批终态形成 | 业务对象条件回写 |
 | `pdp.change.approved` | 变更批准 | 计划/范围更新协调器 |
 | `pdp.audit.export.requested` | 审计导出获准 | 后台导出执行器 |

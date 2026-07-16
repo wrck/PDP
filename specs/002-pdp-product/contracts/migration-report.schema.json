@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://pdp.example.com/schemas/migration-report/v1.json",
-  "title": "PDP 迁移与数据库切换报告",
+  "title": "PDP MySQL 历史迁移与上线切换报告",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -157,7 +157,7 @@
         },
         "databaseType": {
           "type": "string",
-          "enum": ["MYSQL", "POSTGRESQL"]
+          "const": "MYSQL"
         },
         "version": {
           "type": "string"

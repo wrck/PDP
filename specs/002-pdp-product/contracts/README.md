@@ -5,9 +5,11 @@
 - [openapi.yaml](openapi.yaml)：P1 同步 HTTP API 契约；不得存在实现已暴露但契约未登记的路由。
 - [domain-package.schema.json](domain-package.schema.json)：领域包清单及声明式元数据结构。
 - [events.md](events.md)：平台业务事件信封、兼容规则和 P1 事件目录。
-- [migration-report.schema.json](migration-report.schema.json)：历史迁移与认证数据库切换报告契约。
+- [migration-report.schema.json](migration-report.schema.json)：P1 MySQL 历史迁移与上线切换报告契约；后续数据库切换由 P2 扩展。
 - [coverage.md](coverage.md)：P1 用户故事、HTTP、事件、Schema、消费者和验证任务覆盖矩阵。
 - [openapi.yaml](openapi.yaml) 中的“搜索与通知”接口：权限过滤搜索、站内通知查询和已读操作。
+- [openapi.yaml](openapi.yaml) 中的“平台工作流”接口：BPMN 定义校验/部署、实例诊断和受控管理动作；
+  不直接暴露 Flowable REST API。
 - [openapi.yaml](openapi.yaml) 中的“数据迁移”接口：迁移计划、试运行、核对和切换门禁。
 - [../persistence-design.md](../persistence-design.md)：游标、乐观锁、类型映射、投影、搜索、动态数据源、连接池和事件存储约束。
 
@@ -20,7 +22,9 @@
 - 响应携带 `X-Trace-Id`；错误使用 `application/problem+json`，不得泄露无权字段或对象是否存在。
 - 分页默认使用签名 keyset cursor；游标绑定排序、过滤和权限范围，客户端不得解析或构造。批量导入、导出、迁移和统计返回后台作业。
 - API 契约只定义平台稳定语义。领域字段通过 `extensionData` 和领域包元数据扩展，不为每个客户复制接口。
-- API、事件和领域包不得暴露数据库表名、专有类型、方言函数或物理分页方式；同一契约在 PostgreSQL 和 MySQL 上必须保持一致。
+- API、事件和领域包不得暴露数据库表名、专有类型、方言函数或物理分页方式；P1 MySQL 实现必须符合数据库无关的公共契约。
+- 平台工作流契约不得暴露 Flowable 类型、内部标识语义、表结构或异常文本；审批与领域包只依赖
+  PDP 稳定流程定义、运行、任务和管理语义。
 - 高风险命令必须先取得包含目标版本、影响、阻断项、不可逆点和补偿选项的影响预览；确认时对象版本变化必须返回冲突并重新预览。
 - 权限撤销后，新请求立即使用最新授权，本地缓存 5 秒内失效，搜索和报表投影 30 秒内移除，实时连接 30 秒内刷新或断开，活动会话和刷新凭据 1 分钟内撤销。
 - 搜索结果打开时必须再次校验对象与字段权限；站内通知按事件标识幂等生成，失败允许安全重提。

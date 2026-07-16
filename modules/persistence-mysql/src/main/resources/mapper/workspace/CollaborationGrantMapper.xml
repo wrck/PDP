@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.mysql.workspace.CollaborationGrantMapper">
+
+  <resultMap id="grantRow" type="com.pdp.mysql.workspace.CollaborationGrantRow">
+    <constructor>
+      <idArg column="id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="owner_workspace_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="collaborator_workspace_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="target_type" javaType="java.lang.String"/>
+      <arg column="target_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="role_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="allowed_actions" javaType="com.pdp.persistence.type.JsonDocument"
+          typeHandler="com.pdp.mysql.typehandler.JsonDocumentTypeHandler"/>
+      <arg column="valid_from" javaType="java.time.Instant"
+          typeHandler="com.pdp.mysql.typehandler.InstantUtcTypeHandler"/>
+      <arg column="valid_until" javaType="java.time.Instant"
+          typeHandler="com.pdp.mysql.typehandler.InstantUtcTypeHandler"/>
+      <arg column="granted_by" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="status" javaType="com.pdp.workspace.domain.CollaborationGrant$Status"/>
+      <arg column="revoked_at" javaType="java.time.Instant"
+          typeHandler="com.pdp.mysql.typehandler.InstantUtcTypeHandler"/>
+      <arg column="revocation_reason" javaType="java.lang.String"/>
+      <arg column="revision" javaType="long"/>
+    </constructor>
+  </resultMap>
+
+  <sql id="columns">
+    id, owner_workspace_id, collaborator_workspace_id, target_type, target_id,
+    role_id, allowed_actions, valid_from, valid_until, granted_by, status,
+    revoked_at, revocation_reason, revision
+  </sql>
+
+  <select id="findById" resultMap="grantRow">
+    SELECT <include refid="columns"/> FROM pdp_collaboration_grant
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+  </select>
+
+  <select id="findByOwnerWorkspaceId" resultMap="grantRow">
+    SELECT <include refid="columns"/> FROM pdp_collaboration_grant
+    WHERE owner_workspace_id =
+      #{workspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+    ORDER BY valid_until DESC, id
+  </select>
+
+  <select id="findActive" resultMap="grantRow">
+    SELECT <include refid="columns"/> FROM pdp_collaboration_grant
+    WHERE owner_workspace_id =
+      #{ownerWorkspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND collaborator_workspace_id =
+        #{collaboratorWorkspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND status = 'ACTIVE'
+      AND valid_from &lt;= #{at,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler}
+      AND valid_until &gt; #{at,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler}
+    ORDER BY valid_until, id
+  </select>
+
+  <insert id="insert">
+    INSERT INTO pdp_collaboration_grant (
+      id, owner_workspace_id, collaborator_workspace_id, target_type, target_id,
+      role_id, allowed_actions, valid_from, valid_until, granted_by, status,
+      revoked_at, revocation_reason, revision
+    ) VALUES (
+      #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{ownerWorkspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{collaboratorWorkspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{targetType},
+      #{targetId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{roleId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{allowedActions,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+      #{validFrom,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+      #{validUntil,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+      #{grantedBy,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{status},
+      #{revokedAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+      #{revocationReason}, #{revision}
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE pdp_collaboration_grant
+    SET allowed_actions =
+          #{allowedActions,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+        valid_from =
+          #{validFrom,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+        valid_until =
+          #{validUntil,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+        status = #{status},
+        revoked_at =
+          #{revokedAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler},
+        revocation_reason = #{revocationReason},
+        revision = #{revision}
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND revision = #{revision} - 1
+  </update>
+</mapper>

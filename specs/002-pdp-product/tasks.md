@@ -131,7 +131,7 @@
 - [X] T100 [US1] 创建工作空间、组织、成员、角色、数据范围和协作授权公共变更集，文件：`modules/public-persistence/src/main/resources/db/changelog/common/010-workspace.xml`
 - [X] T101 [US1] 创建工作空间和组织领域模型，文件：`modules/workspace/src/main/java/com/pdp/workspace/domain/`
 - [X] T102 [US1] 创建工作空间、组织、成员和授权仓储端口，文件：`modules/workspace/src/main/java/com/pdp/workspace/port/`
-- [ ] T103 [US1] 创建工作空间治理 MySQL Mapper、XML 和适配器，文件：`modules/persistence-mysql/src/main/java/com/pdp/mysql/workspace/`、`modules/persistence-mysql/src/main/resources/mapper/workspace/`
+- [X] T103 [US1] 创建工作空间治理 MySQL Mapper、XML 和适配器，文件：`modules/persistence-mysql/src/main/java/com/pdp/mysql/workspace/`、`modules/persistence-mysql/src/main/resources/mapper/workspace/`
 - [ ] T104 [US1] 创建唯一性、层级、数据范围和游标分页 MySQL 契约测试，文件：`tests/backend/contract/workspace/WorkspaceGovernanceDatabaseContractTest.java`
 - [X] T105 [US1] 实现工作空间、组织、成员、角色和数据范围管理服务，文件：`modules/workspace/src/main/java/com/pdp/workspace/application/WorkspaceGovernanceService.java`
 - [X] T106 [US1] 实现跨工作空间授权、到期和撤销服务，文件：`modules/workspace/src/main/java/com/pdp/workspace/application/CollaborationGrantService.java`

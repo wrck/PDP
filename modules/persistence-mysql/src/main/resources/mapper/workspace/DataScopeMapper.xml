@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.mysql.workspace.DataScopeMapper">
+
+  <resultMap id="scopeRow" type="com.pdp.mysql.workspace.DataScopeRow">
+    <constructor>
+      <idArg column="id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="workspace_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="stable_key" javaType="java.lang.String"/>
+      <arg column="name" javaType="java.lang.String"/>
+      <arg column="resource_types" javaType="com.pdp.persistence.type.JsonDocument"
+          typeHandler="com.pdp.mysql.typehandler.JsonDocumentTypeHandler"/>
+      <arg column="condition_definition" javaType="com.pdp.persistence.type.JsonDocument"
+          typeHandler="com.pdp.mysql.typehandler.JsonDocumentTypeHandler"/>
+      <arg column="status" javaType="com.pdp.workspace.domain.DataScope$Status"/>
+      <arg column="revision" javaType="long"/>
+    </constructor>
+  </resultMap>
+
+  <sql id="columns">
+    id, workspace_id, stable_key, name, resource_types, condition_definition, status, revision
+  </sql>
+
+  <select id="findById" resultMap="scopeRow">
+    SELECT <include refid="columns"/> FROM pdp_data_scope
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+  </select>
+
+  <select id="findByStableKey" resultMap="scopeRow">
+    SELECT <include refid="columns"/> FROM pdp_data_scope
+    WHERE workspace_id =
+      #{workspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND stable_key = #{stableKey}
+  </select>
+
+  <insert id="insert">
+    INSERT INTO pdp_data_scope (
+      id, workspace_id, stable_key, name, resource_types, condition_definition, status, revision
+    ) VALUES (
+      #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{workspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{stableKey}, #{name},
+      #{resourceTypes,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+      #{conditionDefinition,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+      #{status}, #{revision}
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE pdp_data_scope
+    SET name = #{name},
+        resource_types =
+          #{resourceTypes,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+        condition_definition =
+          #{conditionDefinition,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+        status = #{status},
+        revision = #{revision}
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND revision = #{revision} - 1
+  </update>
+</mapper>

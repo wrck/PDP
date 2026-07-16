@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.mysql.workspace.OrganizationUnitMapper">
+
+  <resultMap id="organizationRow" type="com.pdp.mysql.workspace.OrganizationUnitRow">
+    <constructor>
+      <idArg column="id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="workspace_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="parent_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="code" javaType="java.lang.String"/>
+      <arg column="name" javaType="java.lang.String"/>
+      <arg column="type" javaType="com.pdp.workspace.domain.OrganizationUnit$Type"/>
+      <arg column="region_code" javaType="java.lang.String"/>
+      <arg column="path" javaType="java.lang.String"/>
+      <arg column="status" javaType="com.pdp.workspace.domain.OrganizationUnit$Status"/>
+      <arg column="revision" javaType="long"/>
+    </constructor>
+  </resultMap>
+
+  <sql id="columns">
+    id, workspace_id, parent_id, code, name, type, region_code, path, status, revision
+  </sql>
+
+  <select id="findById" resultMap="organizationRow">
+    SELECT <include refid="columns"/> FROM pdp_organization_unit
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+  </select>
+
+  <select id="findByWorkspaceAndCode" resultMap="organizationRow">
+    SELECT <include refid="columns"/> FROM pdp_organization_unit
+    WHERE workspace_id =
+      #{workspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND code = #{code}
+  </select>
+
+  <select id="findByWorkspaceId" resultMap="organizationRow">
+    SELECT <include refid="columns"/> FROM pdp_organization_unit
+    WHERE workspace_id =
+      #{workspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+    ORDER BY path, id
+  </select>
+
+  <select id="findPageAfter" resultMap="organizationRow">
+    SELECT <include refid="columns"/> FROM pdp_organization_unit
+    WHERE workspace_id =
+      #{workspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+    <if test="afterPath != null">
+      AND (
+        path &gt; #{afterPath}
+        OR (
+          path = #{afterPath}
+          AND id &gt;
+            #{afterId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+        )
+      )
+    </if>
+    ORDER BY path, id
+    LIMIT #{limit}
+  </select>
+
+  <insert id="insert">
+    INSERT INTO pdp_organization_unit (
+      id, workspace_id, parent_id, code, name, type, region_code, path, status, revision
+    ) VALUES (
+      #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{workspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{parentId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{code}, #{name}, #{type}, #{regionCode}, #{path}, #{status}, #{revision}
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE pdp_organization_unit
+    SET parent_id = #{parentId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+        name = #{name},
+        type = #{type},
+        region_code = #{regionCode},
+        path = #{path},
+        status = #{status},
+        revision = #{revision}
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND revision = #{revision} - 1
+  </update>
+</mapper>

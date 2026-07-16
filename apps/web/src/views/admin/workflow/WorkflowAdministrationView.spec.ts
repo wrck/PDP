@@ -106,5 +106,7 @@ describe('WorkflowAdministrationView', () => {
       }),
       expect.stringContaining('workflow-action-'),
     )
+    expect(wrapper.text()).toContain('管理动作已进入队列')
+    expect(wrapper.text()).toContain('作业 job-1，状态 QUEUED')
   })
 })

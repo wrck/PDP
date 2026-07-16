@@ -112,7 +112,7 @@
 - [X] T087 创建 BPMN 部署、实例固定版本、定时器、并行网关、消息关联、重试、死信、权限复核和引擎恢复集成测试，文件：`tests/backend/integration/workflow/PlatformWorkflowFoundationTest.java`
 - [X] T088 创建业务模块不得依赖 Flowable API/表结构、不得直接查询引擎表且不得暴露 Flowable REST 的架构测试，文件：`tests/backend/architecture/WorkflowBoundaryTest.java`
 - [X] T089 实现平台工作流定义、实例诊断和受控管理动作控制器，文件：`apps/api/src/main/java/com/pdp/api/workflow/WorkflowController.java`
-- [ ] T090 实现平台流程定义、部署、实例、incident/dead-letter 和迁移管理页面，文件：`apps/web/src/views/admin/workflow/`
+- [X] T090 实现平台流程定义、部署、实例、incident/dead-letter 和迁移管理页面，文件：`apps/web/src/views/admin/workflow/`
 
 ### 前端、契约和架构基础
 

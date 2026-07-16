@@ -145,12 +145,15 @@ async function submitAction() {
       },
       `workflow-action-${globalThis.crypto?.randomUUID?.() ?? Date.now()}`,
     )
-    feedback.value = {
-      type: 'success',
+    const acceptedFeedback = {
+      type: 'success' as const,
       title: '管理动作已进入队列',
       detail: `作业 ${accepted.jobId}，状态 ${accepted.status}`,
     }
     await queryInstance()
+    if (instance.value) {
+      feedback.value = acceptedFeedback
+    }
   } catch (error) {
     showError(error, '管理动作提交失败')
   } finally {

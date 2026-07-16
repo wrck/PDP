@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pdp.example.com/schemas/migration-report/v1.json",
+  "title": "PDP 迁移与数据库切换报告",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "reportId",
+    "programId",
+    "reportType",
+    "source",
+    "target",
+    "mappingVersion",
+    "checkpoint",
+    "reconciliation",
+    "decision",
+    "generatedAt"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "reportId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "programId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "reportType": {
+      "type": "string",
+      "enum": [
+        "ASSESSMENT",
+        "REHEARSAL",
+        "RECONCILIATION",
+        "CUTOVER",
+        "ROLLBACK",
+        "FORWARD_REPAIR",
+        "DATABASE_CERTIFICATION"
+      ]
+    },
+    "source": {
+      "$ref": "#/$defs/systemEndpoint"
+    },
+    "target": {
+      "$ref": "#/$defs/systemEndpoint"
+    },
+    "mappingVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshotPosition", "lastAppliedPosition", "capturedAt"],
+      "properties": {
+        "snapshotPosition": {
+          "type": "string"
+        },
+        "lastAppliedPosition": {
+          "type": "string"
+        },
+        "pendingChanges": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lagSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "capturedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "reconciliation": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/reconciliationItem"
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/issue"
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result", "decidedBy", "decidedAt", "rollbackBoundary"],
+      "properties": {
+        "result": {
+          "type": "string",
+          "enum": ["GO", "NO_GO", "ROLLED_BACK", "FORWARD_REPAIR"]
+        },
+        "decidedBy": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "decidedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "rollbackBoundary": {
+          "type": "string",
+          "enum": ["REVERSIBLE", "IRREVERSIBLE"]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "uri", "digest"],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string"
+          },
+          "digest": {
+            "type": "string",
+            "minLength": 16
+          }
+        }
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "systemEndpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["systemType", "databaseType", "version"],
+      "properties": {
+        "systemType": {
+          "type": "string",
+          "enum": ["LEGACY_MYSQL", "PDP"]
+        },
+        "databaseType": {
+          "type": "string",
+          "enum": ["MYSQL", "POSTGRESQL"]
+        },
+        "version": {
+          "type": "string"
+        },
+        "schemaVersion": {
+          "type": "string"
+        }
+      }
+    },
+    "reconciliationItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "checkType", "expected", "actual", "status"],
+      "properties": {
+        "scope": {
+          "type": "string"
+        },
+        "checkType": {
+          "type": "string",
+          "enum": [
+            "COUNT",
+            "BUSINESS_SUMMARY",
+            "IDENTIFIER_MAPPING",
+            "RELATIONSHIP",
+            "STATE",
+            "APPROVAL_CHAIN",
+            "ATTACHMENT_HASH",
+            "REQUIRED_FIELD",
+            "BUSINESS_SCENARIO"
+          ]
+        },
+        "expected": {},
+        "actual": {},
+        "status": {
+          "type": "string",
+          "enum": ["PASSED", "FAILED", "ACCEPTED_EXCEPTION"]
+        },
+        "evidenceRef": {
+          "type": "string"
+        }
+      }
+    },
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["issueId", "severity", "status", "summary"],
+      "properties": {
+        "issueId": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["BLOCKER", "HIGH", "MEDIUM", "LOW"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["OPEN", "RESOLVED", "ACCEPTED_EXCLUSION"]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

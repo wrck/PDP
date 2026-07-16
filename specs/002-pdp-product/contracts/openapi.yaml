@@ -4,7 +4,9 @@ info:
   version: 1.0.0
   description: |
     PDP 企业级项目交付管理平台 P1 的稳定同步接口边界。
-    本契约覆盖关键闭环，不枚举领域包生成的所有对象页面。
+    本契约与 coverage.md 共同覆盖全部 P1 稳定操作；领域包生成页面使用
+    domain-package.schema.json 定义的元数据，不为客户复制私有接口。
+x-pdp-contract-coverage: ./coverage.md
 servers:
   - url: /api/v1
 security:
@@ -12,13 +14,17 @@ security:
 tags:
   - name: 工作空间
   - name: 领域包
+  - name: 项目模板
   - name: 项目
   - name: 计划
   - name: 交付件
   - name: 审批
   - name: 治理
+  - name: 权限与数据
   - name: 搜索与通知
+  - name: 运行保障
   - name: 数据迁移
+  - name: 数据库
   - name: 作业
 paths:
   /workspaces:
@@ -488,6 +494,309 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ChangeRequest'
+  /project-templates:
+    get:
+      tags: [项目模板]
+      summary: 获取当前工作空间可用的项目模板版本
+      operationId: listProjectTemplates
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 项目模板分页
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTemplatePage'
+  /projects/{projectId}/saved-views:
+    get:
+      tags: [项目]
+      summary: 获取项目的个人和共享保存视图
+      operationId: listProjectSavedViews
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/ProjectIdPath'
+      responses:
+        '200':
+          description: 保存视图列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SavedView'
+    post:
+      tags: [项目]
+      summary: 保存项目视图
+      operationId: createProjectSavedView
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/ProjectIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSavedViewCommand'
+      responses:
+        '201':
+          description: 保存视图已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedView'
+  /projects/{projectId}/risks:
+    get:
+      tags: [治理]
+      summary: 查询项目风险
+      operationId: listProjectRisks
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/ProjectIdPath'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 风险分页
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceItemPage'
+    post:
+      tags: [治理]
+      summary: 创建项目风险
+      operationId: createProjectRisk
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/ProjectIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGovernanceItemCommand'
+      responses:
+        '201':
+          description: 风险已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceItem'
+  /projects/{projectId}/issues:
+    get:
+      tags: [治理]
+      summary: 查询项目问题
+      operationId: listProjectIssues
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/ProjectIdPath'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 问题分页
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceItemPage'
+    post:
+      tags: [治理]
+      summary: 创建项目问题
+      operationId: createProjectIssue
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/ProjectIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGovernanceItemCommand'
+      responses:
+        '201':
+          description: 问题已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceItem'
+  /authorization-policies:
+    get:
+      tags: [权限与数据]
+      summary: 获取当前工作空间授权策略
+      operationId: listAuthorizationPolicies
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+      responses:
+        '200':
+          description: 授权策略列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuthorizationPolicy'
+    post:
+      tags: [权限与数据]
+      summary: 创建授权策略
+      operationId: createAuthorizationPolicy
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuthorizationPolicyCommand'
+      responses:
+        '201':
+          description: 授权策略已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationPolicy'
+  /audit-events:
+    get:
+      tags: [权限与数据]
+      summary: 查询不可变审计事件
+      operationId: listAuditEvents
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - name: objectType
+          in: query
+          schema:
+            type: string
+        - name: objectId
+          in: query
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 审计事件分页
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventPage'
+  /disposition-requests:
+    post:
+      tags: [权限与数据]
+      summary: 创建数据导出、归档、删除或法律保留处置请求
+      operationId: createDispositionRequest
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDispositionRequestCommand'
+      responses:
+        '202':
+          description: 处置请求已受理
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispositionRequest'
+        '403':
+          $ref: '#/components/responses/Problem'
+  /operations/service-levels:
+    get:
+      tags: [运行保障]
+      summary: 获取 P1 关键能力服务等级档案
+      operationId: listServiceLevelProfiles
+      responses:
+        '200':
+          description: 服务等级档案
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceLevelProfile'
+  /operations/availability:
+    get:
+      tags: [运行保障]
+      summary: 获取可用性 SLI、排除项和报告状态
+      operationId: getAvailabilityReport
+      parameters:
+        - name: period
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}$'
+      responses:
+        '200':
+          description: 可用性报告
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityReport'
+  /database-deployments/current:
+    get:
+      tags: [数据库]
+      summary: 获取当前认证数据库部署及能力基线
+      operationId: getCurrentDatabaseDeployment
+      responses:
+        '200':
+          description: 当前数据库部署
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseDeployment'
+  /database-switches:
+    post:
+      tags: [数据库]
+      summary: 创建受控数据库切换任务
+      operationId: createDatabaseSwitch
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDatabaseSwitchCommand'
+      responses:
+        '202':
+          description: 数据库切换任务已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseSwitch'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /operation-previews:
+    post:
+      tags: [治理]
+      summary: 生成高风险操作影响预览和短期确认令牌
+      operationId: createOperationImpactPreview
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOperationPreviewCommand'
+      responses:
+        '200':
+          description: 操作影响预览
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationImpactPreview'
+        '409':
+          $ref: '#/components/responses/Problem'
   /data-migrations:
     post:
       tags: [数据迁移]
@@ -1338,6 +1647,400 @@ components:
           enum: [OPEN, ANALYZING, APPROVAL_PENDING, APPROVED, REJECTED, APPLIED, CLOSED, CANCELLED]
         revision:
           type: integer
+    ProjectTemplatePage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectTemplate'
+        nextCursor:
+          type: [string, 'null']
+    ProjectTemplate:
+      type: object
+      required: [id, stableKey, name, version, domainPackageVersionId, status]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        stableKey:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        domainPackageVersionId:
+          $ref: '#/components/schemas/Uuid'
+        status:
+          type: string
+          enum: [DRAFT, PUBLISHED, RETIRED]
+    CreateSavedViewCommand:
+      type: object
+      required: [name, viewType, definition, visibility]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        viewType:
+          type: string
+          enum: [LIST, BOARD, GANTT, CALENDAR]
+        definition:
+          type: object
+          additionalProperties: true
+        visibility:
+          type: string
+          enum: [PRIVATE, PROJECT]
+    SavedView:
+      type: object
+      required: [id, projectId, name, viewType, definition, visibility, revision]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        projectId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+        viewType:
+          type: string
+          enum: [LIST, BOARD, GANTT, CALENDAR]
+        definition:
+          type: object
+          additionalProperties: true
+        visibility:
+          type: string
+          enum: [PRIVATE, PROJECT]
+        revision:
+          type: integer
+          minimum: 0
+    CreateGovernanceItemCommand:
+      type: object
+      required: [title, description, ownerId, priority]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 5000
+        ownerId:
+          $ref: '#/components/schemas/Uuid'
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        dueAt:
+          type: [string, 'null']
+          format: date-time
+    GovernanceItem:
+      type: object
+      required: [id, projectId, itemType, title, state, ownerId, priority, revision]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        projectId:
+          $ref: '#/components/schemas/Uuid'
+        itemType:
+          type: string
+          enum: [RISK, ISSUE]
+        title:
+          type: string
+        state:
+          type: string
+          enum: [OPEN, ASSESSING, MITIGATING, RESOLVED, ACCEPTED, CLOSED, CANCELLED]
+        ownerId:
+          $ref: '#/components/schemas/Uuid'
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        revision:
+          type: integer
+          minimum: 0
+    GovernanceItemPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GovernanceItem'
+        nextCursor:
+          type: [string, 'null']
+    CreateAuthorizationPolicyCommand:
+      type: object
+      required: [stableKey, name, effect, actions, resourceTypes, condition]
+      properties:
+        stableKey:
+          type: string
+          pattern: '^[a-z][a-z0-9.-]{2,99}$'
+        name:
+          type: string
+          minLength: 2
+          maxLength: 200
+        effect:
+          type: string
+          enum: [ALLOW, DENY]
+        actions:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        resourceTypes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        condition:
+          type: object
+          additionalProperties: true
+    AuthorizationPolicy:
+      type: object
+      required: [id, stableKey, name, effect, actions, resourceTypes, status, revision]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        stableKey:
+          type: string
+        name:
+          type: string
+        effect:
+          type: string
+          enum: [ALLOW, DENY]
+        actions:
+          type: array
+          items:
+            type: string
+        resourceTypes:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, RETIRED]
+        revision:
+          type: integer
+          minimum: 0
+    AuditEventPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        nextCursor:
+          type: [string, 'null']
+    AuditEvent:
+      type: object
+      required: [id, occurredAt, actorId, action, objectType, objectId, result, digest, previousDigest]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        occurredAt:
+          type: string
+          format: date-time
+        actorId:
+          $ref: '#/components/schemas/Uuid'
+        action:
+          type: string
+        objectType:
+          type: string
+        objectId:
+          $ref: '#/components/schemas/Uuid'
+        result:
+          type: string
+          enum: [SUCCEEDED, DENIED, FAILED]
+        digest:
+          type: string
+        previousDigest:
+          type: string
+    CreateDispositionRequestCommand:
+      type: object
+      required: [operationType, scope, reason]
+      properties:
+        operationType:
+          type: string
+          enum: [EXPORT, ARCHIVE, DELETE, LEGAL_HOLD, RELEASE_HOLD]
+        scope:
+          type: object
+          additionalProperties: true
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        operationPreviewToken:
+          type: string
+    DispositionRequest:
+      type: object
+      required: [id, operationType, status, requestedAt, revision]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        operationType:
+          type: string
+          enum: [EXPORT, ARCHIVE, DELETE, LEGAL_HOLD, RELEASE_HOLD]
+        status:
+          type: string
+          enum: [REQUESTED, APPROVAL_PENDING, APPROVED, RUNNING, COMPLETED, REJECTED, FAILED, CANCELLED]
+        requestedAt:
+          type: string
+          format: date-time
+        revision:
+          type: integer
+          minimum: 0
+    ServiceLevelProfile:
+      type: object
+      required: [capabilityKey, requestClass, sli, objective, capacityProfile, alertPolicy, owner, runbook]
+      properties:
+        capabilityKey:
+          type: string
+        requestClass:
+          type: string
+          enum: [INTERACTIVE_READ, INTERACTIVE_WRITE, ASYNC_JOB, RECOVERY, CUTOVER]
+        sli:
+          type: string
+        objective:
+          type: string
+        capacityProfile:
+          type: string
+        failureModes:
+          type: array
+          items:
+            type: string
+        alertPolicy:
+          type: string
+        owner:
+          type: string
+        runbook:
+          type: string
+          format: uri-reference
+    AvailabilityReport:
+      type: object
+      required: [period, serviceMinutes, excludedMinutes, unavailableMinutes, availability, status]
+      properties:
+        period:
+          type: string
+          pattern: '^\d{4}-\d{2}$'
+        serviceMinutes:
+          type: integer
+          minimum: 1
+        excludedMinutes:
+          type: integer
+          minimum: 0
+        unavailableMinutes:
+          type: integer
+          minimum: 0
+        availability:
+          type: number
+          minimum: 0
+          maximum: 1
+        status:
+          type: string
+          enum: [MEETING, AT_RISK, BREACHED]
+    DatabaseDeployment:
+      type: object
+      required: [databaseType, databaseVersion, certificationBaseline, writeAuthority, status, revision]
+      properties:
+        databaseType:
+          type: string
+          enum: [POSTGRESQL, MYSQL]
+        databaseVersion:
+          type: string
+        certificationBaseline:
+          type: string
+        writeAuthority:
+          type: string
+          enum: [PRIMARY]
+        status:
+          type: string
+          enum: [CERTIFIED, DEGRADED, UNSUPPORTED]
+        revision:
+          type: integer
+          minimum: 0
+    CreateDatabaseSwitchCommand:
+      type: object
+      required: [targetDatabaseType, targetDatabaseVersion, previewToken, reconciliationRunId, reason]
+      properties:
+        targetDatabaseType:
+          type: string
+          enum: [POSTGRESQL, MYSQL]
+        targetDatabaseVersion:
+          type: string
+        previewToken:
+          type: string
+        reconciliationRunId:
+          $ref: '#/components/schemas/Uuid'
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 2000
+    DatabaseSwitch:
+      type: object
+      required: [id, sourceDatabaseType, targetDatabaseType, status, writeAuthority, revision]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        sourceDatabaseType:
+          type: string
+          enum: [POSTGRESQL, MYSQL]
+        targetDatabaseType:
+          type: string
+          enum: [POSTGRESQL, MYSQL]
+        status:
+          type: string
+          enum: [PLANNED, REHEARSING, READY, FREEZING, SWITCHING, VALIDATING, STABILIZING, COMPLETED, ROLLING_BACK, FAILED, CANCELLED]
+        writeAuthority:
+          type: string
+          enum: [SOURCE, TARGET, FROZEN]
+        revision:
+          type: integer
+          minimum: 0
+    CreateOperationPreviewCommand:
+      type: object
+      required: [operationType, targetType, targetIds, expectedRevisions, commandDigest]
+      properties:
+        operationType:
+          type: string
+        targetType:
+          type: string
+        targetIds:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Uuid'
+        expectedRevisions:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        commandDigest:
+          type: string
+    OperationImpactPreview:
+      type: object
+      required: [previewId, operationType, affectedCounts, warnings, irreversibleAt, compensation, confirmationToken, expiresAt]
+      properties:
+        previewId:
+          $ref: '#/components/schemas/Uuid'
+        operationType:
+          type: string
+        affectedCounts:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        warnings:
+          type: array
+          items:
+            type: string
+        irreversibleAt:
+          type: string
+        compensation:
+          type: string
+        confirmationToken:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
     CreateMigrationProgramCommand:
       type: object
       required: [stableKey, name, sourceDatabaseVersion, targetDatabaseType, targetDatabaseVersion, mappingVersion, plannedCutoverAt]

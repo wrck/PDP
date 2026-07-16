@@ -1,0 +1,676 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pdp.example.com/schemas/domain-package/v1.json",
+  "title": "PDP 领域包清单",
+  "description": "用于平台标准包、行业领域包和工作空间客户包的声明式配置交换与发布校验。",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "stableKey",
+    "name",
+    "layer",
+    "version",
+    "objects"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "stableKey": {
+      "$ref": "#/$defs/stableKey"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "layer": {
+      "enum": [
+        "PLATFORM_STANDARD",
+        "INDUSTRY",
+        "WORKSPACE_CUSTOMER"
+      ]
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "extends": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packageKey",
+        "versionRange"
+      ],
+      "properties": {
+        "packageKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "versionRange": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        }
+      }
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/objectDefinition"
+      }
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pageDefinition"
+      },
+      "default": []
+    },
+    "views": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/viewDefinition"
+      },
+      "default": []
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ruleDefinition"
+      },
+      "default": []
+    },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/permissionDefinition"
+      },
+      "default": []
+    },
+    "extensions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/extensionDefinition"
+      },
+      "default": []
+    },
+    "overrides": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/overrideDefinition"
+      },
+      "default": []
+    },
+    "migrations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/migrationDefinition"
+      },
+      "default": []
+    }
+  },
+  "$defs": {
+    "stableKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9.-]{2,99}$"
+    },
+    "localizedText": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 500
+      }
+    },
+    "objectDefinition": {
+      "type": "object",
+      "required": [
+        "stableKey",
+        "kind",
+        "label",
+        "fields",
+        "states"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "stableKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "kind": {
+          "enum": [
+            "CORE_EXTENSION",
+            "NEW_OBJECT"
+          ]
+        },
+        "coreObjectType": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "label": {
+          "$ref": "#/$defs/localizedText"
+        },
+        "titleFieldKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fieldDefinition"
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/relationDefinition"
+          },
+          "default": []
+        },
+        "states": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/stateDefinition"
+          }
+        },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/transitionDefinition"
+          },
+          "default": []
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "CORE_EXTENSION"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "coreObjectType"
+            ]
+          }
+        }
+      ]
+    },
+    "fieldDefinition": {
+      "type": "object",
+      "required": [
+        "stableKey",
+        "label",
+        "dataType"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "stableKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "label": {
+          "$ref": "#/$defs/localizedText"
+        },
+        "dataType": {
+          "enum": [
+            "TEXT",
+            "LONG_TEXT",
+            "INTEGER",
+            "DECIMAL",
+            "BOOLEAN",
+            "DATE",
+            "DATETIME",
+            "ENUM",
+            "USER_REF",
+            "ORG_REF",
+            "OBJECT_REF",
+            "FILE_REF",
+            "GEO_POINT",
+            "JSON"
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "sensitive": {
+          "type": "boolean",
+          "default": false
+        },
+        "uniqueScope": {
+          "enum": [
+            "NONE",
+            "WORKSPACE",
+            "PROJECT",
+            "OBJECT_TYPE"
+          ],
+          "default": "NONE"
+        },
+        "indexMode": {
+          "enum": [
+            "NONE",
+            "FILTER",
+            "SORT",
+            "SEARCH",
+            "AGGREGATE"
+          ],
+          "default": "NONE"
+        },
+        "defaultValue": {},
+        "validation": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "label"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "#/$defs/stableKey"
+              },
+              "label": {
+                "$ref": "#/$defs/localizedText"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "relationDefinition": {
+      "type": "object",
+      "required": [
+        "stableKey",
+        "targetObjectKey",
+        "cardinality"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "stableKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "targetObjectKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "cardinality": {
+          "enum": [
+            "ONE_TO_ONE",
+            "ONE_TO_MANY",
+            "MANY_TO_ONE",
+            "MANY_TO_MANY"
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "ownership": {
+          "enum": [
+            "REFERENCE",
+            "AGGREGATE_CHILD"
+          ],
+          "default": "REFERENCE"
+        }
+      }
+    },
+    "stateDefinition": {
+      "type": "object",
+      "required": [
+        "stableKey",
+        "label",
+        "topLifecycleState"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "stableKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "label": {
+          "$ref": "#/$defs/localizedText"
+        },
+        "topLifecycleState": {
+          "enum": [
+            "PRE_PLANNING",
+            "PLANNING",
+            "EXECUTING",
+            "ACCEPTING",
+            "SERVICING",
+            "CLOSED",
+            "CANCELLED"
+          ]
+        },
+        "initial": {
+          "type": "boolean",
+          "default": false
+        },
+        "terminal": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "transitionDefinition": {
+      "type": "object",
+      "required": [
+        "stableKey",
+        "from",
+        "to",
+        "requiredPermission"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "stableKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "from": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "to": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "requiredPermission": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "guardRuleKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "approvalDefinitionKey": {
+          "$ref": "#/$defs/stableKey"
+        }
+      }
+    },
+    "pageDefinition": {
+      "type": "object",
+      "required": [
+        "stableKey",
+        "objectKey",
+        "layout"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "stableKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "objectKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "layout": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "visibilityRuleKey": {
+          "$ref": "#/$defs/stableKey"
+        }
+      }
+    },
+    "viewDefinition": {
+      "type": "object",
+      "required": [
+        "stableKey",
+        "objectKey",
+        "viewType"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "stableKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "objectKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "viewType": {
+          "enum": [
+            "LIST",
+            "BOARD",
+            "CALENDAR",
+            "TIMELINE",
+            "DETAIL"
+          ]
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/stableKey"
+          }
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "ruleDefinition": {
+      "type": "object",
+      "required": [
+        "stableKey",
+        "event",
+        "actions",
+        "executionIdentity"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "stableKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "event": {
+          "type": "string",
+          "minLength": 1
+        },
+        "condition": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "SET_FIELD",
+                  "CREATE_OBJECT",
+                  "TRANSITION",
+                  "SUBMIT_APPROVAL",
+                  "NOTIFY",
+                  "CALL_EXTENSION",
+                  "EMIT_EVENT"
+                ]
+              },
+              "parameters": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "executionIdentity": {
+          "enum": [
+            "CURRENT_USER",
+            "PACKAGE_SERVICE_ACCOUNT"
+          ]
+        },
+        "mode": {
+          "enum": [
+            "SYNCHRONOUS",
+            "ASYNCHRONOUS"
+          ],
+          "default": "ASYNCHRONOUS"
+        }
+      }
+    },
+    "permissionDefinition": {
+      "type": "object",
+      "required": [
+        "capabilityKey",
+        "objectKey",
+        "operations"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "capabilityKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "objectKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "fieldKeys": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/stableKey"
+          }
+        },
+        "dataScope": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "extensionDefinition": {
+      "type": "object",
+      "required": [
+        "stableKey",
+        "artifact",
+        "entrypoint",
+        "permissions",
+        "timeoutMs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "stableKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "artifact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "entrypoint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "permissions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 30000
+        },
+        "memoryMb": {
+          "type": "integer",
+          "minimum": 16,
+          "maximum": 1024
+        },
+        "signature": {
+          "type": "string"
+        }
+      }
+    },
+    "overrideDefinition": {
+      "type": "object",
+      "required": [
+        "targetStableKey",
+        "propertyPath",
+        "newValue",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "targetStableKey": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "propertyPath": {
+          "type": "string",
+          "pattern": "^/"
+        },
+        "oldValue": {},
+        "newValue": {},
+        "reason": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 1000
+        }
+      }
+    },
+    "migrationDefinition": {
+      "type": "object",
+      "required": [
+        "fromVersion",
+        "toVersion",
+        "steps",
+        "rollback"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "fromVersion": {
+          "type": "string"
+        },
+        "toVersion": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "parameters"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "RENAME_FIELD",
+                  "MAP_VALUE",
+                  "SPLIT_FIELD",
+                  "MERGE_FIELD",
+                  "SET_DEFAULT",
+                  "CUSTOM_EXTENSION"
+                ]
+              },
+              "parameters": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "rollback": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.mysql.domainconfig.DomainPackageVersionMapper">
+
+  <resultMap id="versionRow" type="com.pdp.mysql.domainconfig.DomainPackageVersionRow">
+    <constructor>
+      <idArg column="id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="package_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="semantic_version" javaType="java.lang.String"/>
+      <arg column="manifest" javaType="com.pdp.persistence.type.JsonDocument"
+          typeHandler="com.pdp.mysql.typehandler.JsonDocumentTypeHandler"/>
+      <arg column="content_hash" javaType="java.lang.String"/>
+      <arg column="status"
+          javaType="com.pdp.domainconfig.domain.packageversion.DomainPackageVersion$Status"/>
+      <arg column="frozen" javaType="boolean"/>
+      <arg column="created_by" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="reviewed_by" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="approved_by" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="revision" javaType="long"/>
+      <arg column="created_at" javaType="java.time.Instant"
+          typeHandler="com.pdp.mysql.typehandler.InstantUtcTypeHandler"/>
+    </constructor>
+  </resultMap>
+
+  <sql id="columns">
+    id, package_id, semantic_version, manifest, content_hash, status, frozen,
+    created_by, reviewed_by, approved_by, revision, created_at
+  </sql>
+
+  <select id="findById" resultMap="versionRow">
+    SELECT <include refid="columns"/> FROM pdp_domain_package_version
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+  </select>
+
+  <select id="findByPackageAndSemanticVersion" resultMap="versionRow">
+    SELECT <include refid="columns"/> FROM pdp_domain_package_version
+    WHERE package_id =
+      #{packageId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND semantic_version = #{semanticVersion}
+  </select>
+
+  <select id="findByPackageId" resultMap="versionRow">
+    SELECT <include refid="columns"/> FROM pdp_domain_package_version
+    WHERE package_id =
+      #{packageId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+    ORDER BY created_at, id
+  </select>
+
+  <select id="findPageAfter" resultMap="versionRow">
+    SELECT <include refid="columns"/> FROM pdp_domain_package_version
+    WHERE package_id =
+      #{packageId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+    <if test="afterCreatedAt != null">
+      AND (
+        created_at &gt;
+          #{afterCreatedAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler}
+        OR (
+          created_at =
+            #{afterCreatedAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler}
+          AND id &gt;
+            #{afterId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+        )
+      )
+    </if>
+    ORDER BY created_at, id
+    LIMIT #{limit}
+  </select>
+
+  <insert id="insert">
+    INSERT INTO pdp_domain_package_version (
+      id, package_id, semantic_version, manifest, content_hash, status, frozen,
+      created_by, reviewed_by, approved_by, revision, created_at
+    ) VALUES (
+      #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{packageId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{semanticVersion},
+      #{manifest,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+      #{contentHash}, #{status}, #{frozen},
+      #{createdBy,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{reviewedBy,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{approvedBy,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{revision},
+      #{createdAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler}
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE pdp_domain_package_version
+    SET manifest = #{manifest,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+        content_hash = #{contentHash},
+        status = #{status},
+        frozen = #{frozen},
+        reviewed_by =
+          #{reviewedBy,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+        approved_by =
+          #{approvedBy,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+        revision = #{revision}
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND revision = #{revision} - 1
+  </update>
+</mapper>

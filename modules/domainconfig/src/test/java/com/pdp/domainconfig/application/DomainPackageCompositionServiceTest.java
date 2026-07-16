@@ -7,6 +7,7 @@ import com.pdp.domainconfig.domain.metamodel.FieldDefinition;
 import com.pdp.domainconfig.domain.metamodel.ObjectDefinition;
 import com.pdp.domainconfig.domain.packageversion.PackageLayer;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class DomainPackageCompositionServiceTest {
@@ -23,8 +24,12 @@ class DomainPackageCompositionServiceTest {
             "device.model",
             "INTEGER");
 
-    var result = new DomainPackageCompositionService().compose(platform, industry, customer);
+    UUID packageVersionId = UUID.randomUUID();
+    var result =
+        new DomainPackageCompositionService()
+            .compose(packageVersionId, platform, industry, customer);
 
+    assertThat(result.snapshot().packageVersionId()).isEqualTo(packageVersionId);
     assertThat(result.snapshot().layers()).containsExactly(
         "pdp.standard", "network.delivery", "customer.network");
     assertThat(result.conflicts()).anyMatch(value -> value.contains("device.model"));

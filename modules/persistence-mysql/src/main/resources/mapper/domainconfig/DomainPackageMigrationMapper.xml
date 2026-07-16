@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.mysql.domainconfig.DomainPackageMigrationMapper">
+
+  <resultMap id="migrationRow" type="com.pdp.mysql.domainconfig.DomainPackageMigrationRow">
+    <constructor>
+      <idArg column="id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="source_version_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="target_version_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="preview_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="status" javaType="java.lang.String"/>
+      <arg column="batch_size" javaType="int"/>
+      <arg column="migrated_count" javaType="long"/>
+      <arg column="failed_count" javaType="long"/>
+      <arg column="failure_details" javaType="com.pdp.persistence.type.JsonDocument"
+          typeHandler="com.pdp.mysql.typehandler.JsonDocumentTypeHandler"/>
+      <arg column="rollback_plan" javaType="com.pdp.persistence.type.JsonDocument"
+          typeHandler="com.pdp.mysql.typehandler.JsonDocumentTypeHandler"/>
+      <arg column="revision" javaType="long"/>
+      <arg column="created_at" javaType="java.time.Instant"
+          typeHandler="com.pdp.mysql.typehandler.InstantUtcTypeHandler"/>
+    </constructor>
+  </resultMap>
+
+  <sql id="columns">
+    id, source_version_id, target_version_id, preview_id, status, batch_size,
+    migrated_count, failed_count, failure_details, rollback_plan, revision, created_at
+  </sql>
+
+  <select id="findPreview" resultMap="migrationRow">
+    SELECT <include refid="columns"/> FROM pdp_domain_package_migration
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND status = 'PREVIEW'
+  </select>
+
+  <select id="findJob" resultMap="migrationRow">
+    SELECT <include refid="columns"/> FROM pdp_domain_package_migration
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND status != 'PREVIEW'
+  </select>
+
+  <insert id="insert">
+    INSERT INTO pdp_domain_package_migration (
+      id, source_version_id, target_version_id, preview_id, status, batch_size,
+      migrated_count, failed_count, failure_details, rollback_plan, revision, created_at
+    ) VALUES (
+      #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{sourceVersionId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{targetVersionId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{previewId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{status}, #{batchSize}, #{migratedCount}, #{failedCount},
+      #{failureDetails,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+      #{rollbackPlan,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+      #{revision},
+      #{createdAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler}
+    )
+  </insert>
+
+  <update id="updatePreview">
+    UPDATE pdp_domain_package_migration
+    SET source_version_id =
+          #{sourceVersionId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+        target_version_id =
+          #{targetVersionId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+        batch_size = #{batchSize},
+        migrated_count = #{migratedCount},
+        failed_count = #{failedCount},
+        failure_details =
+          #{failureDetails,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+        rollback_plan =
+          #{rollbackPlan,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+        created_at =
+          #{createdAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler}
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND status = 'PREVIEW'
+  </update>
+
+  <update id="updateJob">
+    UPDATE pdp_domain_package_migration
+    SET status = #{status},
+        batch_size = #{batchSize},
+        migrated_count = #{migratedCount},
+        failed_count = #{failedCount},
+        failure_details =
+          #{failureDetails,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+        rollback_plan =
+          #{rollbackPlan,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+        revision = #{revision}
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND status != 'PREVIEW'
+      AND revision = #{revision} - 1
+  </update>
+</mapper>

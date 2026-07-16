@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="004-domainconfig-types" author="pdp" dbms="mysql">
+    <sql>
+      ALTER TABLE pdp_core_field_catalog
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY aliases JSON NOT NULL;
+
+      ALTER TABLE pdp_domain_package
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY workspace_id BINARY(16) NOT NULL,
+        MODIFY parent_package_id BINARY(16) NULL;
+
+      ALTER TABLE pdp_domain_package_version
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY package_id BINARY(16) NOT NULL,
+        MODIFY manifest JSON NOT NULL,
+        MODIFY created_by BINARY(16) NOT NULL,
+        MODIFY reviewed_by BINARY(16) NULL,
+        MODIFY approved_by BINARY(16) NULL,
+        MODIFY created_at DATETIME(6) NOT NULL;
+
+      ALTER TABLE pdp_object_definition
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY version_id BINARY(16) NOT NULL,
+        MODIFY definition JSON NOT NULL;
+
+      ALTER TABLE pdp_field_definition
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY object_definition_id BINARY(16) NOT NULL,
+        MODIFY definition JSON NOT NULL;
+
+      ALTER TABLE pdp_relation_definition
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY object_definition_id BINARY(16) NOT NULL,
+        MODIFY definition JSON NOT NULL;
+
+      ALTER TABLE pdp_page_definition
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY version_id BINARY(16) NOT NULL,
+        MODIFY definition JSON NOT NULL;
+
+      ALTER TABLE pdp_behavior_definition
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY version_id BINARY(16) NOT NULL,
+        MODIFY definition JSON NOT NULL;
+
+      ALTER TABLE pdp_package_override
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY version_id BINARY(16) NOT NULL,
+        MODIFY old_value JSON NULL,
+        MODIFY new_value JSON NOT NULL;
+
+      ALTER TABLE pdp_domain_package_snapshot
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY package_version_id BINARY(16) NOT NULL,
+        MODIFY layer_chain JSON NOT NULL,
+        MODIFY snapshot JSON NOT NULL,
+        MODIFY created_at DATETIME(6) NOT NULL;
+
+      ALTER TABLE pdp_domain_package_migration
+        MODIFY id BINARY(16) NOT NULL,
+        MODIFY source_version_id BINARY(16) NOT NULL,
+        MODIFY target_version_id BINARY(16) NOT NULL,
+        MODIFY preview_id BINARY(16) NOT NULL,
+        MODIFY failure_details JSON NULL,
+        MODIFY rollback_plan JSON NOT NULL,
+        MODIFY created_at DATETIME(6) NOT NULL;
+    </sql>
+    <rollback>
+      <sql>
+        ALTER TABLE pdp_domain_package_migration
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY source_version_id CHAR(36) NOT NULL,
+          MODIFY target_version_id CHAR(36) NOT NULL,
+          MODIFY preview_id CHAR(36) NOT NULL,
+          MODIFY failure_details LONGTEXT NULL,
+          MODIFY rollback_plan LONGTEXT NOT NULL,
+          MODIFY created_at TIMESTAMP NOT NULL;
+        ALTER TABLE pdp_domain_package_snapshot
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY package_version_id CHAR(36) NOT NULL,
+          MODIFY layer_chain LONGTEXT NOT NULL,
+          MODIFY snapshot LONGTEXT NOT NULL,
+          MODIFY created_at TIMESTAMP NOT NULL;
+        ALTER TABLE pdp_package_override
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY version_id CHAR(36) NOT NULL,
+          MODIFY old_value LONGTEXT NULL,
+          MODIFY new_value LONGTEXT NOT NULL;
+        ALTER TABLE pdp_behavior_definition
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY version_id CHAR(36) NOT NULL,
+          MODIFY definition LONGTEXT NOT NULL;
+        ALTER TABLE pdp_page_definition
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY version_id CHAR(36) NOT NULL,
+          MODIFY definition LONGTEXT NOT NULL;
+        ALTER TABLE pdp_relation_definition
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY object_definition_id CHAR(36) NOT NULL,
+          MODIFY definition LONGTEXT NOT NULL;
+        ALTER TABLE pdp_field_definition
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY object_definition_id CHAR(36) NOT NULL,
+          MODIFY definition LONGTEXT NOT NULL;
+        ALTER TABLE pdp_object_definition
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY version_id CHAR(36) NOT NULL,
+          MODIFY definition LONGTEXT NOT NULL;
+        ALTER TABLE pdp_domain_package_version
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY package_id CHAR(36) NOT NULL,
+          MODIFY manifest LONGTEXT NOT NULL,
+          MODIFY created_by CHAR(36) NOT NULL,
+          MODIFY reviewed_by CHAR(36) NULL,
+          MODIFY approved_by CHAR(36) NULL,
+          MODIFY created_at TIMESTAMP NOT NULL;
+        ALTER TABLE pdp_domain_package
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY workspace_id CHAR(36) NOT NULL,
+          MODIFY parent_package_id CHAR(36) NULL;
+        ALTER TABLE pdp_core_field_catalog
+          MODIFY id CHAR(36) NOT NULL,
+          MODIFY aliases LONGTEXT NOT NULL;
+      </sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

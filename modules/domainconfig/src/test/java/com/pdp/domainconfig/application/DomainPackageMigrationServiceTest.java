@@ -46,6 +46,7 @@ class DomainPackageMigrationServiceTest {
     job = service.rollback(job.id(), "失败实例需要人工修复");
 
     assertThat(preview.batches()).isEqualTo(3);
+    assertThat(job.previewId()).isEqualTo(preview.id());
     assertThat(job.failedInstances()).containsExactly(failedInstance);
     assertThat(job.status()).isEqualTo(DomainPackageMigrationService.Status.ROLLED_BACK);
   }

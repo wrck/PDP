@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.mysql.domainconfig.DomainPackageMapper">
+
+  <resultMap id="domainPackageRow" type="com.pdp.mysql.domainconfig.DomainPackageRow">
+    <constructor>
+      <idArg column="id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="workspace_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="stable_key" javaType="java.lang.String"/>
+      <arg column="name" javaType="java.lang.String"/>
+      <arg column="layer" javaType="com.pdp.domainconfig.domain.packageversion.PackageLayer"/>
+      <arg column="parent_package_id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="status" javaType="com.pdp.domainconfig.domain.packageversion.DomainPackage$Status"/>
+      <arg column="revision" javaType="long"/>
+    </constructor>
+  </resultMap>
+
+  <sql id="columns">
+    id, workspace_id, stable_key, name, layer, parent_package_id, status, revision
+  </sql>
+
+  <select id="findById" resultMap="domainPackageRow">
+    SELECT <include refid="columns"/> FROM pdp_domain_package
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+  </select>
+
+  <select id="findByStableKey" resultMap="domainPackageRow">
+    SELECT <include refid="columns"/> FROM pdp_domain_package
+    WHERE workspace_id =
+      #{workspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND stable_key = #{stableKey}
+  </select>
+
+  <select id="findByWorkspace" resultMap="domainPackageRow">
+    SELECT <include refid="columns"/> FROM pdp_domain_package
+    WHERE workspace_id =
+      #{workspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+    ORDER BY stable_key, id
+  </select>
+
+  <select id="findPageAfter" resultMap="domainPackageRow">
+    SELECT <include refid="columns"/> FROM pdp_domain_package
+    WHERE workspace_id =
+      #{workspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+    <if test="afterStableKey != null">
+      AND (
+        stable_key &gt; #{afterStableKey}
+        OR (
+          stable_key = #{afterStableKey}
+          AND id &gt; #{afterId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+        )
+      )
+    </if>
+    ORDER BY stable_key, id
+    LIMIT #{limit}
+  </select>
+
+  <insert id="insert">
+    INSERT INTO pdp_domain_package (
+      id, workspace_id, stable_key, name, layer, parent_package_id, status, revision
+    ) VALUES (
+      #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{workspaceId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{stableKey}, #{name}, #{layer},
+      #{parentPackageId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{status}, #{revision}
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE pdp_domain_package
+    SET name = #{name},
+        layer = #{layer},
+        parent_package_id =
+          #{parentPackageId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+        status = #{status},
+        revision = #{revision}
+    WHERE id = #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler}
+      AND revision = #{revision} - 1
+  </update>
+</mapper>

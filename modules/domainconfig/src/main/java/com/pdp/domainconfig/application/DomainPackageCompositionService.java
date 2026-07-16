@@ -17,7 +17,10 @@ import org.springframework.stereotype.Service;
 @Service
 public final class DomainPackageCompositionService {
 
-  public CompositionResult compose(DomainPackageManifest... manifests) {
+  public CompositionResult compose(UUID packageVersionId, DomainPackageManifest... manifests) {
+    if (packageVersionId == null) {
+      throw new IllegalArgumentException("领域包版本标识不能为空");
+    }
     if (manifests.length == 0 || manifests.length > 3) {
       throw new IllegalArgumentException("领域包组合必须包含一至三层");
     }
@@ -52,7 +55,8 @@ public final class DomainPackageCompositionService {
     }
     String hash = sha256(layers + "|" + objects);
     var snapshot =
-        new DomainPackageSnapshot(UUID.randomUUID(), layers, Map.copyOf(objects), hash);
+        new DomainPackageSnapshot(
+            UUID.randomUUID(), packageVersionId, layers, Map.copyOf(objects), hash);
     return new CompositionResult(snapshot, differences, conflicts);
   }
 

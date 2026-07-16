@@ -104,6 +104,7 @@ public final class DomainPackageMigrationService {
     var job =
         new MigrationJob(
             UUID.randomUUID(),
+            preview.id(),
             preview.sourceVersionId(),
             preview.targetVersionId(),
             Status.PLANNED,
@@ -124,6 +125,7 @@ public final class DomainPackageMigrationService {
     return migrations.saveJob(
         new MigrationJob(
             current.id(),
+            current.previewId(),
             current.sourceVersionId(),
             current.targetVersionId(),
             status,
@@ -144,6 +146,7 @@ public final class DomainPackageMigrationService {
     return migrations.saveJob(
         new MigrationJob(
             current.id(),
+            current.previewId(),
             current.sourceVersionId(),
             current.targetVersionId(),
             Status.ROLLED_BACK,
@@ -190,6 +193,7 @@ public final class DomainPackageMigrationService {
 
   public record MigrationJob(
       UUID id,
+      UUID previewId,
       UUID sourceVersionId,
       UUID targetVersionId,
       Status status,
@@ -200,6 +204,9 @@ public final class DomainPackageMigrationService {
       Revision revision,
       Instant createdAt) {
     public MigrationJob {
+      if (previewId == null) {
+        throw new IllegalArgumentException("迁移作业必须关联预览标识");
+      }
       failedInstances = List.copyOf(failedInstances);
     }
   }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.mysql.domainconfig.DomainPackageSnapshotMapper">
+
+  <insert id="insert">
+    INSERT INTO pdp_domain_package_snapshot (
+      id, package_version_id, layer_chain, snapshot, content_hash, created_at
+    ) VALUES (
+      #{id,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{packageVersionId,typeHandler=com.pdp.mysql.typehandler.UuidBinaryTypeHandler},
+      #{layerChain,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+      #{snapshot,typeHandler=com.pdp.mysql.typehandler.JsonDocumentTypeHandler},
+      #{contentHash},
+      #{createdAt,typeHandler=com.pdp.mysql.typehandler.InstantUtcTypeHandler}
+    )
+  </insert>
+</mapper>

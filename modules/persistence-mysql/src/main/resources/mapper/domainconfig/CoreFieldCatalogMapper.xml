@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.mysql.domainconfig.CoreFieldCatalogMapper">
+
+  <resultMap id="coreFieldRow" type="com.pdp.mysql.domainconfig.CoreFieldRow">
+    <constructor>
+      <idArg column="id" javaType="java.util.UUID"
+          typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
+      <arg column="stable_key" javaType="java.lang.String"/>
+      <arg column="object_type" javaType="java.lang.String"/>
+      <arg column="semantic_name" javaType="java.lang.String"/>
+      <arg column="data_type" javaType="java.lang.String"/>
+      <arg column="data_source" javaType="java.lang.String"/>
+      <arg column="aliases" javaType="com.pdp.persistence.type.JsonDocument"
+          typeHandler="com.pdp.mysql.typehandler.JsonDocumentTypeHandler"/>
+      <arg column="extensible" javaType="boolean"/>
+    </constructor>
+  </resultMap>
+
+  <select id="findAll" resultMap="coreFieldRow">
+    SELECT id, stable_key, object_type, semantic_name, data_type, data_source,
+           aliases, extensible
+    FROM pdp_core_field_catalog
+    ORDER BY object_type, stable_key, id
+  </select>
+</mapper>

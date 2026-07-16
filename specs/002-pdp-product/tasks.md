@@ -19,7 +19,7 @@
 - [X] T011 创建关键能力服务等级档案，定义请求类别、时限、SLI/SLO、容量、失败模式、告警、责任人和运行手册，文件：`docs/service-levels/p1-service-catalog.md`
 - [X] T012 建立 P1 用户故事、FR、SC、契约和任务的基础追踪矩阵，校验 OpenAPI、事件、领域包 Schema 和迁移报告 Schema 完整一致，并登记消费者、版本、兼容影响及弃用窗口，文件：`specs/002-pdp-product/traceability.md`、`specs/002-pdp-product/contracts/coverage.md`、`specs/002-pdp-product/contracts/migration-report.schema.json`
 - [X] T013 创建高风险操作目录和统一预览、确认、不可逆点及补偿交互规范，预注册认证数据库切换类型、禁用原因和 P2 启用条件但不提供执行入口，文件：`docs/ux/high-risk-operations.md`
-- [ ] T014 执行实现前 `/speckit-analyze`，由评审人归档结果并要求 CRITICAL/HIGH 为 0，文件：`specs/002-pdp-product/evidence/analysis-pre-implementation.md`
+- [X] T014 执行实现前 `/speckit-analyze`，由评审人归档结果并要求 CRITICAL/HIGH 为 0，文件：`specs/002-pdp-product/evidence/analysis-pre-implementation.md`
 
 ## 阶段 1：工程初始化
 

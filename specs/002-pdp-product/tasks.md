@@ -89,7 +89,7 @@
 - [X] T067 创建仓储端口禁止泄漏 MyBatis、MySQL 驱动和数据库专有类型的架构测试，并使用模拟适配器验证注册、唯一激活、未知能力拒绝和边界兼容，文件：`tests/backend/architecture/PersistenceBoundaryTest.java`、`tests/backend/contract/persistence/PersistenceProviderExtensionContractTest.java`
 - [X] T068 创建权限过滤的搜索投影端口、文档和统一分析器，文件：`modules/experience/src/main/java/com/pdp/experience/search/`
 - [X] T069 创建搜索投影 30 秒可见和撤权过滤测试，文件：`tests/backend/integration/search/SearchProjectionConsistencyTest.java`
-- [ ] T070 创建后台作业协调器以及批量导入、导出、归档、统计、投影重建、断点恢复、进度和失败明细能力，文件：`modules/operations/src/main/java/com/pdp/operations/job/BackgroundJobCoordinator.java`、`modules/operations/src/main/java/com/pdp/operations/projection/ProjectionRebuildJob.java`
+- [X] T070 创建后台作业协调器以及批量导入、导出、归档、统计、投影重建、断点恢复、进度和失败明细能力，文件：`modules/operations/src/main/java/com/pdp/operations/job/BackgroundJobCoordinator.java`、`modules/operations/src/main/java/com/pdp/operations/projection/ProjectionRebuildJob.java`
 - [ ] T071 创建批量作业暂停、取消、检查点恢复、失败明细和资源预算测试，文件：`tests/backend/integration/job/BackgroundJobLifecycleTest.java`
 - [ ] T072 创建对象存储、短时签名 URL、病毒扫描和隔离适配器，文件：`modules/experience/src/main/java/com/pdp/experience/storage/`
 - [ ] T073 创建 Redis 缓存降级、失效和防击穿组件，文件：`modules/operations/src/main/java/com/pdp/operations/cache/`

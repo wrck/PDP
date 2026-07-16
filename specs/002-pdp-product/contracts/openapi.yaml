@@ -876,6 +876,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AvailabilityReport'
+  /database-deployments/current:
+    get:
+      tags: [数据库]
+      summary: 获取当前认证数据库部署及能力基线
+      operationId: getCurrentDatabaseDeployment
+      responses:
+        '200':
+          description: 当前数据库部署
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseDeployment'
+  /database-switches:
+    post:
+      tags: [数据库]
+      summary: 创建受控数据库切换任务
+      operationId: createDatabaseSwitch
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDatabaseSwitchCommand'
+      responses:
+        '202':
+          description: 数据库切换任务已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseSwitch'
+        '409':
+          $ref: '#/components/responses/Problem'
   /operation-previews:
     post:
       tags: [治理]
@@ -901,7 +936,7 @@ paths:
   /data-migrations:
     post:
       tags: [数据迁移]
-      summary: 创建迁移到 PDP MySQL 8.4 的历史数据迁移计划
+      summary: 创建 MySQL 历史数据迁移计划并指定 PDP 目标数据库
       operationId: createMigrationProgram
       parameters:
         - $ref: '#/components/parameters/WorkspaceHeader'
@@ -2038,6 +2073,64 @@ components:
         status:
           type: string
           enum: [MEETING, AT_RISK, BREACHED]
+    DatabaseDeployment:
+      type: object
+      required: [databaseType, databaseVersion, certificationBaseline, writeAuthority, status, revision]
+      properties:
+        databaseType:
+          type: string
+          enum: [POSTGRESQL, MYSQL]
+        databaseVersion:
+          type: string
+        certificationBaseline:
+          type: string
+        writeAuthority:
+          type: string
+          enum: [PRIMARY]
+        status:
+          type: string
+          enum: [CERTIFIED, DEGRADED, UNSUPPORTED]
+        revision:
+          type: integer
+          minimum: 0
+    CreateDatabaseSwitchCommand:
+      type: object
+      required: [targetDatabaseType, targetDatabaseVersion, previewToken, reconciliationRunId, reason]
+      properties:
+        targetDatabaseType:
+          type: string
+          enum: [POSTGRESQL, MYSQL]
+        targetDatabaseVersion:
+          type: string
+        previewToken:
+          type: string
+        reconciliationRunId:
+          $ref: '#/components/schemas/Uuid'
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 2000
+    DatabaseSwitch:
+      type: object
+      required: [id, sourceDatabaseType, targetDatabaseType, status, writeAuthority, revision]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        sourceDatabaseType:
+          type: string
+          enum: [POSTGRESQL, MYSQL]
+        targetDatabaseType:
+          type: string
+          enum: [POSTGRESQL, MYSQL]
+        status:
+          type: string
+          enum: [PLANNED, REHEARSING, READY, FREEZING, SWITCHING, VALIDATING, STABILIZING, COMPLETED, ROLLING_BACK, FAILED, CANCELLED]
+        writeAuthority:
+          type: string
+          enum: [SOURCE, TARGET, FROZEN]
+        revision:
+          type: integer
+          minimum: 0
     CreateOperationPreviewCommand:
       type: object
       required: [operationType, targetType, targetIds, expectedRevisions, commandDigest]
@@ -2107,8 +2200,8 @@ components:
           type: string
         targetDatabaseType:
           type: string
-          const: MYSQL
-          description: P1 固定为 PDP MySQL 目标
+          enum: [POSTGRESQL, MYSQL]
+          description: 当前部署选择的认证目标数据库
         targetDatabaseVersion:
           type: string
           minLength: 1
@@ -2136,7 +2229,7 @@ components:
           type: string
         targetDatabaseType:
           type: string
-          const: MYSQL
+          enum: [POSTGRESQL, MYSQL]
         targetDatabaseVersion:
           type: string
         status:
@@ -2169,7 +2262,7 @@ components:
         runType:
           type: string
           enum:
-            [PROFILE, DRY_RUN, FULL_LOAD, CDC, RECONCILIATION, CUTOVER, ROLLBACK_REHEARSAL]
+            [PROFILE, DRY_RUN, FULL_LOAD, CDC, DATABASE_SWITCH, RECONCILIATION, CUTOVER, ROLLBACK_REHEARSAL]
         mappingVersion:
           type: string
         sourceSnapshotId:
@@ -2191,7 +2284,7 @@ components:
         runType:
           type: string
           enum:
-            [PROFILE, DRY_RUN, FULL_LOAD, CDC, RECONCILIATION, CUTOVER, ROLLBACK_REHEARSAL]
+            [PROFILE, DRY_RUN, FULL_LOAD, CDC, DATABASE_SWITCH, RECONCILIATION, CUTOVER, ROLLBACK_REHEARSAL]
         mappingVersion:
           type: string
         status:

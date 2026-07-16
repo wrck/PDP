@@ -20,8 +20,8 @@
 |---|---|---:|---|
 | `pdpPrimary` | 在线业务、审计、事件发布、后台任务事实 | 是 | 必需，应用启动时建立 |
 | `pdpRead` | 明确允许最终一致的查询 | 否 | 可选，只能与主库同引擎且来自受管复制 |
-| `migrationSource` | 历史 MySQL 源系统 | 否 | 迁移计划批准后加载，使用独立只读会话工厂，结束后卸载并撤权 |
-| `migrationTarget` | PDP MySQL 目标的预装载和核对 | 仅迁移执行器 | 使用独立目标会话工厂，开放业务写入前不得作为 `pdpPrimary` |
+| `migrationSource` | 历史 MySQL 或数据库切换源 | 否 | 迁移计划批准后加载，使用独立只读会话工厂，结束后卸载并撤权 |
+| `migrationTarget` | 数据库切换目标的预装载和核对 | 仅迁移执行器 | 使用独立目标会话工厂，开放业务写入前不得作为 `pdpPrimary` |
 | `workflowEngine` | Flowable Process Engine 运行表、作业和历史 | 仅 `workflow` 模块 | 必需；使用 MySQL 8.4，但独立 schema/账号/池/事务管理器，不加入普通业务动态路由 |
 
 路由规则：
@@ -134,7 +134,7 @@ P1 使用平台统一分析器生成 `SearchDocument` 和 `SearchTermProjection`
 - 每个批次在单一目标数据库事务内提交并保存检查点；跨源/目标不启用分布式事务。
 - 读取源批次、转换、写入目标和记录结果使用幂等批次键恢复。
 - 数据源路由上下文必须在 `finally` 中清理，线程池任务显式传递或重建上下文，禁止 ThreadLocal 泄漏。
-- 上线切换仍执行全量、增量、冻结、核对和主权转换，不通过把 `pdpPrimary` 路由到 `migrationTarget` 直接完成。
+- 切换数据库仍执行全量、增量、冻结、核对和主权转换，不通过把 `pdpPrimary` 路由到 `migrationTarget` 直接完成。
 
 ## 10. Spring Modulith 事件发布
 

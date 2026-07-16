@@ -21,6 +21,7 @@
 | US14 搜索通知 | `/search`、`/notifications` | 核心业务事件目录 | Web、投影器、通知器 | 幂等、撤权时限、稳定排序 |
 | US18 连续性 | 健康、恢复、服务等级和可用性接口 | 告警和恢复事件 | 运维控制台、值守系统 | SLI/SLO、故障注入和恢复演练 |
 | US20 历史迁移 | `/data-migrations`、核对和切换决策 | `migration-report.schema.json`、迁移事件 | 迁移控制台、审计、值守 | 重跑、核对、回退和来源追踪 |
+| US21 多数据库 | 当前部署、认证和数据库切换接口 | `migration-report.schema.json`、切换事件 | 运维控制台、迁移器 | 当前数据库语义、单写和双向切换 |
 | 横向高风险操作 | `/operation-previews` 及对应确认命令 | 审计事件 | 所有高风险页面和服务 | 预览过期、版本冲突、确认和补偿测试 |
 | 横向工作流编排 | `/workflow-definitions/validate`、`/workflow-definitions/deploy`、`/workflow-instances/{id}` 及受控管理动作；不暴露 Flowable API | `pdp.workflow.orchestration.requested/failed` | `workflow`、审批、项目、领域包、运维 | BPMN 校验、版本固定、幂等关联、权限复核、死信和 MySQL 升级 |
 

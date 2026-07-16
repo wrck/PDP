@@ -1,0 +1,169 @@
+# 本地开发编排，所有凭据来自 .env；禁止提交真实凭据
+#
+# 服务拓扑（对齐 specs/002-pdp-product/persistence-design.md 动态数据源拓扑）：
+#   - pdp-mysql            : 在线业务事实真源（pdpPrimary），MySQL 8.4 LTS
+#   - pdp-mysql-workflow   : Flowable Process Engine 独立 schema/账号（workflowEngine），MySQL 8.4 LTS
+#   - pdp-mysql-legacy     : 历史 MySQL 5.7 迁移源库（migrationSource），只读语义
+#   - pdp-redis            : 缓存、限流、短期协调（仅可重建数据，非业务真源）
+#   - pdp-minio            : S3 兼容对象存储，保存附件与交付件文件内容
+#   - pdp-observability    : 占位服务，预留后续 Prometheus / OpenTelemetry Collector
+#
+# 说明：
+#   - 所有口令均引用 ${VAR}，真实值由仓库根目录 .env 提供（参见 .env.example）。
+#   - 本文件仅用于本地开发与集成测试，生产环境使用托管 MySQL 8.4、S3 兼容对象存储与 Kubernetes。
+#   - 字符集、排序规则、时区与 sql-mode 对齐 persistence-design.md 第 11 节基线。
+
+name: pdp
+
+services:
+  pdp-mysql:
+    image: mysql:8.4
+    container_name: pdp-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${PDP_MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${PDP_MYSQL_DATABASE:-pdp}
+      MYSQL_USER: ${PDP_MYSQL_USER:-pdp}
+      MYSQL_PASSWORD: ${PDP_MYSQL_PASSWORD}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_bin
+      - --default-time-zone=+00:00
+      - --sql-mode=STRICT_TRANS_TABLES
+    ports:
+      - "3306:3306"
+    volumes:
+      - pdp-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${PDP_MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - pdp-net
+
+  pdp-mysql-workflow:
+    image: mysql:8.4
+    container_name: pdp-mysql-workflow
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${PDP_MYSQL_WORKFLOW_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${PDP_MYSQL_WORKFLOW_DATABASE:-pdp_workflow}
+      MYSQL_USER: ${PDP_MYSQL_WORKFLOW_USER:-pdp_workflow}
+      MYSQL_PASSWORD: ${PDP_MYSQL_WORKFLOW_PASSWORD}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_bin
+      - --default-time-zone=+00:00
+      - --sql-mode=STRICT_TRANS_TABLES
+    ports:
+      - "3307:3306"
+    volumes:
+      - pdp-mysql-workflow-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${PDP_MYSQL_WORKFLOW_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - pdp-net
+
+  pdp-mysql-legacy:
+    # 历史 MySQL 5.7 源库，仅用于迁移期只读访问（migrationSource）。
+    # 通过 --read-only 限制非特权账号写入，模拟历史系统冻结后的只读语义。
+    image: mysql:5.7
+    container_name: pdp-mysql-legacy
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${PDP_MYSQL_LEGACY_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${PDP_MYSQL_LEGACY_DATABASE:-legacy_pdp}
+      MYSQL_USER: ${PDP_MYSQL_LEGACY_USER:-legacy_pdp}
+      MYSQL_PASSWORD: ${PDP_MYSQL_LEGACY_PASSWORD}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_bin
+      - --default-time-zone=+00:00
+      - --sql-mode=STRICT_TRANS_TABLES
+      - --read-only
+    ports:
+      - "3308:3306"
+    volumes:
+      - pdp-mysql-legacy-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${PDP_MYSQL_LEGACY_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - pdp-net
+
+  pdp-redis:
+    image: redis:7-alpine
+    container_name: pdp-redis
+    restart: unless-stopped
+    # 本地开发不设置密码；如需启用，通过 PDP_REDIS_PASSWORD 占位并在 command 中追加 requirepass。
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - pdp-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - pdp-net
+
+  pdp-minio:
+    image: minio/minio:latest
+    container_name: pdp-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${PDP_OBJECT_STORAGE_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${PDP_OBJECT_STORAGE_SECRET_KEY}
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - pdp-minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - pdp-net
+
+  pdp-observability:
+    # 占位服务：本地默认不启动 Prometheus / OpenTelemetry Collector。
+    # 后续接入可观测能力时，在此补充 prometheus、otelcol 及其配置挂载。
+    image: busybox:1.36
+    container_name: pdp-observability
+    restart: "no"
+    command: ["echo", "observability placeholder: add prometheus / otelcol here"]
+    networks:
+      - pdp-net
+
+networks:
+  pdp-net:
+    name: pdp-net
+    driver: bridge
+
+volumes:
+  pdp-mysql-data:
+    name: pdp-mysql-data
+  pdp-mysql-workflow-data:
+    name: pdp-mysql-workflow-data
+  pdp-mysql-legacy-data:
+    name: pdp-mysql-legacy-data
+  pdp-redis-data:
+    name: pdp-redis-data
+  pdp-minio-data:
+    name: pdp-minio-data

@@ -1,0 +1,16 @@
+# PDP API Pod 干扰预算
+# minAvailable=2，保证自愿驱逐（滚动升级、节点维护）期间至少 2 个副本可用，支撑核心业务可用性 ≥ 99.95%。
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pdp-api
+  namespace: pdp
+  labels:
+    app: pdp
+    component: api
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: pdp
+      component: api

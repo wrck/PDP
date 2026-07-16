@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.pdp</groupId>
+        <artifactId>pdp-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>pdp-standarddelivery</artifactId>
+    <packaging>jar</packaging>
+    <name>PDP Standard Delivery</name>
+    <description>标准实施领域包及从创建到归档的闭环资源</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-shared-kernel</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-domainconfig</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-workflow</artifactId>
+        </dependency>
+    </dependencies>
+</project>

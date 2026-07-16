@@ -1,0 +1,28 @@
+{
+  "name": "pdp-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PDP 企业级项目交付管理平台 - Web 前端",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "vue": "^3.5.0",
+    "vue-router": "^4.4.0",
+    "pinia": "^2.2.0",
+    "ant-design-vue": "^4.2.0",
+    "@tanstack/vue-query": "^2.0.0",
+    "axios": "^1.7.0"
+  },
+  "devDependencies": {
+    "vite": "^8.0.0",
+    "@vitejs/plugin-vue": "^5.2.0",
+    "typescript": "^5.6.0",
+    "vue-tsc": "^2.1.0",
+    "sass": "^1.79.0"
+  }
+}

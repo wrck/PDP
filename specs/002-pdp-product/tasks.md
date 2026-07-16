@@ -23,23 +23,23 @@
 
 ## 阶段 1：工程初始化
 
-- [ ] T015 创建 Java 21、Spring Boot 4.1、Maven 多模块父工程和版本锁定，文件：`pom.xml`、`.mvn/wrapper/`
-- [ ] T016 创建 API 应用、业务模块和持久化适配器模块骨架，文件：`apps/api/pom.xml`、`modules/*/pom.xml`
-- [ ] T017 创建根 pnpm 命令，统一前端、契约、端到端和性能测试入口，文件：`package.json`
-- [ ] T018 创建 pnpm 工作区并纳入 Web 与测试包，文件：`pnpm-workspace.yaml`
-- [ ] T019 创建 Vue 3.5、TypeScript、Vite 前端工程，文件：`apps/web/package.json`、`apps/web/vite.config.ts`
-- [ ] T020 创建 Vue 应用入口、路由和状态管理骨架，文件：`apps/web/src/main.ts`、`apps/web/src/router/index.ts`、`apps/web/src/stores/index.ts`
-- [ ] T021 [P] 配置 ESLint、Prettier、Stylelint 和 EditorConfig，文件：`eslint.config.js`、`.prettierrc.json`、`.stylelintrc.json`、`.editorconfig`
-- [ ] T022 创建独立测试工作区，文件：`tests/package.json`、`tests/tsconfig.json`
-- [ ] T023 [P] 配置 Playwright 端到端测试，文件：`tests/playwright.config.ts`
-- [ ] T024 [P] 配置 OpenAPI、JSON Schema 和事件契约校验，文件：`tests/scripts/validate-contracts.mjs`、`tests/.spectral.yaml`
-- [ ] T025 创建 MySQL 8.4 持久化、升级、权限和集成测试持续集成矩阵，文件：`.github/workflows/ci.yml`
-- [ ] T026 [P] 创建本地 MySQL 8.4、历史 MySQL 源库、Redis、对象存储和可观测组件编排，文件：`infra/compose/compose.yaml`
-- [ ] T027 [P] 创建无凭据的配置示例与说明，文件：`.env.example`、`docs/configuration.md`
-- [ ] T028 [P] 创建 Kubernetes 探针、滚动升级和 PodDisruptionBudget 基础清单，文件：`infra/k8s/base/`
-- [ ] T029 创建后端单元、集成、架构、恢复和数据库契约测试目录，文件：`tests/backend/`
-- [ ] T030 配置依赖治理，显式使用 MyBatis-Plus 并阻止 Hibernate/JPA 进入运行时；建立技术债记录机制，文件：`pom.xml`、`tests/backend/architecture/DependencyPolicyTest.java`、`docs/technical-debt.md`
-- [ ] T031 在项目 BOM 中锁定经验证的 Flowable 8.0.x，并仅引入 `flowable-spring-boot-starter-process`，阻止全引擎/REST/IDM/CMMN/DMN/JPA starter，文件：`pom.xml`、`tests/backend/architecture/WorkflowDependencyPolicyTest.java`
+- [X] T015 创建 Java 21、Spring Boot 4.1、Maven 多模块父工程和版本锁定，文件：`pom.xml`、`.mvn/wrapper/`
+- [X] T016 创建 API 应用、业务模块和持久化适配器模块骨架，文件：`apps/api/pom.xml`、`modules/*/pom.xml`
+- [X] T017 创建根 pnpm 命令，统一前端、契约、端到端和性能测试入口，文件：`package.json`
+- [X] T018 创建 pnpm 工作区并纳入 Web 与测试包，文件：`pnpm-workspace.yaml`
+- [X] T019 创建 Vue 3.5、TypeScript、Vite 前端工程，文件：`apps/web/package.json`、`apps/web/vite.config.ts`
+- [X] T020 创建 Vue 应用入口、路由和状态管理骨架，文件：`apps/web/src/main.ts`、`apps/web/src/router/index.ts`、`apps/web/src/stores/index.ts`
+- [X] T021 [P] 配置 ESLint、Prettier、Stylelint 和 EditorConfig，文件：`eslint.config.mjs`、`.prettierrc.json`、`.stylelintrc.json`、`.editorconfig`
+- [X] T022 创建独立测试工作区，文件：`tests/package.json`、`tests/tsconfig.json`
+- [X] T023 [P] 配置 Playwright 端到端测试，文件：`tests/playwright.config.ts`
+- [X] T024 [P] 配置 OpenAPI、JSON Schema 和事件契约校验，文件：`tests/scripts/validate-contracts.mjs`、`tests/.spectral.yaml`
+- [X] T025 创建 MySQL 8.4 持久化、升级、权限和集成测试持续集成矩阵，文件：`.github/workflows/ci.yml`
+- [X] T026 [P] 创建本地 MySQL 8.4、历史 MySQL 源库、Redis、对象存储和可观测组件编排，文件：`infra/compose/compose.yaml`
+- [X] T027 [P] 创建无凭据的配置示例与说明，文件：`.env.example`、`docs/configuration.md`
+- [X] T028 [P] 创建 Kubernetes 探针、滚动升级和 PodDisruptionBudget 基础清单，文件：`infra/k8s/base/`
+- [X] T029 创建后端单元、集成、架构、恢复和数据库契约测试目录，文件：`tests/backend/`
+- [X] T030 配置依赖治理，显式使用 MyBatis-Plus 并阻止 Hibernate/JPA 进入运行时；建立技术债记录机制，文件：`pom.xml`、`tests/backend/architecture/DependencyPolicyTest.java`、`docs/technical-debt.md`
+- [X] T031 在项目 BOM 中锁定经验证的 Flowable 8.0.x，并仅引入 `flowable-spring-boot-starter-process`，阻止全引擎/REST/IDM/CMMN/DMN/JPA starter，文件：`pom.xml`、`tests/backend/architecture/WorkflowDependencyPolicyTest.java`
 
 ## 阶段 2：公共平台基础
 

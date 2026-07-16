@@ -1,0 +1,25 @@
+# PDP API 水平自动扩缩
+# min=3 与 Deployment 副本数对齐；max=10；CPU 目标利用率 70%。
+# 部署前应完成容量压测，按规格事务混合与 1000 并发目标冻结阈值。
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pdp-api
+  namespace: pdp
+  labels:
+    app: pdp
+    component: api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pdp-api
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

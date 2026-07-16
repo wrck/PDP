@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.pdp</groupId>
+        <artifactId>pdp-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>pdp-api</artifactId>
+    <packaging>jar</packaging>
+    <name>PDP API</name>
+    <description>PDP 可部署应用：聚合全部业务模块、MySQL 适配器与 Web/Security/Actuator</description>
+
+    <dependencies>
+        <!-- 业务模块 -->
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-identity</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-workspace</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-domainconfig</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-template</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-project</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-planning</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-deliverable</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-approval</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-workflow</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-governance</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-experience</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-integration</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-operations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-datamigration</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-standarddelivery</artifactId>
+        </dependency>
+
+        <!-- MySQL 适配器 -->
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-persistence-mysql</artifactId>
+        </dependency>
+
+        <!-- Web / Actuator / Security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

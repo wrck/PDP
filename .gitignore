@@ -1,0 +1,63 @@
+# 通用
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.log
+*.iml
+
+# 环境与凭据（.env.example 保留，其余 .env* 忽略）
+.env
+.env.*
+!.env.example
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle（如未来引入）
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# Node.js / pnpm
+node_modules/
+dist/
+build/
+coverage/
+.npm
+.pnpm-store/
+*.tsbuildinfo
+
+# 前端构建产物
+apps/web/dist/
+apps/web/.vite/
+
+# 测试产物
+test-results/
+playwright-report/
+playwright/.cache/
+junit*.xml
+*.exec
+
+# 容器与本地数据
+infra/compose/data/
+infra/compose/.data/
+
+# 密钥与证书（禁止入库）
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+secrets/

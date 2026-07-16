@@ -1,0 +1,8 @@
+# PDP 命名空间
+# 部署时所有 PDP 资源统一落入该命名空间。
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pdp
+  labels:
+    app: pdp

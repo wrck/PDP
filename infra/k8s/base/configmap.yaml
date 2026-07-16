@@ -1,0 +1,26 @@
+# PDP 非敏感配置
+# 仅承载非敏感的结构性配置；所有凭据、密钥、口令必须通过 Secret（pdp-secrets）注入。
+# 对齐 specs/002-pdp-product/persistence-design.md 动态数据源拓扑。
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pdp-config
+  namespace: pdp
+  labels:
+    app: pdp
+    component: api
+data:
+  # 服务端口与 Spring Profile
+  SERVER_PORT: "8080"
+  SPRING_PROFILES_ACTIVE: "prod"
+  # 动态数据源路由键（strict=true，未声明路由的业务调用始终访问 pdpPrimary）
+  PDP_DATASOURCE_PRIMARY: "pdpPrimary"
+  PDP_DATASOURCE_READ: "pdpRead"
+  PDP_DATASOURCE_WORKFLOW_ENGINE: "workflowEngine"
+  PDP_DATASOURCE_MIGRATION_SOURCE: "migrationSource"
+  PDP_DATASOURCE_MIGRATION_TARGET: "migrationTarget"
+  # 非敏感默认值（主机、口令等由 Secret 注入）
+  PDP_MYSQL_DATABASE: "pdp"
+  PDP_MYSQL_WORKFLOW_DATABASE: "pdp_workflow"
+  PDP_MYSQL_LEGACY_DATABASE: "legacy_pdp"
+  PDP_OBJECT_STORAGE_BUCKET: "pdp-attachments"

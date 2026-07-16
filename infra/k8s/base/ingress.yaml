@@ -1,0 +1,33 @@
+# PDP API Ingress（占位）
+# 部署时按集群 Ingress Controller、实际域名与 TLS 证书策略调整。
+# 生产必须启用 TLS（详见 docs/security/security-baseline.md 第 2 节传输保护）。
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pdp-api
+  namespace: pdp
+  labels:
+    app: pdp
+    component: api
+  annotations:
+    # 部署时按集群 Ingress Controller 补充，例如 nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+spec:
+  # 部署时按集群实际 IngressClass 调整。
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - pdp.example.com  # 部署时替换为实际域名
+      # TLS 证书 Secret，由 cert-manager 自动签发或由运维注入；证书内容不得进入仓库。
+      secretName: pdp-api-tls
+  rules:
+    - host: pdp.example.com  # 部署时替换为实际域名
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pdp-api
+                port:
+                  number: 8080

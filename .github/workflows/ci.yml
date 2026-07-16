@@ -1,0 +1,165 @@
+name: CI
+
+# PDP 持续集成矩阵（对应任务 T025、plan.md“测试”与“目标平台”章节）
+# 覆盖后端 verify、前端 typecheck/build、契约校验以及 MySQL 8.4 持久化矩阵。
+# 注意："on" 加引号以避免 YAML 1.1 将裸 on/off/yes/no 解析为布尔值（GitHub Actions 同样接受裸 on:）。
+"on":
+  push:
+    branches: [trae, master]
+  pull_request:
+
+# 取消同一分支/PR 上被取代的旧运行
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # 1. 后端：JDK 21 + Maven，使用 MySQL 8.4 服务容器承载集成测试
+  backend:
+    name: Backend (JDK 21 / Maven verify)
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: pdp-root
+          MYSQL_DATABASE: pdp
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ppdp-root"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+          --health-start-period=20s
+
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: '3306'
+      MYSQL_DATABASE: pdp
+      SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/pdp?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8&useUnicode=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: pdp-root
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Wait for MySQL readiness
+        run: |
+          for i in $(seq 1 30); do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -ppdp-root --silent; then
+              echo "MySQL is ready"
+              exit 0
+            fi
+            echo "Waiting for MySQL... ($i)"
+            sleep 3
+          done
+          echo "MySQL did not become ready in time" >&2
+          exit 1
+
+      - name: Build and verify
+        run: ./mvnw -B -ntp verify
+
+      - name: Upload Surefire reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports-${{ github.run_id }}
+          path: '**/target/surefire-reports/**'
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # 2. 前端：pnpm@9 + Node 22，typecheck 与构建
+  frontend:
+    name: Frontend (pnpm / Node 22)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm 9
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck (pdp-web)
+        run: pnpm --filter pdp-web typecheck
+
+      - name: Build (pdp-web)
+        run: pnpm --filter pdp-web build
+
+  # 3. 契约：OpenAPI / JSON Schema / 事件契约校验
+  contracts:
+    name: Contracts (OpenAPI / Schema / Events)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm 9
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run contract tests
+        run: pnpm --filter tests run test:contracts
+
+  # 4. MySQL 矩阵：P1 仅认证 MySQL 8.4 LTS；通过 Testcontainers 跑 Liquibase 与契约测试
+  mysql-matrix:
+    name: MySQL Matrix (${{ matrix.mysql-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # P1 仅认证 MySQL 8.4 LTS；PostgreSQL 与其他版本下移 P2（plan.md“P1 MySQL 持久化与数据库独立边界”）
+        mysql-version: ['8.4']
+
+    env:
+      # 供 Testcontainers 测试参数化容器镜像版本
+      TEST_MYSQL_VERSION: ${{ matrix.mysql-version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Liquibase + MySQL contract tests (Testcontainers MySQL ${{ matrix.mysql-version }})
+        run: ./mvnw -B -ntp -pl modules/public-persistence,modules/persistence-mysql -am verify

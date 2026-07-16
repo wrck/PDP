@@ -1,0 +1,18 @@
+{
+  "name": "pdp-tests",
+  "version": "0.0.0",
+  "private": true,
+  "description": "PDP 独立测试工作区 - E2E / 契约 / 性能测试",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:contracts": "node scripts/validate-contracts.mjs",
+    "test:perf": "k6 run"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@stoplight/spectral-cli": "^6.14.0",
+    "ajv": "^8.17.0",
+    "ajv-formats": "^3.0.1",
+    "js-yaml": "^4.1.0"
+  }
+}

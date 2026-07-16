@@ -1,0 +1,40 @@
+# Spectral 规则集（T024）
+#
+# 用于校验 specs/002-pdp-product/contracts/openapi.yaml 是否符合 PDP 平台稳定契约约束。
+# 运行：`pnpm --filter pdp-tests exec spectral lint -r tests/.spectral.yaml ../specs/002-pdp-product/contracts/openapi.yaml`
+# 依赖：`@stoplight/spectral-cli` 为 tests/package.json 的 devDependency。
+
+extends:
+  - spectral:oas
+
+rules:
+  # 每个 HTTP 操作必须声明 operationId，作为平台稳定标识与契约覆盖矩阵的引用键。
+  operation-must-have-operationId:
+    description: 每个 HTTP 操作必须声明 operationId，作为平台稳定标识。
+    severity: error
+    given: $.paths.*[get,post,put,patch,delete,head,options,trace]
+    then:
+      field: operationId
+      function: truthy
+
+  # 每个 HTTP 操作必须关联至少一个标签，便于契约覆盖矩阵与文档归类。
+  operation-must-have-tags:
+    description: 每个 HTTP 操作必须关联至少一个标签。
+    severity: warn
+    given: $.paths.*[get,post,put,patch,delete,head,options,trace]
+    then:
+      field: tags
+      function: length
+      functionOptions:
+        min: 1
+
+  # 路径段必须使用 kebab-case（小写字母、数字、连字符），或为 {param} 形式参数。
+  path-kebab-case:
+    description: API 路径段必须使用 kebab-case，路径参数使用 {param} 形式。
+    severity: error
+    given: $.paths.*
+    then:
+      field: '@key'
+      function: pattern
+      functionOptions:
+        match: ^((/[a-z0-9]+(-[a-z0-9]+)*)|(/\{[^}]+\}))*$

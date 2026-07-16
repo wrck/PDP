@@ -6,12 +6,12 @@
 
 ## 阶段 0：实现前治理门禁
 
-- [ ] T001 关闭规格质量清单并确认 P1 规格状态、业务闭环、状态机和成功标准已批准，文件：`specs/002-pdp-product/checklists/requirements.md`、`specs/002-pdp-product/spec.md`
-- [ ] T002 [P] 创建模块化单体架构 ADR，记录边界、替代方案、质量属性和拆分触发条件，文件：`docs/adr/0001-modular-monolith.md`
-- [ ] T003 [P] 创建 P1 MySQL 持久化与数据库独立边界 ADR，定义适配器注册、能力画像、部署事实、启动校验、单写主权和数据库切换治理扩展点，并记录第二种数据库、跨库迁移执行器及 PostgreSQL 下移 P2，文件：`docs/adr/0002-mysql-portability-boundary.md`
-- [ ] T004 [P] 创建动态数据源、独立 HikariCP 和单写主权 ADR，文件：`docs/adr/0003-dynamic-datasource.md`
-- [ ] T005 [P] 创建 MySQL 历史迁移、上线切换和本地事务边界 ADR，文件：`docs/adr/0004-data-migration.md`
-- [ ] T006 [P] 创建平台工作流与 Flowable 边界 ADR，记录平台基础能力定位、BPMN 标准、四类稳定端口、事实权威、事务、MySQL schema、升级和退出条件，文件：`docs/adr/0005-platform-workflow-flowable.md`
+- [X] T001 关闭规格质量清单并确认 P1 规格状态、业务闭环、状态机和成功标准已批准，文件：`specs/002-pdp-product/checklists/requirements.md`、`specs/002-pdp-product/spec.md`
+- [X] T002 [P] 创建模块化单体架构 ADR，记录边界、替代方案、质量属性和拆分触发条件，文件：`docs/adr/0001-modular-monolith.md`
+- [X] T003 [P] 创建 P1 MySQL 持久化与数据库独立边界 ADR，定义适配器注册、能力画像、部署事实、启动校验、单写主权和数据库切换治理扩展点，并记录第二种数据库、跨库迁移执行器及 PostgreSQL 下移 P2，文件：`docs/adr/0002-mysql-portability-boundary.md`
+- [X] T004 [P] 创建动态数据源、独立 HikariCP 和单写主权 ADR，文件：`docs/adr/0003-dynamic-datasource.md`
+- [X] T005 [P] 创建 MySQL 历史迁移、上线切换和本地事务边界 ADR，文件：`docs/adr/0004-data-migration.md`
+- [X] T006 [P] 创建平台工作流与 Flowable 边界 ADR，记录平台基础能力定位、BPMN 标准、四类稳定端口、事实权威、事务、MySQL schema、升级和退出条件，文件：`docs/adr/0005-platform-workflow-flowable.md`
 - [ ] T007 建立 ISO 21500 系列、PMI Lexicon、BPMN 与 PDP 扩展的受控术语目录和术语偏离审批机制，文件：`specs/002-pdp-product/terminology.md`、`docs/governance/terminology-governance.md`
 - [ ] T008 创建平台威胁模型与数据分类目录，覆盖信任边界、字段、附件、签名、导出、迁移、凭据和审计，文件：`docs/security/threat-model.md`、`docs/security/data-classification.md`
 - [ ] T009 创建传输与存储保护、密钥引用、轮换、职责分离和审计防篡改基线，文件：`docs/security/security-baseline.md`

@@ -15,7 +15,7 @@
       <arg column="parent_package_id" javaType="java.util.UUID"
           typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
       <arg column="status" javaType="com.pdp.domainconfig.domain.packageversion.DomainPackage$Status"/>
-      <arg column="revision" javaType="long"/>
+      <arg column="revision" javaType="_long"/>
     </constructor>
   </resultMap>
 

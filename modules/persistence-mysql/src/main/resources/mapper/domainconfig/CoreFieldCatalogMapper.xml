@@ -14,7 +14,7 @@
       <arg column="data_source" javaType="java.lang.String"/>
       <arg column="aliases" javaType="com.pdp.persistence.type.JsonDocument"
           typeHandler="com.pdp.mysql.typehandler.JsonDocumentTypeHandler"/>
-      <arg column="extensible" javaType="boolean"/>
+      <arg column="extensible" javaType="_boolean"/>
     </constructor>
   </resultMap>
 

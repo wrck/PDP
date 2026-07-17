@@ -8,12 +8,12 @@ import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface DomainPackageVersionMapper {
-  DomainPackageVersionRow findById(UUID id);
+  DomainPackageVersionRow findById(@Param("id") UUID id);
 
   DomainPackageVersionRow findByPackageAndSemanticVersion(
       @Param("packageId") UUID packageId, @Param("semanticVersion") String semanticVersion);
 
-  List<DomainPackageVersionRow> findByPackageId(UUID packageId);
+  List<DomainPackageVersionRow> findByPackageId(@Param("packageId") UUID packageId);
 
   List<DomainPackageVersionRow> findPageAfter(
       @Param("packageId") UUID packageId,

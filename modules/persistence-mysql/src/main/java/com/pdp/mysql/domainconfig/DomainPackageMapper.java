@@ -7,12 +7,12 @@ import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface DomainPackageMapper {
-  DomainPackageRow findById(UUID id);
+  DomainPackageRow findById(@Param("id") UUID id);
 
   DomainPackageRow findByStableKey(
       @Param("workspaceId") UUID workspaceId, @Param("stableKey") String stableKey);
 
-  List<DomainPackageRow> findByWorkspace(UUID workspaceId);
+  List<DomainPackageRow> findByWorkspace(@Param("workspaceId") UUID workspaceId);
 
   List<DomainPackageRow> findPageAfter(
       @Param("workspaceId") UUID workspaceId,

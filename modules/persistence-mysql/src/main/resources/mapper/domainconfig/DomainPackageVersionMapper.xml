@@ -15,14 +15,14 @@
       <arg column="content_hash" javaType="java.lang.String"/>
       <arg column="status"
           javaType="com.pdp.domainconfig.domain.packageversion.DomainPackageVersion$Status"/>
-      <arg column="frozen" javaType="boolean"/>
+      <arg column="frozen" javaType="_boolean"/>
       <arg column="created_by" javaType="java.util.UUID"
           typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
       <arg column="reviewed_by" javaType="java.util.UUID"
           typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
       <arg column="approved_by" javaType="java.util.UUID"
           typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
-      <arg column="revision" javaType="long"/>
+      <arg column="revision" javaType="_long"/>
       <arg column="created_at" javaType="java.time.Instant"
           typeHandler="com.pdp.mysql.typehandler.InstantUtcTypeHandler"/>
     </constructor>

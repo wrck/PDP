@@ -14,14 +14,14 @@
       <arg column="preview_id" javaType="java.util.UUID"
           typeHandler="com.pdp.mysql.typehandler.UuidBinaryTypeHandler"/>
       <arg column="status" javaType="java.lang.String"/>
-      <arg column="batch_size" javaType="int"/>
-      <arg column="migrated_count" javaType="long"/>
-      <arg column="failed_count" javaType="long"/>
+      <arg column="batch_size" javaType="_int"/>
+      <arg column="migrated_count" javaType="_long"/>
+      <arg column="failed_count" javaType="_long"/>
       <arg column="failure_details" javaType="com.pdp.persistence.type.JsonDocument"
           typeHandler="com.pdp.mysql.typehandler.JsonDocumentTypeHandler"/>
       <arg column="rollback_plan" javaType="com.pdp.persistence.type.JsonDocument"
           typeHandler="com.pdp.mysql.typehandler.JsonDocumentTypeHandler"/>
-      <arg column="revision" javaType="long"/>
+      <arg column="revision" javaType="_long"/>
       <arg column="created_at" javaType="java.time.Instant"
           typeHandler="com.pdp.mysql.typehandler.InstantUtcTypeHandler"/>
     </constructor>

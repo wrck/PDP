@@ -87,7 +87,7 @@
 - [ ] T065 创建空库、升级库和回滚演练的 Liquibase MySQL 测试，文件：`tests/backend/contract/persistence/LiquibaseMySqlMatrixTest.java`
 - [X] T066 创建实现公共持久化提供方扩展契约的 MySQL 8.4 仓储和 SQL 方言适配器，文件：`modules/persistence-mysql/src/main/java/com/pdp/mysql/`
 - [ ] T067 创建仓储端口禁止泄漏 MyBatis、MySQL 驱动和数据库专有类型的架构测试，并使用模拟适配器验证注册、唯一激活、未知能力拒绝和边界兼容，文件：`tests/backend/architecture/PersistenceBoundaryTest.java`、`tests/backend/contract/persistence/PersistenceProviderExtensionContractTest.java`
-- [ ] T068 创建权限过滤的搜索投影端口、文档和统一分析器，文件：`modules/experience/src/main/java/com/pdp/experience/search/`
+- [X] T068 创建权限过滤的搜索投影端口、文档和统一分析器，文件：`modules/experience/src/main/java/com/pdp/experience/search/`
 - [ ] T069 创建搜索投影 30 秒可见和撤权过滤测试，文件：`tests/backend/integration/search/SearchProjectionConsistencyTest.java`
 - [ ] T070 创建后台作业协调器以及批量导入、导出、归档、统计、投影重建、断点恢复、进度和失败明细能力，文件：`modules/operations/src/main/java/com/pdp/operations/job/BackgroundJobCoordinator.java`、`modules/operations/src/main/java/com/pdp/operations/projection/ProjectionRebuildJob.java`
 - [ ] T071 创建批量作业暂停、取消、检查点恢复、失败明细和资源预算测试，文件：`tests/backend/integration/job/BackgroundJobLifecycleTest.java`

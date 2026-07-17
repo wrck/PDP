@@ -166,7 +166,7 @@
 - [X] T129 [P] [US3] 编写项目模板版本状态、原子实例化和从模板创建项目 API 契约测试，文件：`tests/contracts/us3-project-template.spec.ts`
 - [ ] T130 [P] [US3] 编写模板维护、创建向导和版本快照端到端测试，文件：`tests/e2e/us3-project-template.spec.ts`
 - [X] T131 [US3] 创建项目模板、模板版本、模板组件和实例化记录公共变更集，文件：`modules/public-persistence/src/main/resources/db/changelog/common/030-project-template.xml`
-- [ ] T132 [US3] 创建项目模板、版本和实例化计划领域模型及仓储端口，文件：`modules/template/src/main/java/com/pdp/template/domain/`、`modules/template/src/main/java/com/pdp/template/port/`
+- [X] T132 [US3] 创建项目模板、版本和实例化计划领域模型及仓储端口，文件：`modules/template/src/main/java/com/pdp/template/domain/`、`modules/template/src/main/java/com/pdp/template/port/`
 - [ ] T133 [US3] 创建项目模板 MySQL Mapper、XML 和适配器，文件：`modules/persistence-mysql/src/main/java/com/pdp/mysql/template/`、`modules/persistence-mysql/src/main/resources/mapper/template/`
 - [ ] T134 [US3] 创建版本快照、组件顺序和实例化幂等 MySQL 契约测试，文件：`tests/backend/contract/template/ProjectTemplateDatabaseContractTest.java`
 - [ ] T135 [US3] 实现项目模板编辑、发布、冻结和版本比较服务，文件：`modules/template/src/main/java/com/pdp/template/application/ProjectTemplateService.java`

@@ -15,6 +15,7 @@
     "vue-router": "^4.4.0",
     "pinia": "^2.2.0",
     "ant-design-vue": "^4.2.0",
+    "@ant-design/icons-vue": "^7.0.0",
     "@tanstack/vue-query": "^2.0.0",
     "axios": "^1.7.0"
   },

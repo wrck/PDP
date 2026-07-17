@@ -25,5 +25,13 @@
             <groupId>com.pdp</groupId>
             <artifactId>pdp-public-persistence</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-integration</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-experience</artifactId>
+        </dependency>
     </dependencies>
 </project>

@@ -4,5 +4,11 @@ public record StateDefinition(
     String stableKey,
     Object label,
     TopLifecycleState topLifecycleState,
-    boolean initial,
-    boolean terminal) {}
+    Boolean initial,
+    Boolean terminal) {
+
+  public StateDefinition {
+    initial = Boolean.TRUE.equals(initial);
+    terminal = Boolean.TRUE.equals(terminal);
+  }
+}

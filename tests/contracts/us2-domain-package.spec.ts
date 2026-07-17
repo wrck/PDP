@@ -3,8 +3,7 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import test from 'node:test'
 
-import Ajv2020 from 'ajv/dist/2020.js'
-import addFormats from 'ajv-formats'
+import { Ajv2020 } from 'ajv/dist/2020.js'
 import YAML from 'yaml'
 
 const contracts = path.resolve(
@@ -28,6 +27,12 @@ test('US2 领域包生命周期和迁移操作必须形成稳定契约', async (
       '/domain-packages/{packageId}/versions/{versionId}/validate',
       'post',
       'validateDomainPackageVersion',
+      '200',
+    ],
+    [
+      '/domain-packages/{packageId}/versions/{versionId}/submit-review',
+      'post',
+      'submitDomainPackageVersionReview',
       '200',
     ],
     [
@@ -92,7 +97,6 @@ test('US2 manifest 必须约束三层继承、扩展治理和可回滚迁移', a
     await readFile(path.join(contracts, 'domain-package.schema.json'), 'utf8'),
   )
   const ajv = new Ajv2020({ allErrors: true, strict: false })
-  addFormats(ajv)
   const validate = ajv.compile(schema)
 
   const valid = {
@@ -151,7 +155,12 @@ test('US2 manifest 必须约束三层继承、扩展治理和可回滚迁移', a
 
   assert.equal(validate(valid), true, JSON.stringify(validate.errors))
 
-  const invalid = structuredClone(valid)
+  const invalid = structuredClone(valid) as {
+    layer: string
+    extends?: unknown
+    extensions: Array<{ isolation: string }>
+    migrations: Array<{ rollback: Record<string, unknown> }>
+  }
   invalid.layer = 'WORKSPACE_CUSTOMER'
   delete invalid.extends
   invalid.extensions[0].isolation = 'NONE'
@@ -173,7 +182,6 @@ test('网络设备割接示例包必须通过正式 manifest 契约', async () =
     ),
   )
   const ajv = new Ajv2020({ allErrors: true, strict: false })
-  addFormats(ajv)
   const validate = ajv.compile(schema)
   assert.equal(validate(fixture), true, JSON.stringify(validate.errors))
 })

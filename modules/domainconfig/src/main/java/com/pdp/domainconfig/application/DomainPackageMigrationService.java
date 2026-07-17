@@ -100,8 +100,7 @@ public final class DomainPackageMigrationService {
   public MigrationJob start(UUID previewId, String confirmationToken, int batchSize, String reason) {
     requireBatchSize(batchSize);
     requireReason(reason, "迁移原因");
-    MigrationPreview preview =
-        migrations.findPreview(previewId).orElseThrow(() -> new IllegalArgumentException("迁移预览不存在"));
+    MigrationPreview preview = requirePreview(previewId);
     if (!clock.instant().isBefore(preview.impact().expiresAt())) {
       throw new IllegalStateException("迁移预览已过期，请重新预览");
     }
@@ -135,6 +134,12 @@ public final class DomainPackageMigrationService {
             new Revision(0),
             clock.instant());
     return migrations.saveJob(job);
+  }
+
+  public MigrationPreview requirePreview(UUID previewId) {
+    return migrations
+        .findPreview(previewId)
+        .orElseThrow(() -> new IllegalArgumentException("迁移预览不存在"));
   }
 
   public MigrationJob recordBatch(UUID jobId, int migrated, List<UUID> failedInstances) {

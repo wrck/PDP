@@ -19,6 +19,13 @@ spring:
 server:
   shutdown: graceful
 
+pdp:
+  domain-package:
+    cursor:
+      active-key-id: ${PDP_CURSOR_ACTIVE_KEY_ID}
+      active-key-base64: ${PDP_CURSOR_ACTIVE_KEY_BASE64}
+      ttl: ${PDP_CURSOR_TTL:PT1H}
+
 management:
   endpoints:
     web:

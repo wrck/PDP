@@ -10,4 +10,9 @@ public record TransitionDefinition(
     String requiredPermission,
     String guardRuleKey,
     String workflowBindingKey,
-    boolean controlledRollback) {}
+    Boolean controlledRollback) {
+
+  public TransitionDefinition {
+    controlledRollback = Boolean.TRUE.equals(controlledRollback);
+  }
+}

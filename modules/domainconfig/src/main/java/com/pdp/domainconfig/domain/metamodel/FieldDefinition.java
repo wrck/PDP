@@ -7,12 +7,14 @@ public record FieldDefinition(
     String stableKey,
     Object label,
     String dataType,
-    boolean required,
-    boolean sensitive,
+    Boolean required,
+    Boolean sensitive,
     String semanticName,
     String dataSource) {
 
   public FieldDefinition {
+    required = Boolean.TRUE.equals(required);
+    sensitive = Boolean.TRUE.equals(sensitive);
     semanticName =
         semanticName == null || semanticName.isBlank()
             ? (label == null ? stableKey : label.toString())

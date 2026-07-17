@@ -14,6 +14,12 @@ const router = createRouter({
       component: () => import('../views/workspace/WorkspaceGovernanceView.vue'),
     },
     {
+      path: '/domain-packages',
+      name: 'domain-package-designer',
+      component: () =>
+        import('../views/domain-package/DomainPackageDesignerView.vue'),
+    },
+    {
       path: '/admin/workflow',
       name: 'workflow-administration',
       component: () =>

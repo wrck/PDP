@@ -393,6 +393,7 @@ paths:
     post:
       tags: [领域包]
       summary: 审核领域包版本
+      description: 仅允许独立审核人处理 REVIEW_PENDING 版本；审核人不得代替创建者提交审核。
       operationId: reviewDomainPackageVersion
       parameters:
         - $ref: '#/components/parameters/WorkspaceHeader'
@@ -414,10 +415,31 @@ paths:
                 $ref: '#/components/schemas/DomainPackageVersion'
         '409':
           $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/submit-review:
+    post:
+      tags: [领域包]
+      summary: 提交领域包版本审核
+      description: 仅版本创建者可以将 VALIDATED 版本提交为 REVIEW_PENDING，提交动作与独立审核动作分离。
+      operationId: submitDomainPackageVersionReview
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: 已提交审核
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
   /domain-packages/{packageId}/versions/{versionId}/publish:
     post:
       tags: [领域包]
-      summary: 审核并发布领域包版本
+      summary: 发布已批准的领域包版本
+      description: 仅允许与创建者、审核人均不同的发布批准人发布 APPROVED 版本。
       operationId: publishDomainPackageVersion
       parameters:
         - $ref: '#/components/parameters/WorkspaceHeader'
@@ -2234,13 +2256,18 @@ components:
       allOf:
         - $ref: '#/components/schemas/CreateDomainPackageCommand'
         - type: object
-          required: [id, status]
+          required: [id, workspaceId, status, revision]
           properties:
             id:
+              $ref: '#/components/schemas/Uuid'
+            workspaceId:
               $ref: '#/components/schemas/Uuid'
             status:
               type: string
               enum: [DRAFT, ACTIVE, DEPRECATED, RETIRED]
+            revision:
+              type: integer
+              minimum: 0
     CreateDomainPackageVersionCommand:
       type: object
       required: [semanticVersion, manifest]

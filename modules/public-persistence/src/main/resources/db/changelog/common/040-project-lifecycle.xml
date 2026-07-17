@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <!-- 项目生命周期公共模型仅使用可移植的类型和约束。 -->
+  <changeSet id="040-01-project" author="pdp">
+    <createTable tableName="pdp_project">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="workspace_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="parent_project_id" type="CHAR(36)"/>
+      <column name="project_no" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="name" type="VARCHAR(200)"><constraints nullable="false"/></column>
+      <column name="objective" type="CLOB"/><column name="scope" type="CLOB"/>
+      <column name="customer_ref" type="VARCHAR(200)"/><column name="contract_ref" type="VARCHAR(200)"/>
+      <column name="manager_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="priority" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="health" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="top_lifecycle_state" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="domain_stage_key" type="VARCHAR(100)"/>
+      <column name="planned_start_at" type="TIMESTAMP"/><column name="planned_end_at" type="TIMESTAMP"/>
+      <column name="actual_start_at" type="TIMESTAMP"/><column name="actual_end_at" type="TIMESTAMP"/>
+      <column name="template_version_id" type="CHAR(36)"/><column name="runtime_snapshot_id" type="CHAR(36)"/>
+      <column name="progress" type="DECIMAL(5,2)"/><column name="progress_calculated_at" type="TIMESTAMP"/>
+      <column name="status" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="created_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+      <column name="updated_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="pdp_project" columnNames="workspace_id,project_no" constraintName="uk_project_workspace_no"/>
+    <addForeignKeyConstraint baseTableName="pdp_project" baseColumnNames="workspace_id" referencedTableName="pdp_workspace" referencedColumnNames="id" constraintName="fk_project_workspace" onDelete="RESTRICT"/>
+    <addForeignKeyConstraint baseTableName="pdp_project" baseColumnNames="parent_project_id" referencedTableName="pdp_project" referencedColumnNames="id" constraintName="fk_project_parent" onDelete="RESTRICT"/>
+    <addForeignKeyConstraint baseTableName="pdp_project" baseColumnNames="manager_id" referencedTableName="pdp_user_account" referencedColumnNames="id" constraintName="fk_project_manager" onDelete="RESTRICT"/>
+    <createIndex tableName="pdp_project" indexName="idx_project_workspace_lifecycle"><column name="workspace_id"/><column name="top_lifecycle_state"/><column name="id"/></createIndex>
+    <createIndex tableName="pdp_project" indexName="idx_project_parent"><column name="parent_project_id"/><column name="id"/></createIndex>
+  </changeSet>
+
+  <changeSet id="040-02-project-member" author="pdp">
+    <createTable tableName="pdp_project_member">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="project_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="actor_ref" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="project_role_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="valid_from" type="TIMESTAMP"><constraints nullable="false"/></column><column name="valid_until" type="TIMESTAMP"/>
+      <column name="data_scope" type="CLOB"/><column name="source" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="pdp_project_member" columnNames="project_id,actor_ref,project_role_key,valid_from" constraintName="uk_project_member_assignment"/>
+    <addForeignKeyConstraint baseTableName="pdp_project_member" baseColumnNames="project_id" referencedTableName="pdp_project" referencedColumnNames="id" constraintName="fk_project_member_project" onDelete="RESTRICT"/>
+    <createIndex tableName="pdp_project_member" indexName="idx_project_member_active"><column name="project_id"/><column name="actor_ref"/><column name="valid_until"/></createIndex>
+  </changeSet>
+
+  <changeSet id="040-03-project-stage" author="pdp">
+    <createTable tableName="pdp_project_stage">
+      <column name="id" type="CHAR(36)"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="project_id" type="CHAR(36)"><constraints nullable="false"/></column>
+      <column name="stable_key" type="VARCHAR(100)"><constraints nullable="false"/></column>
+      <column name="name" type="VARCHAR(200)"><constraints nullable="false"/></column>
+      <column name="top_lifecycle_state" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="state" type="VARCHAR(30)"><constraints nullable="false"/></column>
+      <column name="owner_id" type="CHAR(36)"/><column name="planned_start_at" type="TIMESTAMP"/><column name="planned_end_at" type="TIMESTAMP"/><column name="actual_start_at" type="TIMESTAMP"/><column name="actual_end_at" type="TIMESTAMP"/>
+      <column name="entry_rule" type="CLOB"/><column name="exit_rule" type="CLOB"/><column name="required_outputs" type="CLOB"/>
+      <column name="sequence_no" type="INTEGER"><constraints nullable="false"/></column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="pdp_project_stage" columnNames="project_id,stable_key" constraintName="uk_project_stage_key"/>
+    <addUniqueConstraint tableName="pdp_project_stage" columnNames="project_id,sequence_no" constraintName="uk_project_stage_sequence"/>
+    <addForeignKeyConstraint baseTableName="pdp_project_stage" baseColumnNames="project_id" referencedTableName="pdp_project" referencedColumnNames="id" constraintName="fk_project_stage_project" onDelete="RESTRICT"/>
+    <createIndex tableName="pdp_project_stage" indexName="idx_project_stage_lifecycle"><column name="project_id"/><column name="top_lifecycle_state"/><column name="sequence_no"/></createIndex>
+  </changeSet>
+
+  <changeSet id="040-04-project-instantiation-link" author="pdp">
+    <addForeignKeyConstraint baseTableName="pdp_project_instantiation_record" baseColumnNames="project_id" referencedTableName="pdp_project" referencedColumnNames="id" constraintName="fk_instantiation_record_project" onDelete="RESTRICT"/>
+  </changeSet>
+</databaseChangeLog>

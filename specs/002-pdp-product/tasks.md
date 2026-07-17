@@ -163,7 +163,7 @@
 ## 阶段 5：US3 项目模板与项目创建（P1）
 
 - [X] T128 [US3] 先更新项目模板、实例化和项目创建 API 契约，文件：`specs/002-pdp-product/contracts/openapi.yaml`、`specs/002-pdp-product/contracts/coverage.md`
-- [ ] T129 [P] [US3] 编写项目模板版本状态、原子实例化和从模板创建项目 API 契约测试，文件：`tests/contracts/us3-project-template.spec.ts`
+- [X] T129 [P] [US3] 编写项目模板版本状态、原子实例化和从模板创建项目 API 契约测试，文件：`tests/contracts/us3-project-template.spec.ts`
 - [ ] T130 [P] [US3] 编写模板维护、创建向导和版本快照端到端测试，文件：`tests/e2e/us3-project-template.spec.ts`
 - [ ] T131 [US3] 创建项目模板、模板版本、模板组件和实例化记录公共变更集，文件：`modules/public-persistence/src/main/resources/db/changelog/common/030-project-template.xml`
 - [ ] T132 [US3] 创建项目模板、版本和实例化计划领域模型及仓储端口，文件：`modules/template/src/main/java/com/pdp/template/domain/`、`modules/template/src/main/java/com/pdp/template/port/`

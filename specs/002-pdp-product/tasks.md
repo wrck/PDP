@@ -99,7 +99,7 @@
 
 ### 平台工作流基础能力
 
-- [ ] T077 先完成平台工作流定义、部署、实例诊断和管理动作的 OpenAPI/事件契约及失败测试，文件：`specs/002-pdp-product/contracts/openapi.yaml`、`specs/002-pdp-product/contracts/events.md`、`tests/contracts/platform-workflow.spec.ts`
+- [X] T077 先完成平台工作流定义、部署、实例诊断和管理动作的 OpenAPI/事件契约及失败测试，文件：`specs/002-pdp-product/contracts/openapi.yaml`、`specs/002-pdp-product/contracts/events.md`、`tests/contracts/platform-workflow.spec.ts`
 - [ ] T078 创建平台 `workflow` 模块以及定义、运行、人工任务和管理四类公开端口，文件：`modules/workflow/pom.xml`、`modules/workflow/src/main/java/com/pdp/workflow/port/`
 - [ ] T079 配置 Flowable Process Engine 独立 schema/表前缀、数据库账号、HikariCP 池和本地事务管理器，关闭生产自动建表/升级和内置 REST/IDM，文件：`modules/workflow/src/main/java/com/pdp/workflow/infrastructure/flowable/FlowableEngineConfig.java`、`apps/api/src/main/resources/application-workflow.yml`
 - [ ] T080 创建 Flowable MySQL 版本化初始化与升级脚本清单，并验证空库、上一版本升级和不支持版本快速失败，文件：`modules/workflow/src/main/resources/db/flowable/mysql/`、`tests/backend/contract/workflow/FlowableSchemaMySqlMatrixTest.java`

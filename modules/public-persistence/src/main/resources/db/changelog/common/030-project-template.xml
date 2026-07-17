@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <!--
+    公共项目模板模型。这里只使用 Liquibase 可移植类型和约束；
+    JSON、生成列、函数索引及其他数据库专有优化必须由数据库适配器追加。
+  -->
+  <changeSet id="030-01-project-template" author="pdp">
+    <createTable tableName="pdp_project_template">
+      <column name="id" type="CHAR(36)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="workspace_id" type="CHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="stable_key" type="VARCHAR(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="name" type="VARCHAR(200)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="CLOB"/>
+      <column name="status" type="VARCHAR(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="current_published_version_id" type="CHAR(36)"/>
+      <column name="created_by" type="CHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="CHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addUniqueConstraint
+        tableName="pdp_project_template"
+        columnNames="workspace_id,stable_key"
+        constraintName="uk_project_template_workspace_key"/>
+    <addForeignKeyConstraint
+        baseTableName="pdp_project_template"
+        baseColumnNames="workspace_id"
+        referencedTableName="pdp_workspace"
+        referencedColumnNames="id"
+        constraintName="fk_project_template_workspace"
+        onDelete="RESTRICT"/>
+    <addForeignKeyConstraint
+        baseTableName="pdp_project_template"
+        baseColumnNames="created_by"
+        referencedTableName="pdp_user_account"
+        referencedColumnNames="id"
+        constraintName="fk_project_template_creator"
+        onDelete="RESTRICT"/>
+    <addForeignKeyConstraint
+        baseTableName="pdp_project_template"
+        baseColumnNames="updated_by"
+        referencedTableName="pdp_user_account"
+        referencedColumnNames="id"
+        constraintName="fk_project_template_updater"
+        onDelete="RESTRICT"/>
+    <createIndex tableName="pdp_project_template" indexName="idx_project_template_workspace_status">
+      <column name="workspace_id"/>
+      <column name="status"/>
+      <column name="id"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="030-02-project-template-version" author="pdp">
+    <createTable tableName="pdp_project_template_version">
+      <column name="id" type="CHAR(36)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="template_id" type="CHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="semantic_version" type="VARCHAR(50)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="base_version_id" type="CHAR(36)"/>
+      <column name="domain_package_version_id" type="CHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="status" type="VARCHAR(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="content_hash" type="VARCHAR(128)"/>
+      <column name="definition" type="CLOB">
+        <constraints nullable="false"/>
+      </column>
+      <column name="change_summary" type="VARCHAR(1000)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_by" type="CHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="frozen_by" type="CHAR(36)"/>
+      <column name="frozen_at" type="TIMESTAMP"/>
+      <column name="published_by" type="CHAR(36)"/>
+      <column name="published_at" type="TIMESTAMP"/>
+      <column name="retired_by" type="CHAR(36)"/>
+      <column name="retired_at" type="TIMESTAMP"/>
+      <column name="created_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addUniqueConstraint
+        tableName="pdp_project_template_version"
+        columnNames="template_id,semantic_version"
+        constraintName="uk_project_template_version_semantic"/>
+    <addForeignKeyConstraint
+        baseTableName="pdp_project_template_version"
+        baseColumnNames="template_id"
+        referencedTableName="pdp_project_template"
+        referencedColumnNames="id"
+        constraintName="fk_template_version_template"
+        onDelete="RESTRICT"/>
+    <addForeignKeyConstraint
+        baseTableName="pdp_project_template_version"
+        baseColumnNames="base_version_id"
+        referencedTableName="pdp_project_template_version"
+        referencedColumnNames="id"
+        constraintName="fk_template_version_base"
+        onDelete="RESTRICT"/>
+    <addForeignKeyConstraint
+        baseTableName="pdp_project_template_version"
+        baseColumnNames="domain_package_version_id"
+        referencedTableName="pdp_domain_package_version"
+        referencedColumnNames="id"
+        constraintName="fk_template_version_domain_package"
+        onDelete="RESTRICT"/>
+    <addForeignKeyConstraint
+        baseTableName="pdp_project_template"
+        baseColumnNames="current_published_version_id"
+        referencedTableName="pdp_project_template_version"
+        referencedColumnNames="id"
+        constraintName="fk_template_current_version"
+        onDelete="RESTRICT"/>
+    <createIndex
+        tableName="pdp_project_template_version"
+        indexName="idx_template_version_status">
+      <column name="template_id"/>
+      <column name="status"/>
+      <column name="id"/>
+    </createIndex>
+    <createIndex
+        tableName="pdp_project_template_version"
+        indexName="idx_template_version_domain_package">
+      <column name="domain_package_version_id"/>
+      <column name="id"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="030-03-project-template-component" author="pdp">
+    <createTable tableName="pdp_project_template_component">
+      <column name="id" type="CHAR(36)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="template_version_id" type="CHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="component_type" type="VARCHAR(30)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="component_key" type="VARCHAR(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="parent_component_key" type="VARCHAR(100)"/>
+      <column name="name" type="VARCHAR(200)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="sequence_no" type="INTEGER">
+        <constraints nullable="false"/>
+      </column>
+      <column name="configuration" type="CLOB">
+        <constraints nullable="false"/>
+      </column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addUniqueConstraint
+        tableName="pdp_project_template_component"
+        columnNames="template_version_id,component_key"
+        constraintName="uk_template_component_version_key"/>
+    <addForeignKeyConstraint
+        baseTableName="pdp_project_template_component"
+        baseColumnNames="template_version_id"
+        referencedTableName="pdp_project_template_version"
+        referencedColumnNames="id"
+        constraintName="fk_template_component_version"
+        onDelete="RESTRICT"/>
+    <createIndex
+        tableName="pdp_project_template_component"
+        indexName="idx_template_component_order">
+      <column name="template_version_id"/>
+      <column name="component_type"/>
+      <column name="sequence_no"/>
+      <column name="id"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="030-04-project-instantiation-record" author="pdp">
+    <createTable tableName="pdp_project_instantiation_record">
+      <column name="id" type="CHAR(36)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="workspace_id" type="CHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <!-- T144 建立 pdp_project 后再追加项目外键；T131 仅保留跨事务稳定标识。 -->
+      <column name="project_id" type="CHAR(36)">
+        <constraints nullable="false" unique="true"/>
+      </column>
+      <column name="creation_mode" type="VARCHAR(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="template_version_id" type="CHAR(36)"/>
+      <column name="template_content_hash" type="VARCHAR(128)"/>
+      <column name="domain_package_snapshot_id" type="CHAR(36)"/>
+      <column name="idempotency_key" type="VARCHAR(128)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="request_digest" type="VARCHAR(128)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="generated_summary" type="CLOB">
+        <constraints nullable="false"/>
+      </column>
+      <column name="generated_object_refs" type="CLOB">
+        <constraints nullable="false"/>
+      </column>
+      <column name="status" type="VARCHAR(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="completed_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="revision" type="BIGINT" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addUniqueConstraint
+        tableName="pdp_project_instantiation_record"
+        columnNames="workspace_id,idempotency_key"
+        constraintName="uk_project_instantiation_idempotency"/>
+    <addForeignKeyConstraint
+        baseTableName="pdp_project_instantiation_record"
+        baseColumnNames="workspace_id"
+        referencedTableName="pdp_workspace"
+        referencedColumnNames="id"
+        constraintName="fk_project_instantiation_workspace"
+        onDelete="RESTRICT"/>
+    <addForeignKeyConstraint
+        baseTableName="pdp_project_instantiation_record"
+        baseColumnNames="template_version_id"
+        referencedTableName="pdp_project_template_version"
+        referencedColumnNames="id"
+        constraintName="fk_project_instantiation_template"
+        onDelete="RESTRICT"/>
+    <addForeignKeyConstraint
+        baseTableName="pdp_project_instantiation_record"
+        baseColumnNames="domain_package_snapshot_id"
+        referencedTableName="pdp_domain_package_snapshot"
+        referencedColumnNames="id"
+        constraintName="fk_project_instantiation_snapshot"
+        onDelete="RESTRICT"/>
+    <createIndex
+        tableName="pdp_project_instantiation_record"
+        indexName="idx_project_instantiation_template">
+      <column name="template_version_id"/>
+      <column name="completed_at"/>
+      <column name="id"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

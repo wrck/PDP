@@ -17,13 +17,14 @@
     <description>工作空间、组织、成员、角色与跨空间协作授权</description>
 
     <dependencies>
+        <!--
+            工作空间模块仅依赖共享内核：领域模型、端口与应用服务不依赖任何持久化框架。
+            适配器位于 pdp-public-persistence（反向依赖本模块端口），符合六边形架构与 ADR 0001。
+            spring-boot-starter 经 pdp-shared-kernel 传递，提供 @Service/@Transactional。
+        -->
         <dependency>
             <groupId>com.pdp</groupId>
             <artifactId>pdp-shared-kernel</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.pdp</groupId>
-            <artifactId>pdp-public-persistence</artifactId>
         </dependency>
     </dependencies>
 </project>

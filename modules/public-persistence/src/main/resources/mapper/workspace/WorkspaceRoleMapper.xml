@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.workspace.mapper.WorkspaceRoleMapper">
+
+    <!--
+        WorkspaceRoleRow record 构造器映射。
+        字段顺序与 com.pdp.persistence.workspace.adapter.WorkspaceRoleRow canonical constructor 一致：
+        id, workspaceId, key, name, description, permissionsJson, dataScopeType, status,
+        isSystem, revision, createdAt, updatedAt。
+        permissions 列以 TEXT 存储 JSON 字符串，由适配器反序列化为 List<String>。
+    -->
+    <resultMap id="roleRowMap" type="com.pdp.persistence.workspace.adapter.WorkspaceRoleRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="workspace_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="key" javaType="java.lang.String"/>
+            <arg column="name" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="permissions" javaType="java.lang.String"/>
+            <arg column="data_scope_type" javaType="com.pdp.workspace.domain.DataScopeType"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="status" javaType="com.pdp.workspace.domain.RoleStatus"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="is_system" javaType="boolean"/>
+            <arg column="revision" javaType="int"/>
+            <arg column="created_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="updated_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, workspace_id, key, name, description, permissions, data_scope_type, status,
+        is_system, revision, created_at, updated_at
+    </sql>
+
+    <select id="selectById" resultMap="roleRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM workspace_role
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </select>
+
+    <select id="selectByWorkspaceAndKey" resultMap="roleRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM workspace_role
+        WHERE workspace_id = #{workspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND key = #{key}
+    </select>
+
+    <!--
+        按工作空间分页查询角色：
+        includeSystem=false 时排除系统角色（is_system = false）。
+        游标分页使用 id > #{lastId}，UUIDv7 时间有序。
+    -->
+    <select id="selectByWorkspace" resultMap="roleRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM workspace_role
+        WHERE workspace_id = #{workspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        <if test="!includeSystem">
+            AND is_system = false
+        </if>
+        <if test="lastId != null">
+            AND id &gt; #{lastId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        </if>
+        ORDER BY id ASC
+        LIMIT #{size}
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.persistence.workspace.adapter.WorkspaceRoleRow">
+        INSERT INTO workspace_role
+            (id, workspace_id, key, name, description, permissions, data_scope_type, status,
+             is_system, revision, created_at, updated_at)
+        VALUES
+            (#{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{workspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{key},
+             #{name},
+             #{description},
+             #{permissionsJson},
+             #{dataScopeType, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{status, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{isSystem},
+             #{revision},
+             #{createdAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{updatedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+    </insert>
+
+    <update id="update">
+        UPDATE workspace_role
+        SET name = #{name},
+            description = #{description},
+            permissions = #{permissionsJson},
+            data_scope_type = #{dataScopeType, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE workspace_role
+        SET status = #{newStatus, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+</mapper>

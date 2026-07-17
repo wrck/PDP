@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.workspace.mapper.WorkspaceMemberMapper">
+
+    <!--
+        WorkspaceMemberRow record 构造器映射（仅标量字段）。
+        字段顺序与 com.pdp.persistence.workspace.adapter.WorkspaceMemberRow canonical constructor 一致：
+        id, workspaceId, userId, organizationId, status, validUntil, revision, createdAt, updatedAt。
+        角色与数据范围 ID 列表由独立 SQL 加载，避免在 record 构造器上映射集合参数。
+    -->
+    <resultMap id="memberRowMap" type="com.pdp.persistence.workspace.adapter.WorkspaceMemberRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="workspace_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="user_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="organization_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="status" javaType="com.pdp.workspace.domain.MemberStatus"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="valid_until" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="revision" javaType="int"/>
+            <arg column="created_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="updated_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="uuidMap" type="java.util.UUID">
+        <idArg column="id" javaType="java.util.UUID"
+               typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, workspace_id, user_id, organization_id, status, valid_until, revision, created_at, updated_at
+    </sql>
+
+    <select id="selectById" resultMap="memberRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM workspace_member
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </select>
+
+    <select id="selectByWorkspaceAndUser" resultMap="memberRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM workspace_member
+        WHERE workspace_id = #{workspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND user_id = #{userId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </select>
+
+    <!--
+        按工作空间分页查询成员：
+        - organizationId 非空时按组织过滤
+        - roleId 非空时通过 EXISTS 子查询命中 workspace_member_role 关联表
+        - status 非空时按状态过滤
+        游标分页使用 id > #{lastId}，UUIDv7 时间有序。
+    -->
+    <select id="selectByWorkspace" resultMap="memberRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM workspace_member
+        WHERE workspace_id = #{workspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        <if test="organizationId != null">
+            AND organization_id = #{organizationId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        </if>
+        <if test="roleId != null">
+            AND EXISTS (
+                SELECT 1 FROM workspace_member_role wmr
+                WHERE wmr.member_id = workspace_member.id
+                  AND wmr.role_id = #{roleId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            )
+        </if>
+        <if test="status != null">
+            AND status = #{status, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler}
+        </if>
+        <if test="lastId != null">
+            AND id &gt; #{lastId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        </if>
+        ORDER BY id ASC
+        LIMIT #{size}
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.persistence.workspace.adapter.WorkspaceMemberRow">
+        INSERT INTO workspace_member
+            (id, workspace_id, user_id, organization_id, status, valid_until, revision, created_at, updated_at)
+        VALUES
+            (#{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{workspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{userId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{organizationId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{status, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{validUntil, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{revision},
+             #{createdAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{updatedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE workspace_member
+        SET status = #{newStatus, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+    <update id="updateAssociations">
+        UPDATE workspace_member
+        SET organization_id = #{organizationId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+            valid_until = #{validUntil, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+    <!-- 关联表维护：先 DELETE 旧关联，再批量 INSERT 新关联 -->
+    <delete id="deleteRoleAssociations">
+        DELETE FROM workspace_member_role
+        WHERE member_id = #{memberId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </delete>
+
+    <delete id="deleteDataScopeAssociations">
+        DELETE FROM workspace_member_data_scope
+        WHERE member_id = #{memberId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </delete>
+
+    <insert id="insertRoleAssociations">
+        INSERT INTO workspace_member_role (member_id, role_id) VALUES
+        <foreach collection="roleIds" item="roleId" separator=",">
+            (#{memberId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{roleId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler})
+        </foreach>
+    </insert>
+
+    <insert id="insertDataScopeAssociations">
+        INSERT INTO workspace_member_data_scope (member_id, scope_id) VALUES
+        <foreach collection="scopeIds" item="scopeId" separator=",">
+            (#{memberId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{scopeId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler})
+        </foreach>
+    </insert>
+
+    <select id="selectRoleIds" resultType="java.util.UUID"
+            resultOrdered="true">
+        SELECT role_id AS id
+        FROM workspace_member_role
+        WHERE member_id = #{memberId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        ORDER BY role_id ASC
+    </select>
+
+    <select id="selectDataScopeIds" resultType="java.util.UUID"
+            resultOrdered="true">
+        SELECT scope_id AS id
+        FROM workspace_member_data_scope
+        WHERE member_id = #{memberId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        ORDER BY scope_id ASC
+    </select>
+
+    <!--
+        FR-068 批量撤销指定用户的全部 ACTIVE/SUSPENDED 成员记录（即时撤权，1 分钟内生效）。
+        单条 UPDATE 原子完成；REMOVED 为终态不可逆。
+        已 REMOVED 记录跳过；同时清理关联由应用层在后台作业协调（关联表无 revision，可异步清理）。
+    -->
+    <update id="revokeAllByUser">
+        UPDATE workspace_member
+        SET status = 'REMOVED',
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE user_id = #{userId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND status IN ('ACTIVE', 'SUSPENDED')
+    </update>
+
+</mapper>

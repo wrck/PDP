@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.workspace.mapper.OrganizationMapper">
+
+    <!--
+        Organization record 构造器映射。
+        字段顺序与 com.pdp.workspace.domain.Organization canonical constructor 一致：
+        id, workspaceId, code, name, description, parentId, path, depth, status,
+        revision, createdAt, updatedAt。
+        parentId 为 NULL 时由 TypeHandler 返回 null（顶层组织）。
+    -->
+    <resultMap id="organizationMap" type="com.pdp.workspace.domain.Organization">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="workspace_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="code" javaType="java.lang.String"/>
+            <arg column="name" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="parent_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="path" javaType="java.lang.String"/>
+            <arg column="depth" javaType="int"/>
+            <arg column="status" javaType="com.pdp.workspace.domain.OrganizationStatus"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="revision" javaType="int"/>
+            <arg column="created_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="updated_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, workspace_id, code, name, description, parent_id, path, depth, status,
+        revision, created_at, updated_at
+    </sql>
+
+    <select id="selectById" resultMap="organizationMap">
+        SELECT <include refid="allColumns"/>
+        FROM organization
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </select>
+
+    <!--
+        按工作空间与父组织分页查询：
+        parentId 为 null 时查询顶层组织（parent_id IS NULL），否则查询指定父组织下的子组织。
+        游标分页使用 id > #{lastId}，UUIDv7 时间有序。
+    -->
+    <select id="selectByWorkspaceAndParent" resultMap="organizationMap">
+        SELECT <include refid="allColumns"/>
+        FROM organization
+        WHERE workspace_id = #{workspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        <choose>
+            <when test="parentId != null">
+                AND parent_id = #{parentId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </when>
+            <otherwise>
+                AND parent_id IS NULL
+            </otherwise>
+        </choose>
+        <if test="lastId != null">
+            AND id &gt; #{lastId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        </if>
+        ORDER BY id ASC
+        LIMIT #{size}
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.workspace.domain.Organization">
+        INSERT INTO organization
+            (id, workspace_id, code, name, description, parent_id, path, depth, status,
+             revision, created_at, updated_at)
+        VALUES
+            (#{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{workspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{code},
+             #{name},
+             #{description},
+             #{parentId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{path},
+             #{depth},
+             #{status, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{revision},
+             #{createdAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{updatedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+    </insert>
+
+    <update id="updateBasicInfo">
+        UPDATE organization
+        SET name = #{name},
+            description = #{description},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+    <update id="updatePath">
+        UPDATE organization
+        SET path = #{newPath},
+            depth = #{newDepth},
+            parent_id = #{newParentId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+    <update id="deactivate">
+        UPDATE organization
+        SET status = 'INACTIVE',
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+</mapper>

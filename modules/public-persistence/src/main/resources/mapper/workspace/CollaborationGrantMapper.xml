@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.workspace.mapper.CollaborationGrantMapper">
+
+    <!--
+        CollaborationGrantRow record 构造器映射。
+        字段顺序与 com.pdp.persistence.workspace.adapter.CollaborationGrantRow canonical constructor 一致：
+        id, workspaceId, collaboratorWorkspaceId, targetObjectType, targetObjectId, roleId,
+        allowedActionsJson, validUntil, status, reason, revokedAt, revokeReason, revision,
+        createdAt, updatedAt。
+        allowed_actions 列以 TEXT 存储 JSON 字符串，由适配器反序列化为 List<String>。
+    -->
+    <resultMap id="grantRowMap" type="com.pdp.persistence.workspace.adapter.CollaborationGrantRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="workspace_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="collaborator_workspace_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="target_object_type" javaType="java.lang.String"/>
+            <arg column="target_object_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="role_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="allowed_actions" javaType="java.lang.String"/>
+            <arg column="valid_until" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="status" javaType="com.pdp.workspace.domain.GrantStatus"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="reason" javaType="java.lang.String"/>
+            <arg column="revoked_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="revoke_reason" javaType="java.lang.String"/>
+            <arg column="revision" javaType="int"/>
+            <arg column="created_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="updated_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, workspace_id, collaborator_workspace_id, target_object_type, target_object_id, role_id,
+        allowed_actions, valid_until, status, reason, revoked_at, revoke_reason, revision,
+        created_at, updated_at
+    </sql>
+
+    <select id="selectById" resultMap="grantRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM collaboration_grant
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </select>
+
+    <!--
+        按工作空间分页查询授权：
+        directionColumn 由适配器从 GrantDirection 解析为列名：
+        - OUTGOING → workspace_id（当前空间作为授权方）
+        - INCOMING → collaborator_workspace_id（当前空间作为被授权方）
+        使用 ${directionColumn} 拼接列名（适配器保证只接受枚举常量值，无注入风险）。
+        status 非空时按状态过滤；游标分页使用 id > #{lastId}，UUIDv7 时间有序。
+    -->
+    <select id="selectByWorkspace" resultMap="grantRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM collaboration_grant
+        WHERE ${directionColumn} = #{workspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        <if test="status != null">
+            AND status = #{status, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler}
+        </if>
+        <if test="lastId != null">
+            AND id &gt; #{lastId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        </if>
+        ORDER BY id ASC
+        LIMIT #{size}
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.persistence.workspace.adapter.CollaborationGrantRow">
+        INSERT INTO collaboration_grant
+            (id, workspace_id, collaborator_workspace_id, target_object_type, target_object_id, role_id,
+             allowed_actions, valid_until, status, reason, revoked_at, revoke_reason, revision,
+             created_at, updated_at)
+        VALUES
+            (#{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{workspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{collaboratorWorkspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{targetObjectType},
+             #{targetObjectId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{roleId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{allowedActionsJson},
+             #{validUntil, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{status, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{reason},
+             #{revokedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{revokeReason},
+             #{revision},
+             #{createdAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{updatedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+    </insert>
+
+    <!--
+        撤销授权：ACTIVE → REVOKED，记录撤销原因与时间，递增 revision。
+        仅当当前状态为 ACTIVE 时可撤销，否则返回 0 行（视为状态冲突，由应用层抛 ConflictException）。
+    -->
+    <update id="revoke">
+        UPDATE collaboration_grant
+        SET status = 'REVOKED',
+            revoked_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revoke_reason = #{reason},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+          AND status = 'ACTIVE'
+    </update>
+
+    <!--
+        到期失效：将所有 valid_until < now 的 ACTIVE 授权迁移为 EXPIRED。
+        定时任务调度，单条 UPDATE 原子完成批量迁移。
+    -->
+    <update id="expireDue">
+        UPDATE collaboration_grant
+        SET status = 'EXPIRED',
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE status = 'ACTIVE'
+          AND valid_until IS NOT NULL
+          AND valid_until &lt; #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler}
+    </update>
+
+</mapper>

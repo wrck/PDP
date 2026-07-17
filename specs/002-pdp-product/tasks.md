@@ -79,7 +79,7 @@
 - [ ] T057 创建游标分页 MySQL 契约测试，文件：`tests/backend/contract/persistence/CursorPaginationDatabaseContractTest.java`
 - [X] T058 创建 `revision`、ETag 和乐观并发冲突组件，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/concurrency/`
 - [ ] T059 创建并发更新、重试和冲突呈现测试，文件：`tests/backend/integration/concurrency/OptimisticConcurrencyTest.java`
-- [ ] T060 创建领域事件、Outbox、幂等消费和死信基础设施，文件：`modules/integration/src/main/java/com/pdp/integration/event/`
+- [X] T060 创建领域事件、Outbox、幂等消费和死信基础设施，文件：`modules/integration/src/main/java/com/pdp/integration/event/`
 - [ ] T061 创建重复、乱序、失败重放和死信恢复测试，文件：`tests/backend/integration/event/EventDeliverySemanticsTest.java`
 - [X] T062 创建 Liquibase 根变更集及 common/mysql 目录规则，文件：`modules/public-persistence/src/main/resources/db/changelog/db.changelog-master.xml`
 - [X] T063 创建公共审计摘要链、Outbox、幂等和后台作业表，文件：`modules/public-persistence/src/main/resources/db/changelog/common/002-platform-foundation.xml`

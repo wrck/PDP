@@ -4,6 +4,7 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * PDP API 应用入口。
@@ -16,11 +17,13 @@ import org.springframework.context.annotation.ComponentScan;
  * {@code @Component}/{@code @Configuration}/{@code @Service}/{@code @Repository}；
  * {@code @MapperScan} 注册各业务模块 MyBatis Mapper 接口
  * （Mapper 仅位于 {@code com.pdp.persistence} 与 {@code com.pdp.datamigration} 基础设施边界，
- * 由 {@code DependencyPolicyTest} 守护）。
+ * 由 {@code DependencyPolicyTest} 守护）；
+ * {@code @EnableScheduling} 启用事件中继、后台作业等定时调度。
  */
 @SpringBootApplication
 @ComponentScan("com.pdp")
 @MapperScan(basePackages = {"com.pdp.persistence", "com.pdp.datamigration"})
+@EnableScheduling
 public class ApiApplication {
 
     public static void main(String[] args) {

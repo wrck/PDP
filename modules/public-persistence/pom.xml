@@ -30,6 +30,14 @@
             <groupId>com.pdp</groupId>
             <artifactId>pdp-identity</artifactId>
         </dependency>
+        <!--
+            集成模块端口（事件 Outbox、幂等）由本模块 Mapper/适配器实现；
+            同样单向依赖，integration 不反向依赖 persistence。
+        -->
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-integration</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>

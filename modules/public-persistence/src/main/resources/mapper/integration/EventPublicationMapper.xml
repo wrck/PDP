@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.integration.mapper.EventPublicationMapper">
+
+    <!--
+        EventPublication record 构造器映射。
+        字段顺序与 com.pdp.integration.event.domain.EventPublication canonical constructor 一致：
+        publicationId, eventId, eventType, version, listenerId, aggregateType, aggregateId,
+        payload, status, publicationDate, completionAttempts, lastResubmissionDate,
+        completionDate, lastError, nextRetryAt, revision。
+    -->
+    <resultMap id="eventPublicationMap" type="com.pdp.integration.event.domain.EventPublication">
+        <constructor>
+            <idArg column="publication_id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="event_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="event_type" javaType="java.lang.String"/>
+            <arg column="event_version" javaType="java.lang.String"/>
+            <arg column="listener_id" javaType="java.lang.String"/>
+            <arg column="aggregate_type" javaType="java.lang.String"/>
+            <arg column="aggregate_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="payload" javaType="com.fasterxml.jackson.databind.JsonNode"
+                 typeHandler="com.pdp.persistence.typehandler.JsonNodeTypeHandler"/>
+            <arg column="status" javaType="com.pdp.integration.event.domain.PublicationStatus"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="publication_date" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="completion_attempts" javaType="int"/>
+            <arg column="last_resubmission_date" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="completion_date" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="last_error" javaType="java.lang.String"/>
+            <arg column="next_retry_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="revision" javaType="int"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        publication_id, event_id, event_type, event_version, listener_id, aggregate_type, aggregate_id,
+        payload, status, publication_date, completion_attempts, last_resubmission_date,
+        completion_date, last_error, next_retry_at, revision
+    </sql>
+
+    <insert id="insert" parameterType="com.pdp.integration.event.domain.EventPublication">
+        INSERT INTO event_publication
+            (publication_id, event_id, event_type, event_version, listener_id, aggregate_type, aggregate_id,
+             payload, status, publication_date, completion_attempts, last_resubmission_date,
+             completion_date, last_error, next_retry_at, created_at, revision)
+        VALUES
+            (#{publicationId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{eventId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{eventType},
+             #{version},
+             #{listenerId},
+             #{aggregateType},
+             #{aggregateId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{payload, typeHandler=com.pdp.persistence.typehandler.JsonNodeTypeHandler},
+             #{status, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{publicationDate, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{completionAttempts},
+             #{lastResubmissionDate, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{completionDate, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{lastError},
+             #{nextRetryAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             <choose>
+                 <when test="publicationDate != null">
+                     #{publicationDate, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler}
+                 </when>
+                 <otherwise>
+                     CURRENT_TIMESTAMP(6)
+                 </otherwise>
+             </choose>,
+             #{revision})
+    </insert>
+
+    <select id="selectById" resultMap="eventPublicationMap">
+        SELECT <include refid="allColumns"/>
+        FROM event_publication
+        WHERE publication_id = #{publicationId}
+    </select>
+
+    <!--
+        拉取可投递事件，使用 FOR UPDATE SKIP LOCKED 避免多副本重复拾取。
+        条件：status IN ('PUBLISHED', 'RETRY_PENDING') AND (next_retry_at IS NULL OR next_retry_at &lt;= now)
+        必须在事务中调用以保持行锁。
+    -->
+    <select id="selectDispatchableForUpdateSkipLocked" resultMap="eventPublicationMap">
+        SELECT <include refid="allColumns"/>
+        FROM event_publication
+        WHERE status IN ('PUBLISHED', 'RETRY_PENDING')
+          AND (next_retry_at IS NULL OR next_retry_at &lt;= #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+        ORDER BY publication_date ASC, publication_id ASC
+        LIMIT #{limit}
+        FOR UPDATE SKIP LOCKED
+    </select>
+
+    <!-- 标记完成：status → COMPLETED，设置 completion_date，递增 revision -->
+    <update id="updateMarkCompleted">
+        UPDATE event_publication
+        SET status = 'COMPLETED',
+            completion_date = #{completedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE publication_id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND status IN ('PUBLISHED', 'RETRY_PENDING')
+          AND revision = #{expectedRevision}
+    </update>
+
+    <!--
+        标记重试等待：递增 completion_attempts，设置 last_error、last_resubmission_date、next_retry_at，
+        状态保持 RETRY_PENDING（首次失败从 PUBLISHED 转为 RETRY_PENDING），递增 revision。
+    -->
+    <update id="updateMarkRetryPending">
+        UPDATE event_publication
+        SET status = 'RETRY_PENDING',
+            completion_attempts = completion_attempts + 1,
+            last_error = #{lastError},
+            last_resubmission_date = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            next_retry_at = #{nextRetryAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE publication_id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND status IN ('PUBLISHED', 'RETRY_PENDING')
+          AND revision = #{expectedRevision}
+    </update>
+
+    <!-- 标记死信：status → DEAD_LETTERED，记录 final_error，递增 revision -->
+    <update id="updateMarkDeadLettered">
+        UPDATE event_publication
+        SET status = 'DEAD_LETTERED',
+            last_error = #{finalError},
+            last_resubmission_date = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            next_retry_at = NULL,
+            revision = revision + 1
+        WHERE publication_id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND status IN ('PUBLISHED', 'RETRY_PENDING')
+          AND revision = #{expectedRevision}
+    </update>
+
+    <!--
+        人工重新入队：DEAD_LETTERED → RETRY_PENDING，重置 completion_attempts=0，清空 next_retry_at，
+        在 last_error 中追加操作者标识以保留审计痕迹，递增 revision。
+    -->
+    <update id="updateRequeueFromDeadLetter">
+        UPDATE event_publication
+        SET status = 'RETRY_PENDING',
+            completion_attempts = 0,
+            last_resubmission_date = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            next_retry_at = NULL,
+            last_error = CONCAT(IFNULL(last_error, ''), ' | REQUEUED by ', #{operator}, ' at ',
+                                #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler}),
+            revision = revision + 1
+        WHERE publication_id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND status = 'DEAD_LETTERED'
+          AND revision = #{expectedRevision}
+    </update>
+
+    <select id="countByStatus" resultType="long">
+        SELECT COUNT(*) FROM event_publication WHERE status = #{status}
+    </select>
+
+    <select id="selectDeadLettered" resultMap="eventPublicationMap">
+        SELECT <include refid="allColumns"/>
+        FROM event_publication
+        WHERE status = 'DEAD_LETTERED'
+        ORDER BY last_resubmission_date DESC, publication_id DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

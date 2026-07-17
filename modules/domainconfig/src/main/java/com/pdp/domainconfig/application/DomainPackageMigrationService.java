@@ -11,8 +11,12 @@ import com.pdp.shared.operation.OperationConfirmationPort;
 import com.pdp.shared.operation.OperationImpactPreview;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
@@ -51,9 +55,15 @@ public final class DomainPackageMigrationService {
     int batches = affected == 0 ? 0 : Math.toIntExact((affected + batchSize - 1) / batchSize);
     UUID previewId = UUID.randomUUID();
     String commandDigest =
-        DomainPackageCompositionService.sha256(sourceVersionId + "|" + targetVersionId + "|" + scope);
-    String revisionDigest =
-        DomainPackageCompositionService.sha256(source.revision() + "|" + target.revision());
+        DomainPackageCompositionService.sha256(
+            sourceVersionId
+                + "|"
+                + targetVersionId
+                + "|"
+                + canonicalizeScope(scope)
+                + "|"
+                + batchSize);
+    String revisionDigest = revisionDigest(source, target, batchSize);
     Instant previewedAt = clock.instant();
     String token =
         confirmations.issue(
@@ -88,11 +98,21 @@ public final class DomainPackageMigrationService {
   }
 
   public MigrationJob start(UUID previewId, String confirmationToken, int batchSize, String reason) {
-    if (reason == null || reason.isBlank()) {
-      throw new IllegalArgumentException("迁移原因不能为空");
-    }
+    requireBatchSize(batchSize);
+    requireReason(reason, "迁移原因");
     MigrationPreview preview =
         migrations.findPreview(previewId).orElseThrow(() -> new IllegalArgumentException("迁移预览不存在"));
+    if (!clock.instant().isBefore(preview.impact().expiresAt())) {
+      throw new IllegalStateException("迁移预览已过期，请重新预览");
+    }
+    DomainPackageVersion source = requirePublished(preview.sourceVersionId());
+    DomainPackageVersion target = requirePublished(preview.targetVersionId());
+    if (!source.packageId().equals(target.packageId())) {
+      throw new IllegalStateException("迁移预览的源目标版本不再属于同一领域包");
+    }
+    if (!revisionDigest(source, target, batchSize).equals(preview.revisionDigest())) {
+      throw new IllegalStateException("迁移批次大小或领域包版本已在预览后变化，请重新预览");
+    }
     confirmations.verify(
         confirmationToken,
         new OperationConfirmation(
@@ -107,7 +127,7 @@ public final class DomainPackageMigrationService {
             preview.id(),
             preview.sourceVersionId(),
             preview.targetVersionId(),
-            Status.PLANNED,
+            preview.affectedInstances() == 0 ? Status.COMPLETED : Status.PLANNED,
             batchSize,
             0,
             0,
@@ -118,10 +138,42 @@ public final class DomainPackageMigrationService {
   }
 
   public MigrationJob recordBatch(UUID jobId, int migrated, List<UUID> failedInstances) {
+    Objects.requireNonNull(failedInstances, "failedInstances");
     MigrationJob current =
         migrations.findJob(jobId).orElseThrow(() -> new IllegalArgumentException("迁移作业不存在"));
+    if (current.status() != Status.PLANNED
+        && current.status() != Status.RUNNING
+        && current.status() != Status.PARTIALLY_FAILED) {
+      throw new IllegalStateException("当前迁移作业状态不允许记录批次: " + current.status());
+    }
+    var currentBatchFailures = new LinkedHashSet<>(failedInstances);
+    if (currentBatchFailures.contains(null)) {
+      throw new IllegalArgumentException("失败实例标识不能为空");
+    }
+    if (migrated < 0 || migrated + currentBatchFailures.size() < 1) {
+      throw new IllegalArgumentException("迁移批次必须至少处理一个实例");
+    }
+    if (migrated + currentBatchFailures.size() > current.batchSize()) {
+      throw new IllegalArgumentException("迁移批次处理数量不得超过批次大小");
+    }
+    if (currentBatchFailures.stream().anyMatch(current.failedInstances()::contains)) {
+      throw new IllegalArgumentException("失败实例不得跨批次重复登记");
+    }
+    MigrationPreview preview =
+        migrations
+            .findPreview(current.previewId())
+            .orElseThrow(() -> new IllegalStateException("迁移作业关联的预览不存在"));
+    long processedBefore = current.migrated() + current.failed();
+    long processedAfter = processedBefore + migrated + currentBatchFailures.size();
+    if (processedAfter > preview.affectedInstances()) {
+      throw new IllegalArgumentException("累计处理数量不得超过预览影响实例数");
+    }
+    var allFailures = new ArrayList<>(current.failedInstances());
+    currentBatchFailures.stream().filter(value -> !allFailures.contains(value)).forEach(allFailures::add);
     Status status =
-        failedInstances.isEmpty() ? Status.RUNNING : Status.PARTIALLY_FAILED;
+        processedAfter == preview.affectedInstances() && allFailures.isEmpty()
+            ? Status.COMPLETED
+            : allFailures.isEmpty() ? Status.RUNNING : Status.PARTIALLY_FAILED;
     return migrations.saveJob(
         new MigrationJob(
             current.id(),
@@ -131,18 +183,19 @@ public final class DomainPackageMigrationService {
             status,
             current.batchSize(),
             current.migrated() + migrated,
-            current.failed() + failedInstances.size(),
-            failedInstances,
+            current.failed() + currentBatchFailures.size(),
+            allFailures,
             current.revision().next(),
             current.createdAt()));
   }
 
   public MigrationJob rollback(UUID jobId, String reason) {
-    if (reason == null || reason.isBlank()) {
-      throw new IllegalArgumentException("回滚原因不能为空");
-    }
+    requireReason(reason, "回滚原因");
     MigrationJob current =
         migrations.findJob(jobId).orElseThrow(() -> new IllegalArgumentException("迁移作业不存在"));
+    if (current.status() == Status.PLANNED || current.status() == Status.ROLLED_BACK) {
+      throw new IllegalStateException("尚未迁移或已回滚作业不得重复回滚");
+    }
     return migrations.saveJob(
         new MigrationJob(
             current.id(),
@@ -163,6 +216,50 @@ public final class DomainPackageMigrationService {
         .findVersionById(versionId)
         .filter(value -> value.status() == DomainPackageVersion.Status.PUBLISHED)
         .orElseThrow(() -> new IllegalArgumentException("迁移版本必须已发布"));
+  }
+
+  private static void requireBatchSize(int batchSize) {
+    if (batchSize < 1 || batchSize > 1000) {
+      throw new IllegalArgumentException("迁移批次大小必须在 1 到 1000 之间");
+    }
+  }
+
+  private static void requireReason(String reason, String label) {
+    if (reason == null || reason.length() < 2 || reason.length() > 1000 || reason.isBlank()) {
+      throw new IllegalArgumentException(label + "长度必须在 2 到 1000 个字符之间");
+    }
+  }
+
+  private static String revisionDigest(
+      DomainPackageVersion source, DomainPackageVersion target, int batchSize) {
+    return DomainPackageCompositionService.sha256(
+        source.revision().value() + "|" + target.revision().value() + "|" + batchSize);
+  }
+
+  private static String canonicalizeScope(Object value) {
+    if (value == null) {
+      return "null";
+    }
+    if (value instanceof Map<?, ?> map) {
+      var sorted = new TreeMap<String, String>();
+      map.forEach(
+          (key, item) -> {
+            if (!(key instanceof CharSequence)) {
+              throw new IllegalArgumentException("迁移范围对象键必须是字符串");
+            }
+            sorted.put(key.toString(), canonicalizeScope(item));
+          });
+      return sorted.toString();
+    }
+    if (value instanceof Iterable<?> iterable) {
+      var items = new ArrayList<String>();
+      iterable.forEach(item -> items.add(canonicalizeScope(item)));
+      return items.toString();
+    }
+    if (value instanceof Number || value instanceof Boolean || value instanceof CharSequence) {
+      return value.getClass().getSimpleName() + ":" + value;
+    }
+    throw new IllegalArgumentException("迁移范围仅允许对象、数组、字符串、数字、布尔值或 null");
   }
 
   public enum Status {
@@ -187,6 +284,10 @@ public final class DomainPackageMigrationService {
       String revisionDigest,
       OperationImpactPreview impact) {
     public MigrationPreview {
+      Objects.requireNonNull(id, "id");
+      Objects.requireNonNull(sourceVersionId, "sourceVersionId");
+      Objects.requireNonNull(targetVersionId, "targetVersionId");
+      Objects.requireNonNull(impact, "impact");
       conflicts = List.copyOf(conflicts);
     }
   }
@@ -204,8 +305,16 @@ public final class DomainPackageMigrationService {
       Revision revision,
       Instant createdAt) {
     public MigrationJob {
-      if (previewId == null) {
-        throw new IllegalArgumentException("迁移作业必须关联预览标识");
+      Objects.requireNonNull(id, "id");
+      Objects.requireNonNull(previewId, "迁移作业必须关联预览标识");
+      Objects.requireNonNull(sourceVersionId, "sourceVersionId");
+      Objects.requireNonNull(targetVersionId, "targetVersionId");
+      Objects.requireNonNull(status, "status");
+      Objects.requireNonNull(revision, "revision");
+      Objects.requireNonNull(createdAt, "createdAt");
+      requireBatchSize(batchSize);
+      if (migrated < 0 || failed < 0) {
+        throw new IllegalArgumentException("迁移成功和失败数量不能为负数");
       }
       failedInstances = List.copyOf(failedInstances);
     }

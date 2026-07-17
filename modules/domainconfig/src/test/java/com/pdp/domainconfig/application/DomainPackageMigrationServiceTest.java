@@ -1,6 +1,7 @@
 package com.pdp.domainconfig.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.pdp.domainconfig.domain.metamodel.DomainPackageManifest;
 import com.pdp.domainconfig.domain.packageversion.DomainPackageVersion;
@@ -49,6 +50,45 @@ class DomainPackageMigrationServiceTest {
     assertThat(job.previewId()).isEqualTo(preview.id());
     assertThat(job.failedInstances()).containsExactly(failedInstance);
     assertThat(job.status()).isEqualTo(DomainPackageMigrationService.Status.ROLLED_BACK);
+  }
+
+  @Test
+  void 启动必须绑定预览批次且失败实例需要跨批次累计() {
+    var store = new Store();
+    UUID packageId = UUID.randomUUID();
+    DomainPackageVersion source = published(packageId, "1.0.0");
+    DomainPackageVersion target = published(packageId, "1.1.0");
+    store.save(source);
+    store.save(target);
+    var confirmations = new Confirmations();
+    var service =
+        new DomainPackageMigrationService(
+            store,
+            (versionId, scope) -> 4,
+            store,
+            confirmations,
+            Clock.fixed(NOW, ZoneOffset.UTC));
+
+    var preview = service.preview(source.id(), target.id(), Map.of("region", "east"), 2);
+    assertThatThrownBy(
+            () -> service.start(preview.id(), preview.impact().confirmationToken(), 3, "改变批次"))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("重新预览");
+
+    var job = service.start(preview.id(), preview.impact().confirmationToken(), 2, "执行迁移");
+    UUID firstFailure = UUID.randomUUID();
+    UUID secondFailure = UUID.randomUUID();
+    job = service.recordBatch(job.id(), 1, List.of(firstFailure));
+    job = service.recordBatch(job.id(), 1, List.of(secondFailure));
+
+    assertThat(job.status()).isEqualTo(DomainPackageMigrationService.Status.PARTIALLY_FAILED);
+    assertThat(job.migrated()).isEqualTo(2);
+    assertThat(job.failed()).isEqualTo(2);
+    assertThat(job.failedInstances()).containsExactly(firstFailure, secondFailure);
+    DomainPackageMigrationService.MigrationJob completedJob = job;
+    assertThatThrownBy(() -> service.recordBatch(completedJob.id(), 1, List.of()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("超过预览");
   }
 
   private static DomainPackageVersion published(UUID packageId, String version) {

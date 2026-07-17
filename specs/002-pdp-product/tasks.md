@@ -155,7 +155,7 @@
 - [X] T121 [US2] 实现核心字段复用、顶层生命周期映射、元模型、规则引用、权限和兼容性校验服务，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/application/DomainPackageValidationService.java`
 - [X] T122 [US2] 实现三层继承、差异、冲突检测和版本快照服务，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/application/DomainPackageCompositionService.java`
 - [X] T123 [US2] 实现职责分离的测试、审核、发布、冻结和回滚服务，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/application/DomainPackageLifecycleService.java`
-- [ ] T124 [US2] 使用高风险操作框架实现升级影响预览、分批迁移、失败隔离和回滚服务，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/application/DomainPackageMigrationService.java`
+- [X] T124 [US2] 使用高风险操作框架实现升级影响预览、分批迁移、失败隔离和回滚服务，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/application/DomainPackageMigrationService.java`
 - [ ] T125 [US2] 实现领域包对平台流程定义的版本化绑定、变量映射、启动条件、权限声明和迁移校验，不允许领域包嵌入 Flowable 专有 API，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/application/WorkflowBindingService.java`
 - [ ] T126 [US2] 实现领域包控制器和设计器，文件：`apps/api/src/main/java/com/pdp/api/domainconfig/DomainPackageController.java`、`apps/web/src/views/domain-package/`
 - [ ] T127 [US2] 创建网络设备割接示例包并记录状态机、日志指标追踪、独立审核、影响预览和发布闭环证据，文件：`tests/fixtures/domain-package/network-cutover-package.json`、`specs/002-pdp-product/evidence/us2-domain-package.md`

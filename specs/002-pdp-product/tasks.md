@@ -121,7 +121,7 @@
 - [X] T093 [P] 创建 JSON Schema 表单、表格和详情渲染基础组件，文件：`apps/web/src/components/schema/`
 - [X] T094 [P] 创建主题令牌、响应式布局和统一交互反馈，文件：`apps/web/src/styles/`、`apps/web/src/layouts/`
 - [X] T095 创建 OpenAPI、Schema、事件样例与实现基线一致性测试，文件：`tests/contracts/contract-baseline.spec.ts`
-- [ ] T096 执行基础阶段门禁并记录平台工作流、MySQL 持久化边界、权限和迁移隔离证据，文件：`specs/002-pdp-product/evidence/foundation-validation.md`
+- [X] T096 执行基础阶段门禁并记录平台工作流、MySQL 持久化边界、权限和迁移隔离证据，文件：`specs/002-pdp-product/evidence/foundation-validation.md`
 
 ## 阶段 3：US1 工作空间与组织治理（P1）
 

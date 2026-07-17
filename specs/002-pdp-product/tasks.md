@@ -104,7 +104,7 @@
 - [X] T079 配置 Flowable Process Engine 独立 schema/表前缀、数据库账号、HikariCP 池和本地事务管理器，关闭生产自动建表/升级和内置 REST/IDM，文件：`modules/workflow/src/main/java/com/pdp/workflow/infrastructure/flowable/FlowableEngineConfig.java`、`apps/api/src/main/resources/application-workflow.yml`
 - [X] T080 创建 Flowable MySQL 版本化初始化与升级脚本清单，并验证空库、上一版本升级和不支持版本快速失败，文件：`modules/workflow/src/main/resources/db/flowable/mysql/`、`tests/backend/contract/workflow/FlowableSchemaMySqlMatrixTest.java`
 - [X] T081 创建平台流程定义、部署、实例引用和异常记录公共变更集及仓储端口，文件：`modules/public-persistence/src/main/resources/db/changelog/common/005-workflow-registry.xml`、`modules/workflow/src/main/java/com/pdp/workflow/domain/`
-- [ ] T082 实现 BPMN 2.0.2 校验、稳定流程键、业务版本、内容哈希、领域包关联和受控部署服务，文件：`modules/workflow/src/main/java/com/pdp/workflow/application/WorkflowDefinitionService.java`
+- [X] T082 实现 BPMN 2.0.2 校验、稳定流程键、业务版本、内容哈希、领域包关联和受控部署服务，文件：`modules/workflow/src/main/java/com/pdp/workflow/application/WorkflowDefinitionService.java`
 - [ ] T083 实现基于 Outbox 的流程启动、推进、消息关联和结果事件桥接，禁止 XA 并确保幂等，文件：`modules/workflow/src/main/java/com/pdp/workflow/application/WorkflowRuntimeService.java`、`modules/workflow/src/main/java/com/pdp/workflow/infrastructure/event/`
 - [ ] T084 实现平台人工任务查询、候选人投影、领取和办理端口，并在每次查询与办理时复核 PDP 当前权限，文件：`modules/workflow/src/main/java/com/pdp/workflow/application/WorkflowTaskService.java`
 - [ ] T085 配置 Flowable 异步执行器独立线程池、队列、连接预算、重试、死信、指标和告警，文件：`modules/workflow/src/main/java/com/pdp/workflow/infrastructure/flowable/WorkflowAsyncExecutorConfig.java`

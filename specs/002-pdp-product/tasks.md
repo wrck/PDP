@@ -108,7 +108,7 @@
 - [X] T083 实现基于 Outbox 的流程启动、推进、消息关联和结果事件桥接，禁止 XA 并确保幂等，文件：`modules/workflow/src/main/java/com/pdp/workflow/application/WorkflowRuntimeService.java`、`modules/workflow/src/main/java/com/pdp/workflow/infrastructure/event/`
 - [X] T084 实现平台人工任务查询、候选人投影、领取和办理端口，并在每次查询与办理时复核 PDP 当前权限，文件：`modules/workflow/src/main/java/com/pdp/workflow/application/WorkflowTaskService.java`
 - [X] T085 配置 Flowable 异步执行器独立线程池、队列、连接预算、重试、死信、指标和告警，文件：`modules/workflow/src/main/java/com/pdp/workflow/infrastructure/flowable/WorkflowAsyncExecutorConfig.java`
-- [ ] T086 实现流程实例受控迁移、暂停、恢复、终止和人工补偿管理服务，文件：`modules/workflow/src/main/java/com/pdp/workflow/application/WorkflowAdministrationService.java`
+- [X] T086 实现流程实例受控迁移、暂停、恢复、终止和人工补偿管理服务，文件：`modules/workflow/src/main/java/com/pdp/workflow/application/WorkflowAdministrationService.java`
 - [ ] T087 创建 BPMN 部署、实例固定版本、定时器、并行网关、消息关联、重试、死信、权限复核和引擎恢复集成测试，文件：`tests/backend/integration/workflow/PlatformWorkflowFoundationTest.java`
 - [ ] T088 创建业务模块不得依赖 Flowable API/表结构、不得直接查询引擎表且不得暴露 Flowable REST 的架构测试，文件：`tests/backend/architecture/WorkflowBoundaryTest.java`
 - [ ] T089 实现平台工作流定义、实例诊断和受控管理动作控制器，文件：`apps/api/src/main/java/com/pdp/api/workflow/WorkflowController.java`

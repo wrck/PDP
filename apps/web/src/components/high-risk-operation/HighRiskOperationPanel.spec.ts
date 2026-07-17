@@ -58,4 +58,37 @@ describe('高风险操作面板', () => {
     expect(wrapper.text()).toContain('DATABASE_COMBINATION_NOT_CERTIFIED')
     expect(wrapper.get('[data-test="confirm-operation"]').attributes('disabled')).toBeDefined()
   })
+
+  it('预览身份或令牌变化后清空确认输入并撤销不可逆点确认', async () => {
+    const wrapper = mount(HighRiskOperationPanel, { props: { preview } })
+    const confirmationInput = wrapper.get('[data-test="confirmation-input"]')
+    const irreversibleAck = wrapper.get('[data-test="irreversible-ack"]')
+    const confirmButton = wrapper.get('[data-test="confirm-operation"]')
+
+    await confirmationInput.setValue(preview.confirmationPhrase)
+    await irreversibleAck.setValue(true)
+    expect(confirmButton.attributes('disabled')).toBeUndefined()
+
+    const changedPreview = {
+      ...preview,
+      previewId: 'preview-2',
+      confirmationPhrase: '确认切换 mysql-b v2',
+      confirmationToken: 'signed-token-v2',
+    }
+    await wrapper.setProps({ preview: changedPreview })
+
+    expect(confirmationInput.element).toHaveProperty('value', '')
+    expect(irreversibleAck.element).toHaveProperty('checked', false)
+    await confirmationInput.setValue(changedPreview.confirmationPhrase)
+    expect(confirmButton.attributes('disabled')).toBeDefined()
+
+    await irreversibleAck.setValue(true)
+    await confirmButton.trigger('click')
+    expect(wrapper.emitted('confirm')?.[0]).toEqual([
+      {
+        previewId: 'preview-2',
+        confirmationToken: 'signed-token-v2',
+      },
+    ])
+  })
 })

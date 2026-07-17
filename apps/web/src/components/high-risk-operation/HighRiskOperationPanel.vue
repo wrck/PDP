@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import type { HighRiskOperationPreview } from './types'
 
@@ -28,6 +28,14 @@ const emit = defineEmits<{
 
 const confirmationInput = ref('')
 const irreversibleAcknowledged = ref(false)
+
+watch(
+  () => [props.preview.previewId, props.preview.confirmationToken],
+  () => {
+    confirmationInput.value = ''
+    irreversibleAcknowledged.value = false
+  },
+)
 
 const expired = computed(() => Date.parse(props.preview.expiresAt) <= Date.now())
 const confirmDisabled = computed(

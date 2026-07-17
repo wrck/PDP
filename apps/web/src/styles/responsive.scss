@@ -1,0 +1,61 @@
+// PDP Web 响应式工具（T094）。
+//
+// 提供 SCSS 媒体查询 mixin 与断点变量，遵循移动优先策略。
+// 与 tokens.scss 中 $pdp-breakpoint-* 对齐。
+
+@use './tokens.scss' as tokens;
+
+// 媒体查询 mixin：min-width 策略（移动优先）
+@mixin xs-up {
+  @media (min-width: tokens.$pdp-breakpoint-xs) {
+    @content;
+  }
+}
+
+@mixin sm-up {
+  @media (min-width: tokens.$pdp-breakpoint-sm) {
+    @content;
+  }
+}
+
+@mixin md-up {
+  @media (min-width: tokens.$pdp-breakpoint-md) {
+    @content;
+  }
+}
+
+@mixin lg-up {
+  @media (min-width: tokens.$pdp-breakpoint-lg) {
+    @content;
+  }
+}
+
+@mixin xl-up {
+  @media (min-width: tokens.$pdp-breakpoint-xl) {
+    @content;
+  }
+}
+
+@mixin xxl-up {
+  @media (min-width: tokens.$pdp-breakpoint-xxl) {
+    @content;
+  }
+}
+
+// max-width 策略（桌面优先回退）
+@mixin md-down {
+  @media (max-width: (tokens.$pdp-breakpoint-md - 1px)) {
+    @content;
+  }
+}
+
+@mixin lg-down {
+  @media (max-width: (tokens.$pdp-breakpoint-lg - 1px)) {
+    @content;
+  }
+}
+
+// 响应式栅格列数（基于 24 列栅格系统）
+@function responsive-span($xs: 24, $sm: 24, $md: 12, $lg: 8, $xl: 6) {
+  @return $xs;
+}

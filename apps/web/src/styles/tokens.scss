@@ -1,0 +1,174 @@
+// PDP Web 主题令牌（T094）。
+//
+// 定义 PDP 品牌色彩、语义色、间距、字号、圆角、阴影、断点等设计令牌，
+// 通过 CSS 自定义属性（CSS Variables）暴露，支持运行时主题切换。
+// 与 Ant Design Vue 4.x 主题令牌对齐，可被 ConfigProvider token 覆盖。
+//
+// 引用约定：组件内 SCSS 使用 $pdp-* 变量；运行时样式使用 var(--pdp-*)。
+
+// ============================================================
+// 品牌色（PDP 主品牌色系）
+// ============================================================
+$pdp-color-primary: #1677ff;
+$pdp-color-primary-hover: #4096ff;
+$pdp-color-primary-active: #0958d9;
+$pdp-color-primary-bg: #e6f4ff;
+$pdp-color-primary-bg-hover: #bae0ff;
+$pdp-color-primary-border: #91caff;
+
+// ============================================================
+// 语义色（与 Ant Design Vue 语义色对齐）
+// ============================================================
+$pdp-color-success: #52c41a;
+$pdp-color-success-bg: #f6ffed;
+$pdp-color-success-border: #b7eb8f;
+
+$pdp-color-warning: #faad14;
+$pdp-color-warning-bg: #fffbe6;
+$pdp-color-warning-border: #ffe58f;
+
+$pdp-color-error: #ff4d4f;
+$pdp-color-error-bg: #fff2f0;
+$pdp-color-error-border: #ffccc7;
+
+$pdp-color-info: #1677ff;
+$pdp-color-info-bg: #e6f4ff;
+$pdp-color-info-border: #91caff;
+
+// ============================================================
+// 中性色（文本、背景、边框）
+// ============================================================
+$pdp-color-text: rgba(0, 0, 0, 0.88);
+$pdp-color-text-secondary: rgba(0, 0, 0, 0.65);
+$pdp-color-text-tertiary: rgba(0, 0, 0, 0.45);
+$pdp-color-text-quaternary: rgba(0, 0, 0, 0.25);
+
+$pdp-color-bg-container: #ffffff;
+$pdp-color-bg-elevated: #ffffff;
+$pdp-color-bg-layout: #f5f5f5;
+$pdp-color-bg-spotlight: #fafafa;
+
+$pdp-color-border: #d9d9d9;
+$pdp-color-border-secondary: #f0f0f0;
+
+// ============================================================
+// 间距尺度（4px 基准）
+// ============================================================
+$pdp-spacing-xxs: 4px;
+$pdp-spacing-xs: 8px;
+$pdp-spacing-sm: 12px;
+$pdp-spacing-md: 16px;
+$pdp-spacing-lg: 24px;
+$pdp-spacing-xl: 32px;
+$pdp-spacing-xxl: 48px;
+
+// ============================================================
+// 字号
+// ============================================================
+$pdp-font-size-xs: 12px;
+$pdp-font-size-sm: 13px;
+$pdp-font-size-base: 14px;
+$pdp-font-size-lg: 16px;
+$pdp-font-size-xl: 20px;
+$pdp-font-size-2xl: 24px;
+$pdp-font-size-3xl: 30px;
+
+$pdp-line-height-base: 1.5715;
+$pdp-line-height-heading: 1.4;
+
+// ============================================================
+// 圆角
+// ============================================================
+$pdp-radius-xs: 2px;
+$pdp-radius-sm: 4px;
+$pdp-radius-base: 6px;
+$pdp-radius-lg: 8px;
+$pdp-radius-xl: 12px;
+$pdp-radius-pill: 9999px;
+
+// ============================================================
+// 阴影
+// ============================================================
+$pdp-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02),
+  0 2px 4px 0 rgba(0, 0, 0, 0.02);
+$pdp-shadow-sm: 0 6px 16px 0 rgba(0, 0, 0, 0.08),
+  0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+$pdp-shadow-lg: 0 12px 48px 16px rgba(0, 0, 0, 0.03),
+  0 9px 28px 0 rgba(0, 0, 0, 0.05), 0 6px 16px -8px rgba(0, 0, 0, 0.08);
+
+// ============================================================
+// Z-index 层级
+// ============================================================
+$pdp-z-base: 0;
+$pdp-z-dropdown: 1000;
+$pdp-z-sticky: 1020;
+$pdp-z-fixed: 1030;
+$pdp-z-modal: 1040;
+$pdp-z-popover: 1050;
+$pdp-z-tooltip: 1060;
+$pdp-z-notification: 1070;
+
+// ============================================================
+// 响应式断点（与 Bootstrap 5 对齐，便于复用社区方案）
+// ============================================================
+$pdp-breakpoint-xs: 480px;
+$pdp-breakpoint-sm: 576px;
+$pdp-breakpoint-md: 768px;
+$pdp-breakpoint-lg: 992px;
+$pdp-breakpoint-xl: 1200px;
+$pdp-breakpoint-xxl: 1600px;
+
+// 布局尺寸
+$pdp-layout-header-height: 56px;
+$pdp-layout-sider-width: 220px;
+$pdp-layout-sider-collapsed-width: 64px;
+$pdp-layout-content-padding: $pdp-spacing-lg;
+
+// ============================================================
+// CSS 自定义属性（运行时主题）
+// ============================================================
+:root {
+  // 品牌色
+  --pdp-color-primary: #{$pdp-color-primary};
+  --pdp-color-primary-hover: #{$pdp-color-primary-hover};
+  --pdp-color-primary-active: #{$pdp-color-primary-active};
+  --pdp-color-primary-bg: #{$pdp-color-primary-bg};
+
+  // 语义色
+  --pdp-color-success: #{$pdp-color-success};
+  --pdp-color-success-bg: #{$pdp-color-success-bg};
+  --pdp-color-warning: #{$pdp-color-warning};
+  --pdp-color-warning-bg: #{$pdp-color-warning-bg};
+  --pdp-color-error: #{$pdp-color-error};
+  --pdp-color-error-bg: #{$pdp-color-error-bg};
+  --pdp-color-info: #{$pdp-color-info};
+  --pdp-color-info-bg: #{$pdp-color-info-bg};
+
+  // 中性色
+  --pdp-color-text: #{$pdp-color-text};
+  --pdp-color-text-secondary: #{$pdp-color-text-secondary};
+  --pdp-color-text-tertiary: #{$pdp-color-text-tertiary};
+  --pdp-color-bg-container: #{$pdp-color-bg-container};
+  --pdp-color-bg-layout: #{$pdp-color-bg-layout};
+  --pdp-color-border: #{$pdp-color-border};
+  --pdp-color-border-secondary: #{$pdp-color-border-secondary};
+
+  // 间距
+  --pdp-spacing-xs: #{$pdp-spacing-xs};
+  --pdp-spacing-sm: #{$pdp-spacing-sm};
+  --pdp-spacing-md: #{$pdp-spacing-md};
+  --pdp-spacing-lg: #{$pdp-spacing-lg};
+  --pdp-spacing-xl: #{$pdp-spacing-xl};
+
+  // 圆角
+  --pdp-radius-base: #{$pdp-radius-base};
+  --pdp-radius-lg: #{$pdp-radius-lg};
+
+  // 阴影
+  --pdp-shadow-sm: #{$pdp-shadow-sm};
+
+  // 布局
+  --pdp-layout-header-height: #{$pdp-layout-header-height};
+  --pdp-layout-sider-width: #{$pdp-layout-sider-width};
+  --pdp-layout-sider-collapsed-width: #{$pdp-layout-sider-collapsed-width};
+}

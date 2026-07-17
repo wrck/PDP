@@ -25,7 +25,6 @@ import {
 import { SearchOutlined } from '@ant-design/icons-vue'
 import {
   isSensitiveField,
-  type DetailData,
   type ObjectSchema,
   type TableColumn,
   type TableRow,
@@ -67,12 +66,6 @@ const emit = defineEmits<{
   (e: 'row-click', row: TableRow): void
   (e: 'selection-change', keys: Array<string | number>): void
 }>()
-
-/** 搜索关键字。 */
-const searchKeyword = computed({
-  get: () => '',
-  set: (v: string) => emit('search', v),
-})
 
 /** 派生表格列。 */
 const resolvedColumns = computed<TableColumn[]>(() => {
@@ -172,10 +165,6 @@ const customRow = (record: TableRow) => ({
 })
 
 defineExpose({ rowKey })
-
-// 显式引用以避免 TS unused 报错
-void searchKeyword
-void DetailData
 </script>
 
 <template>
@@ -205,15 +194,12 @@ void DetailData
       :custom-row="customRow"
       size="middle"
     >
-      <template
-        v-for="col in resolvedColumns"
-        #[`bodyCell`]="{ column, record }"
-      >
+      <template #bodyCell="{ column, record }">
         <slot
-          v-if="column.key === col.key && $slots[`column-${col.key}`]"
-          :name="`column-${col.key}`"
+          v-if="$slots[`column-${column.key}`]"
+          :name="`column-${column.key}`"
           :record="record"
-          :value="record[col.key]"
+          :value="record[column.key as string]"
         />
       </template>
     </ATable>

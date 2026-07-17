@@ -1,2 +1,102 @@
-// PDP Web 全局样式入口
-// 主题令牌、CSS reset 与全局基础样式后续按 Ant Design Vue 主题扩展规范补充
+// PDP Web 全局样式入口（T094）。
+// 导入主题令牌、响应式工具、CSS reset 与全局基础样式。
+
+@use './tokens.scss';
+@use './responsive.scss' as responsive;
+
+// ============================================================
+// CSS reset / 全局基础样式
+// ============================================================
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: tokens.$pdp-font-size-base;
+  line-height: tokens.$pdp-line-height-base;
+  color: tokens.$pdp-color-text;
+  background-color: tokens.$pdp-color-bg-layout;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+a {
+  color: tokens.$pdp-color-primary;
+  text-decoration: none;
+  transition: color 0.2s;
+
+  &:hover {
+    color: tokens.$pdp-color-primary-hover;
+  }
+}
+
+// 滚动条样式（Webkit）
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: tokens.$pdp-color-bg-layout;
+}
+
+::-webkit-scrollbar-thumb {
+  background: tokens.$pdp-color-border;
+  border-radius: tokens.$pdp-radius-base;
+
+  &:hover {
+    background: tokens.$pdp-color-text-quaternary;
+  }
+}
+
+// ============================================================
+// 通用工具类
+// ============================================================
+
+.pdp-text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdp-text-ellipsis-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pdp-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdp-flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// 响应式隐藏
+.pdp-hidden-mobile {
+  @include responsive.md-down {
+    display: none !important;
+  }
+}
+
+.pdp-hidden-desktop {
+  @include responsive.md-up {
+    display: none !important;
+  }
+}

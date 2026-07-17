@@ -1,0 +1,43 @@
+# PDP Flowable Process Engine 配置（T079）
+#
+# 落实 ADR-0005 § 8 与 persistence-design.md § 2-3：
+#   - 独立 schema/账号/HikariCP 池（在 application-datasource.yml 中以 workflowEngine 键注册）
+#   - 独立事务管理器（由 FlowableEngineConfig#workflowTransactionManager 提供，与 pdpPrimary 隔离）
+#   - 关闭生产自动建表与升级（DDL/升级脚本由 T080 版本化管理）
+#   - 不引入 REST/IDM/CMMN/DMN/JPA starter（由 T031 依赖治理守护）
+#   - 异步执行器使用独立线程池、队列与连接预算（计入"所有副本池上限之和不超过数据库可用连接 70%"）
+#
+# 本文件通过 application.yml 中 spring.profiles.include: workflow 自动加载。
+# 所有敏感值使用 ${ENV_VAR:placeholder} 占位，不写真实凭据。
+
+flowable:
+  # 关闭自动 schema 更新（生产）。引擎 DDL/升级脚本由 T080 版本化管理。
+  # 与 FlowableEngineConfig#workflowProcessEngineConfigurer 双重锁定，防止误配触发自动建表。
+  database-schema-update: false
+  # 显式声明数据库类型，避免 Flowable 通过 JDBC metadata 推断失败（与 configurer 中 setDatabaseType("mysql") 一致）
+  database-type: mysql
+  process:
+    # 启用异步执行器：定时器、异步任务、消息关联由独立线程池驱动。
+    # 关闭则流程定义中的边界定时器、异步服务任务、定时事件无法触发。
+    async-executor-activate: true
+    # 异步执行器线程池核心大小：与 workflowEngine HikariCP max-pool-size=10 留出余量，
+    # 避免异步任务与人工任务办理争抢连接。
+    async-executor-core-pool-size: 4
+    # 异步执行器线程池上限：必须 ≤ workflowEngine.hikari.maximum-pool-size，
+    # 否则超额线程会因获取不到连接而排队，触发 acquire timeout。
+    async-executor-max-pool-size: 8
+    # 异步执行器线程空闲保活时长（秒）
+    async-executor-keep-alive-seconds: 60
+    # 异步执行器任务队列容量：超出后由 Flowable 内部拒绝策略处理（记录死信/incident）
+    async-executor-thread-pool-queue-size: 2000
+    # 异步任务重试次数（含原始执行）：耗尽后形成可检索 incident/dead-letter，
+    # 支持安全重放与人工补偿；MUST NOT 产生重复审批结论或业务状态变化（ADR-0005 § 8）。
+    async-executor-number-of-retries: 3
+    # 历史数据级别：full 保留流程实例、活动、任务、变量、表单属性与审计全部历史，
+    # 便于诊断、迁移回退与审计证据。生产按业务合规要求评估是否降级为 audit。
+    history-level: full
+    # 流程定义缓存上限：默认 -1（无上限）。多租户与多领域包场景下显式限制，避免 OOM。
+    definition-cache-limit: 200
+    # 关闭内置 REST servlet：仅 process starter 不引入 REST 模块，此处显式声明防止误启用
+    servlet:
+      path: /__flowable_disabled__

@@ -1,0 +1,121 @@
+# PDP 数据源与 HikariCP 配置
+#
+# 每个数据源独立 HikariCP 容量、超时、存活检测和指标。
+# 连接预算约束：所有应用副本、Flowable 异步执行器、后台执行器与迁移任务的连接池上限之和
+# 不得超过数据库可用连接的 70%（见 persistence-design.md）。
+# 所有敏感值使用 ${ENV_VAR:placeholder} 占位，不写真实凭据。
+
+spring:
+  datasource:
+    dynamic:
+      # strict=true：找不到数据源时失败，不回退默认库
+      strict: true
+      # primary=pdpPrimary：未声明路由的业务调用始终访问主库
+      primary: pdpPrimary
+      # 禁用 XA/Seata：跨库迁移以批次、检查点、幂等和核对保证可恢复性
+      seata: false
+      datasource:
+        # 在线业务主库（写）
+        pdpPrimary:
+          url: jdbc:mysql://${PDP_DB_HOST:localhost}:${PDP_DB_PORT:3306}/${PDP_DB_NAME:pdp}?useSSL=true&requireSSL=true&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8mb4&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
+          username: ${PDP_DB_USER:pdp_app}
+          password: ${PDP_DB_PASSWORD:CHANGE_ME}
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          hikari:
+            pool-name: pdp-primary
+            transaction-isolation: TRANSACTION_READ_COMMITTED
+            connection-timeout: 3000
+            validation-timeout: 2000
+            max-lifetime: 1740000
+            keepalive-time: 120000
+            minimum-idle: 20
+            maximum-pool-size: 20
+            read-only: false
+            # pdpPrimary 必须启动失败即退出
+            initialization-fail-timeout: 1
+            # 生产关闭泄漏检测，故障诊断时启用
+            leak-detection-threshold: 0
+        # 只读副本（仅显式标注可陈旧的报表或列表）
+        pdpRead:
+          url: jdbc:mysql://${PDP_READ_DB_HOST:localhost}:${PDP_READ_DB_PORT:3306}/${PDP_READ_DB_NAME:pdp}?useSSL=true&requireSSL=true&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8mb4&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
+          username: ${PDP_READ_DB_USER:pdp_read}
+          password: ${PDP_READ_DB_PASSWORD:CHANGE_ME}
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          hikari:
+            pool-name: pdp-read
+            transaction-isolation: TRANSACTION_READ_COMMITTED
+            connection-timeout: 3000
+            validation-timeout: 2000
+            max-lifetime: 1740000
+            keepalive-time: 120000
+            minimum-idle: 10
+            maximum-pool-size: 10
+            read-only: true
+            initialization-fail-timeout: 1
+            leak-detection-threshold: 0
+        # Flowable Process Engine 独立数据源（独立 schema/账号/池/事务管理器）
+        workflowEngine:
+          url: jdbc:mysql://${PDP_WORKFLOW_DB_HOST:localhost}:${PDP_WORKFLOW_DB_PORT:3306}/${PDP_WORKFLOW_DB_NAME:pdp_workflow}?useSSL=true&requireSSL=true&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8mb4&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
+          username: ${PDP_WORKFLOW_DB_USER:pdp_workflow}
+          password: ${PDP_WORKFLOW_DB_PASSWORD:CHANGE_ME}
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          hikari:
+            pool-name: pdp-workflow
+            transaction-isolation: TRANSACTION_READ_COMMITTED
+            connection-timeout: 3000
+            validation-timeout: 2000
+            max-lifetime: 1740000
+            keepalive-time: 120000
+            minimum-idle: 10
+            maximum-pool-size: 10
+            read-only: false
+            # workflowEngine 必须启动失败即退出
+            initialization-fail-timeout: 1
+            leak-detection-threshold: 0
+        # 历史 MySQL 源库（仅迁移期加载，使用独立只读会话工厂，结束后卸载并撤权）
+        migrationSource:
+          url: jdbc:mysql://${PDP_LEGACY_DB_HOST:legacy-mysql}:${PDP_LEGACY_DB_PORT:3306}/${PDP_LEGACY_DB_NAME:legacy}?useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8mb4&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
+          username: ${PDP_LEGACY_DB_USER:pdp_migration_reader}
+          password: ${PDP_LEGACY_DB_PASSWORD:CHANGE_ME}
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          hikari:
+            pool-name: pdp-migration-source
+            transaction-isolation: TRANSACTION_READ_COMMITTED
+            connection-timeout: 10000
+            validation-timeout: 2000
+            max-lifetime: 1740000
+            keepalive-time: 120000
+            minimum-idle: 2
+            maximum-pool-size: 5
+            read-only: true
+            # 临时迁移源由迁移作业报告失败，不阻止应用启动
+            initialization-fail-timeout: 0
+            leak-detection-threshold: 60000
+        # 迁移目标库（仅迁移执行器写入，开放业务写入前不得作为 pdpPrimary）
+        migrationTarget:
+          url: jdbc:mysql://${PDP_TARGET_DB_HOST:localhost}:${PDP_TARGET_DB_PORT:3306}/${PDP_TARGET_DB_NAME:pdp}?useSSL=true&requireSSL=true&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8mb4&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
+          username: ${PDP_TARGET_DB_USER:pdp_migration_writer}
+          password: ${PDP_TARGET_DB_PASSWORD:CHANGE_ME}
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          hikari:
+            pool-name: pdp-migration-target
+            transaction-isolation: TRANSACTION_READ_COMMITTED
+            connection-timeout: 10000
+            validation-timeout: 2000
+            max-lifetime: 1740000
+            keepalive-time: 120000
+            minimum-idle: 2
+            maximum-pool-size: 5
+            read-only: false
+            initialization-fail-timeout: 0
+            leak-detection-threshold: 60000
+
+# MyBatis 全局配置：关闭二级缓存与懒加载，localCacheScope=STATEMENT
+mybatis-plus:
+  configuration:
+    cache-enabled: false
+    lazy-loading-enabled: false
+    local-cache-scope: STATEMENT
+    map-underscore-to-camel-case: true
+    default-enum-type-handler: com.pdp.persistence.typehandler.StringEnumTypeHandler
+  type-handlers-package: com.pdp.persistence.typehandler

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                       https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        PDP Liquibase 根变更集。
+        变更集分为 common（数据库无关）与 mysql（MySQL 专用，dbms=mysql 条件）。
+        common/ 承载表结构与公共索引；mysql/ 承载 MySQL 8.4 专用优化（降序索引、函数索引、覆盖索引）。
+        业务 schema 只由 Liquibase 管理；应用账号无 DDL 权限；生产关闭自动建表。
+    -->
+
+    <include file="db/changelog/common/001-identity.xml" relativeToChangelogFile="true"/>
+    <include file="db/changelog/common/002-platform-foundation.xml" relativeToChangelogFile="true"/>
+    <include file="db/changelog/mysql/001-platform-indexes.xml" relativeToChangelogFile="true"/>
+
+</databaseChangeLog>

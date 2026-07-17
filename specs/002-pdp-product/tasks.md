@@ -59,21 +59,21 @@
 
 ### MySQL 持久化、动态数据源和连接池
 
-- [ ] T043 配置 MyBatis-Plus、分页、乐观锁和审计字段填充，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/config/MybatisPlusConfig.java`
-- [ ] T044 配置动态数据源，在线业务仅允许 `pdpPrimary` 和 `pdpRead`，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/config/DynamicDataSourceConfig.java`
-- [ ] T045 创建严格数据源路由守卫，拒绝未知键、越权路由和事务内切换，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/routing/DataSourceRoutingGuard.java`
-- [ ] T046 配置各数据源独立 HikariCP 容量、超时、存活检测和指标，文件：`apps/api/src/main/resources/application-datasource.yml`
+- [X] T043 配置 MyBatis-Plus、分页、乐观锁和审计字段填充，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/config/MybatisPlusConfig.java`
+- [X] T044 配置动态数据源，在线业务仅允许 `pdpPrimary` 和 `pdpRead`，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/config/DynamicDataSourceConfig.java`
+- [X] T045 创建严格数据源路由守卫，拒绝未知键、越权路由和事务内切换，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/routing/DataSourceRoutingGuard.java`
+- [X] T046 配置各数据源独立 HikariCP 容量、超时、存活检测和指标，文件：`apps/api/src/main/resources/application-datasource.yml`
 - [ ] T047 创建动态路由、只读降级和越权拦截测试，文件：`tests/backend/integration/datasource/DynamicDataSourceRoutingTest.java`
 - [ ] T048 创建连接池耗尽、连接泄漏和数据库故障恢复测试，文件：`tests/backend/integration/datasource/HikariPoolResilienceTest.java`
 - [ ] T049 创建历史 MySQL 源库专用 DataSource、SqlSessionFactory 和 Mapper 扫描，文件：`modules/datamigration/src/main/java/com/pdp/datamigration/config/LegacySourceMybatisConfig.java`
 - [ ] T050 创建迁移目标库专用 DataSource、SqlSessionFactory 和 Mapper 扫描，文件：`modules/datamigration/src/main/java/com/pdp/datamigration/config/PdpTargetMybatisConfig.java`
 - [ ] T051 创建源库只读事务管理器、目标库本地事务管理器和批次边界，文件：`modules/datamigration/src/main/java/com/pdp/datamigration/config/MigrationTransactionConfig.java`
 - [ ] T052 创建迁移源/目标连接、Mapper、事务和凭据隔离测试，文件：`tests/backend/integration/datamigration/MigrationDataSourceIsolationTest.java`
-- [ ] T053 创建持久化适配器注册表、数据库能力画像、部署事实，以及产品、版本、字符集、时区、引擎和权限启动校验；P1 仅允许一个已认证适配器激活，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/provider/`、`modules/public-persistence/src/main/java/com/pdp/persistence/config/DatabaseCapabilityValidator.java`
+- [X] T053 创建持久化适配器注册表、数据库能力画像、部署事实，以及产品、版本、字符集、时区、引擎和权限启动校验；P1 仅允许一个已认证适配器激活，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/provider/`、`modules/public-persistence/src/main/java/com/pdp/persistence/config/DatabaseCapabilityValidator.java`
 
 ### 数据访问、事件和投影基础
 
-- [ ] T054 [P] 创建 UUID、JSON、枚举、时间和值对象 TypeHandler，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/typehandler/`
+- [X] T054 [P] 创建 UUID、JSON、枚举、时间和值对象 TypeHandler，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/typehandler/`
 - [ ] T055 创建 TypeHandler MySQL 往返与公共逻辑语义测试，文件：`tests/backend/contract/persistence/TypeHandlerDatabaseContractTest.java`
 - [X] T056 创建签名 keyset cursor 与稳定排序组件，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/page/`
 - [ ] T057 创建游标分页 MySQL 契约测试，文件：`tests/backend/contract/persistence/CursorPaginationDatabaseContractTest.java`
@@ -81,11 +81,11 @@
 - [ ] T059 创建并发更新、重试和冲突呈现测试，文件：`tests/backend/integration/concurrency/OptimisticConcurrencyTest.java`
 - [ ] T060 创建领域事件、Outbox、幂等消费和死信基础设施，文件：`modules/integration/src/main/java/com/pdp/integration/event/`
 - [ ] T061 创建重复、乱序、失败重放和死信恢复测试，文件：`tests/backend/integration/event/EventDeliverySemanticsTest.java`
-- [ ] T062 创建 Liquibase 根变更集及 common/mysql 目录规则，文件：`modules/public-persistence/src/main/resources/db/changelog/db.changelog-master.xml`
-- [ ] T063 创建公共审计摘要链、Outbox、幂等和后台作业表，文件：`modules/public-persistence/src/main/resources/db/changelog/common/002-platform-foundation.xml`
-- [ ] T064 [P] 创建 MySQL 8.4 专用索引和约束，文件：`modules/public-persistence/src/main/resources/db/changelog/mysql/001-platform-indexes.xml`
+- [X] T062 创建 Liquibase 根变更集及 common/mysql 目录规则，文件：`modules/public-persistence/src/main/resources/db/changelog/db.changelog-master.xml`
+- [X] T063 创建公共审计摘要链、Outbox、幂等和后台作业表，文件：`modules/public-persistence/src/main/resources/db/changelog/common/002-platform-foundation.xml`
+- [X] T064 [P] 创建 MySQL 8.4 专用索引和约束，文件：`modules/public-persistence/src/main/resources/db/changelog/mysql/001-platform-indexes.xml`
 - [ ] T065 创建空库、升级库和回滚演练的 Liquibase MySQL 测试，文件：`tests/backend/contract/persistence/LiquibaseMySqlMatrixTest.java`
-- [ ] T066 创建实现公共持久化提供方扩展契约的 MySQL 8.4 仓储和 SQL 方言适配器，文件：`modules/persistence-mysql/src/main/java/com/pdp/mysql/`
+- [X] T066 创建实现公共持久化提供方扩展契约的 MySQL 8.4 仓储和 SQL 方言适配器，文件：`modules/persistence-mysql/src/main/java/com/pdp/mysql/`
 - [ ] T067 创建仓储端口禁止泄漏 MyBatis、MySQL 驱动和数据库专有类型的架构测试，并使用模拟适配器验证注册、唯一激活、未知能力拒绝和边界兼容，文件：`tests/backend/architecture/PersistenceBoundaryTest.java`、`tests/backend/contract/persistence/PersistenceProviderExtensionContractTest.java`
 - [ ] T068 创建权限过滤的搜索投影端口、文档和统一分析器，文件：`modules/experience/src/main/java/com/pdp/experience/search/`
 - [ ] T069 创建搜索投影 30 秒可见和撤权过滤测试，文件：`tests/backend/integration/search/SearchProjectionConsistencyTest.java`

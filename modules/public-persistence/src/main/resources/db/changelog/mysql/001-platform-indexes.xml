@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                       https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        MySQL 8.4 专用索引与约束：降序索引、覆盖索引、函数索引。
+        所有 changeset 仅在 MySQL 执行（dbms="mysql"）。
+        接受 MySQL 空库、升级和失败恢复测试。
+    -->
+
+    <!-- audit_event 降序时间索引（最近审计优先查询） -->
+    <changeSet id="mysql-001-audit-desc-time" author="pdp-platform" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="audit_event" indexName="idx_audit_workspace_time_desc"/></not>
+        </preConditions>
+        <createIndex indexName="idx_audit_workspace_time_desc" tableName="audit_event">
+            <column name="workspace_id"/>
+            <column name="occurred_at" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- event_publication 覆盖索引（status, next_retry_at, publication_date），调度器扫描 -->
+    <changeSet id="mysql-001-event-cover" author="pdp-platform" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="event_publication" indexName="idx_event_dispatch_cover"/></not>
+        </preConditions>
+        <createIndex indexName="idx_event_dispatch_cover" tableName="event_publication">
+            <column name="status"/>
+            <column name="next_retry_at"/>
+            <column name="publication_date"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- background_job 状态+时间降序（管理页面优先展示排队/运行中） -->
+    <changeSet id="mysql-001-job-status-desc" author="pdp-platform" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="background_job" indexName="idx_job_status_created_desc"/></not>
+        </preConditions>
+        <createIndex indexName="idx_job_status_created_desc" tableName="background_job">
+            <column name="status"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- idempotency_record 完成时间索引（清理过期记录） -->
+    <changeSet id="mysql-001-idem-completed" author="pdp-platform" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="idempotency_record" indexName="idx_idem_completed"/></not>
+        </preConditions>
+        <createIndex indexName="idx_idem_completed" tableName="idempotency_record">
+            <column name="completed_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

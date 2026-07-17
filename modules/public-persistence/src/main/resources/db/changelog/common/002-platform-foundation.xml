@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                       https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        平台基础表：审计摘要链、Outbox（Spring Modulith JDBC 事件仓储）、幂等记录、后台作业。
+        所有表 InnoDB + utf8mb4；排序规则、引擎选项由 mysql/ 下的 modifySql 追加。
+        UUIDv7 由应用生成，存储为 BINARY(16)，不调用数据库 UUID 函数。
+    -->
+
+    <!-- 审计摘要链（只追加、不可由普通业务接口修改；before/after/previous digest 形成防篡改链） -->
+    <changeSet id="002-create-audit-event" author="pdp-platform">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="audit_event"/></not>
+        </preConditions>
+        <createTable tableName="audit_event">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="occurred_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor_display_snapshot" type="varchar(255)"/>
+            <column name="action" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_object_type" type="varchar(64)"/>
+            <column name="target_object_id" type="binary(16)"/>
+            <column name="result" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="varchar(512)"/>
+            <column name="before_digest" type="varchar(128)"/>
+            <column name="after_digest" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="previous_digest" type="varchar(128)"/>
+            <column name="trace_id" type="binary(16)"/>
+            <column name="correlation_id" type="binary(16)"/>
+            <column name="source_ip" type="varchar(64)"/>
+            <column name="metadata" type="json"/>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_audit_workspace_time" tableName="audit_event">
+            <column name="workspace_id"/>
+            <column name="occurred_at"/>
+        </createIndex>
+        <createIndex indexName="idx_audit_target" tableName="audit_event">
+            <column name="target_object_type"/>
+            <column name="target_object_id"/>
+        </createIndex>
+        <createIndex indexName="idx_audit_trace" tableName="audit_event">
+            <column name="trace_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Outbox / 事件发布记录（Spring Modulith JDBC 事件仓储；事件表由 Liquibase 管理，生产关闭自动建表） -->
+    <changeSet id="002-create-event-publication" author="pdp-platform">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="event_publication"/></not>
+        </preConditions>
+        <createTable tableName="event_publication">
+            <column name="publication_id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="event_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_version" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="listener_id" type="varchar(255)"/>
+            <column name="aggregate_type" type="varchar(64)"/>
+            <column name="aggregate_id" type="binary(16)"/>
+            <column name="payload" type="json">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(32)" defaultValue="PUBLISHED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="publication_date" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completion_attempts" type="int" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_resubmission_date" type="datetime(6)"/>
+            <column name="completion_date" type="datetime(6)"/>
+            <column name="last_error" type="text"/>
+            <column name="next_retry_at" type="datetime(6)"/>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_event_status_retry" tableName="event_publication">
+            <column name="status"/>
+            <column name="next_retry_at"/>
+        </createIndex>
+        <createIndex indexName="idx_event_aggregate" tableName="event_publication">
+            <column name="aggregate_type"/>
+            <column name="aggregate_id"/>
+        </createIndex>
+        <createIndex indexName="uniq_event_listener" tableName="event_publication" unique="true">
+            <column name="event_id"/>
+            <column name="listener_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 幂等记录（高风险写操作去重；同一 workspace+key+operation 唯一） -->
+    <changeSet id="002-create-idempotency-record" author="pdp-platform">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="idempotency_record"/></not>
+        </preConditions>
+        <createTable tableName="idempotency_record">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="idempotency_key" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="operation_type" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="request_hash" type="varchar(128)"/>
+            <column name="response_summary" type="json"/>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="datetime(6)"/>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="uniq_idem_ws_key" tableName="idempotency_record" unique="true">
+            <column name="workspace_id"/>
+            <column name="idempotency_key"/>
+            <column name="operation_type"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 后台作业（批量导入/导出/归档/统计/迁移/搜索重建/集成补偿；QUEUED→RUNNING→COMPLETED，允许 PAUSED/FAILED/CANCELLED） -->
+    <changeSet id="002-create-background-job" author="pdp-platform">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="background_job"/></not>
+        </preConditions>
+        <createTable tableName="background_job">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="job_type" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="scope" type="varchar(128)"/>
+            <column name="requested_by_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="requested_by_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(32)" defaultValue="QUEUED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="progress" type="int" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_items" type="int"/>
+            <column name="processed_items" type="int" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="checkpoint" type="json"/>
+            <column name="failure_items" type="json"/>
+            <column name="result_file_id" type="binary(16)"/>
+            <column name="error_message" type="text"/>
+            <column name="started_at" type="datetime(6)"/>
+            <column name="finished_at" type="datetime(6)"/>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_job_status" tableName="background_job">
+            <column name="status"/>
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex indexName="idx_job_workspace_type" tableName="background_job">
+            <column name="workspace_id"/>
+            <column name="job_type"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

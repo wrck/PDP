@@ -184,4 +184,27 @@ test('网络设备割接示例包必须通过正式 manifest 契约', async () =
   const ajv = new Ajv2020({ allErrors: true, strict: false })
   const validate = ajv.compile(schema)
   assert.equal(validate(fixture), true, JSON.stringify(validate.errors))
+
+  const objectKeys = fixture.objects.map(
+    (object: { stableKey: string }) => object.stableKey,
+  )
+  assert.deepEqual(objectKeys, [
+    'project.cutover-extension',
+    'deliverable.cutover-extension',
+    'cutover.plan',
+    'cutover.step',
+    'cutover.resource',
+  ])
+  const cutover = fixture.objects.find(
+    (object: { stableKey: string }) => object.stableKey === 'cutover.plan',
+  )
+  assert.deepEqual(
+    cutover.states.map((state: { stableKey: string }) => state.stableKey),
+    ['draft', 'reviewing', 'executing', 'verified', 'rolled-back'],
+  )
+  assert.equal(
+    fixture.workflowBindings[0].authorizationPolicyKey,
+    'cutover.approve',
+  )
+  assert.equal(fixture.migrations[0].rollback.type, 'RESTORE_SNAPSHOT')
 })

@@ -11,10 +11,113 @@
   },
   "objects": [
     {
+      "stableKey": "project.cutover-extension",
+      "kind": "CORE_EXTENSION",
+      "coreObjectType": "project",
+      "label": {
+        "zh-CN": "项目割接扩展"
+      },
+      "fields": [
+        {
+          "stableKey": "project.cutover-window",
+          "label": {
+            "zh-CN": "项目割接窗口"
+          },
+          "dataType": "DATETIME",
+          "indexMode": "SORT"
+        }
+      ],
+      "relations": [],
+      "states": [
+        {
+          "stableKey": "planning",
+          "label": {
+            "zh-CN": "规划中"
+          },
+          "topLifecycleState": "PLANNING",
+          "initial": true
+        },
+        {
+          "stableKey": "executing",
+          "label": {
+            "zh-CN": "割接执行中"
+          },
+          "topLifecycleState": "EXECUTING"
+        },
+        {
+          "stableKey": "closed",
+          "label": {
+            "zh-CN": "割接关闭"
+          },
+          "topLifecycleState": "CLOSED",
+          "terminal": true
+        }
+      ],
+      "transitions": [
+        {
+          "stableKey": "start-project-cutover",
+          "from": "planning",
+          "to": "executing",
+          "requiredPermission": "cutover.project-manage"
+        },
+        {
+          "stableKey": "close-project-cutover",
+          "from": "executing",
+          "to": "closed",
+          "requiredPermission": "cutover.project-manage"
+        }
+      ]
+    },
+    {
+      "stableKey": "deliverable.cutover-extension",
+      "kind": "CORE_EXTENSION",
+      "coreObjectType": "deliverable",
+      "label": {
+        "zh-CN": "交付件割接扩展"
+      },
+      "fields": [
+        {
+          "stableKey": "deliverable.cutover-evidence",
+          "label": {
+            "zh-CN": "割接验收证据"
+          },
+          "dataType": "FILE_REF",
+          "required": true
+        }
+      ],
+      "relations": [],
+      "states": [
+        {
+          "stableKey": "draft",
+          "label": {
+            "zh-CN": "待提交"
+          },
+          "topLifecycleState": "EXECUTING",
+          "initial": true
+        },
+        {
+          "stableKey": "accepted",
+          "label": {
+            "zh-CN": "已验收"
+          },
+          "topLifecycleState": "ACCEPTING",
+          "terminal": true
+        }
+      ],
+      "transitions": [
+        {
+          "stableKey": "accept-cutover-evidence",
+          "from": "draft",
+          "to": "accepted",
+          "requiredPermission": "cutover.verify"
+        }
+      ]
+    },
+    {
       "stableKey": "cutover.plan",
       "kind": "NEW_OBJECT",
       "label": {
-        "zh-CN": "割接计划"
+        "zh-CN": "割接单"
       },
       "titleFieldKey": "cutover.title",
       "fields": [
@@ -46,7 +149,33 @@
           "sensitive": true
         }
       ],
-      "relations": [],
+      "relations": [
+        {
+          "stableKey": "cutover.project",
+          "targetObjectKey": "project.cutover-extension",
+          "cardinality": "MANY_TO_ONE",
+          "required": true,
+          "ownership": "REFERENCE"
+        },
+        {
+          "stableKey": "cutover.steps",
+          "targetObjectKey": "cutover.step",
+          "cardinality": "ONE_TO_MANY",
+          "ownership": "AGGREGATE_CHILD"
+        },
+        {
+          "stableKey": "cutover.resources",
+          "targetObjectKey": "cutover.resource",
+          "cardinality": "ONE_TO_MANY",
+          "ownership": "AGGREGATE_CHILD"
+        },
+        {
+          "stableKey": "cutover.acceptance-deliverable",
+          "targetObjectKey": "deliverable.cutover-extension",
+          "cardinality": "ONE_TO_ONE",
+          "ownership": "REFERENCE"
+        }
+      ],
       "states": [
         {
           "stableKey": "draft",
@@ -114,6 +243,186 @@
           "to": "rolled-back",
           "requiredPermission": "cutover.rollback",
           "guardRuleKey": "cutover.rollback-required"
+        }
+      ]
+    },
+    {
+      "stableKey": "cutover.step",
+      "kind": "NEW_OBJECT",
+      "label": {
+        "zh-CN": "割接步骤"
+      },
+      "titleFieldKey": "step.instruction",
+      "fields": [
+        {
+          "stableKey": "step.sequence",
+          "label": {
+            "zh-CN": "步骤序号"
+          },
+          "dataType": "INTEGER",
+          "required": true,
+          "indexMode": "SORT"
+        },
+        {
+          "stableKey": "step.instruction",
+          "label": {
+            "zh-CN": "执行指令"
+          },
+          "dataType": "LONG_TEXT",
+          "required": true
+        },
+        {
+          "stableKey": "step.execution-log",
+          "label": {
+            "zh-CN": "执行日志"
+          },
+          "dataType": "LONG_TEXT"
+        }
+      ],
+      "relations": [
+        {
+          "stableKey": "step.cutover",
+          "targetObjectKey": "cutover.plan",
+          "cardinality": "MANY_TO_ONE",
+          "required": true,
+          "ownership": "REFERENCE"
+        }
+      ],
+      "states": [
+        {
+          "stableKey": "pending",
+          "label": {
+            "zh-CN": "待执行"
+          },
+          "topLifecycleState": "PLANNING",
+          "initial": true
+        },
+        {
+          "stableKey": "executing",
+          "label": {
+            "zh-CN": "执行中"
+          },
+          "topLifecycleState": "EXECUTING"
+        },
+        {
+          "stableKey": "completed",
+          "label": {
+            "zh-CN": "已完成"
+          },
+          "topLifecycleState": "ACCEPTING",
+          "terminal": true
+        },
+        {
+          "stableKey": "failed",
+          "label": {
+            "zh-CN": "失败"
+          },
+          "topLifecycleState": "CANCELLED",
+          "terminal": true
+        }
+      ],
+      "transitions": [
+        {
+          "stableKey": "execute-step",
+          "from": "pending",
+          "to": "executing",
+          "requiredPermission": "cutover.step-execute"
+        },
+        {
+          "stableKey": "complete-step",
+          "from": "executing",
+          "to": "completed",
+          "requiredPermission": "cutover.step-execute"
+        },
+        {
+          "stableKey": "fail-step",
+          "from": "executing",
+          "to": "failed",
+          "requiredPermission": "cutover.step-execute"
+        }
+      ]
+    },
+    {
+      "stableKey": "cutover.resource",
+      "kind": "NEW_OBJECT",
+      "label": {
+        "zh-CN": "割接资源"
+      },
+      "titleFieldKey": "resource.name",
+      "fields": [
+        {
+          "stableKey": "resource.name",
+          "label": {
+            "zh-CN": "资源名称"
+          },
+          "dataType": "TEXT",
+          "required": true,
+          "indexMode": "SEARCH"
+        },
+        {
+          "stableKey": "resource.device-ref",
+          "label": {
+            "zh-CN": "设备引用"
+          },
+          "dataType": "OBJECT_REF",
+          "required": true
+        },
+        {
+          "stableKey": "resource.config-snapshot",
+          "label": {
+            "zh-CN": "配置快照"
+          },
+          "dataType": "FILE_REF",
+          "required": true,
+          "sensitive": true
+        }
+      ],
+      "relations": [
+        {
+          "stableKey": "resource.cutover",
+          "targetObjectKey": "cutover.plan",
+          "cardinality": "MANY_TO_ONE",
+          "required": true,
+          "ownership": "REFERENCE"
+        }
+      ],
+      "states": [
+        {
+          "stableKey": "reserved",
+          "label": {
+            "zh-CN": "已预留"
+          },
+          "topLifecycleState": "PLANNING",
+          "initial": true
+        },
+        {
+          "stableKey": "ready",
+          "label": {
+            "zh-CN": "已就绪"
+          },
+          "topLifecycleState": "EXECUTING"
+        },
+        {
+          "stableKey": "released",
+          "label": {
+            "zh-CN": "已释放"
+          },
+          "topLifecycleState": "CLOSED",
+          "terminal": true
+        }
+      ],
+      "transitions": [
+        {
+          "stableKey": "mark-resource-ready",
+          "from": "reserved",
+          "to": "ready",
+          "requiredPermission": "cutover.resource-manage"
+        },
+        {
+          "stableKey": "release-resource",
+          "from": "ready",
+          "to": "released",
+          "requiredPermission": "cutover.resource-manage"
         }
       ]
     }
@@ -242,6 +551,33 @@
       ],
       "fieldKeys": [
         "cutover.rollback-plan"
+      ]
+    },
+    {
+      "capabilityKey": "cutover.project-manage",
+      "objectKey": "project.cutover-extension",
+      "operations": [
+        "TRANSITION",
+        "UPDATE"
+      ]
+    },
+    {
+      "capabilityKey": "cutover.step-execute",
+      "objectKey": "cutover.step",
+      "operations": [
+        "TRANSITION",
+        "EXECUTE"
+      ]
+    },
+    {
+      "capabilityKey": "cutover.resource-manage",
+      "objectKey": "cutover.resource",
+      "operations": [
+        "TRANSITION",
+        "UPDATE"
+      ],
+      "fieldKeys": [
+        "resource.config-snapshot"
       ]
     }
   ],

@@ -67,7 +67,7 @@ public record OperationConfirmation(
                     "预览包含不可逆变更，操作者 MUST 显式确认不可逆风险");
         }
         return new OperationConfirmation(
-                UUID.randomUUID(), // 确认 ID 不需时间序，使用随机 UUID
+                UuidV7Generator.next(),
                 preview.previewId(), preview.version(),
                 confirmedBy, Instant.now(), expectedOutcome, acknowledgedIrreversible);
     }

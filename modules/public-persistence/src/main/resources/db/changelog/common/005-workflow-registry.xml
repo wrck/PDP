@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                       https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        平台工作流 PDP 自有注册表（FR-174、ADR-0005 第 7 节）。
+
+        本变更集在 pdpPrimary 数据源上创建 PDP 自有工作流注册表，仅保存引擎与权威业务对象
+        之间的关联与编排标识，不复制 Flowable 引擎运行表（ACT_* 由 flowable-schema-manifest
+        独立管理，位于 workflowEngine 数据源/schema）。
+
+        表清单：
+          - workflow_definition：流程定义注册表（BPMN 内容、版本、状态机、领域包关联）
+          - workflow_deployment：部署记录（链接到 Flowable 引擎 definition/deployment ID）
+          - workflow_instance_ref：流程实例引用（业务对象 ↔ 引擎实例关联、幂等键、状态投影）
+          - workflow_incident：异常记录（OPEN → RETRYING → RESOLVED/MANUAL_ACTION/DEAD_LETTER）
+          - workflow_result_event：结果事件桥接（流程终态 → 业务聚合回查）
+          - workflow_migration_record：迁移历史（受控迁移审计回查）
+
+        约定（与 002-platform-foundation.xml 一致）：
+          - UUIDv7 由应用生成，存储为 BINARY(16)，不调用数据库 UUID 函数
+          - 时间戳 datetime(6) 微秒精度
+          - 枚举 varchar(32) 存储 name() 稳定键，禁止依赖枚举序号
+          - JSON 字段使用 json 类型（findings、current_activity_keys、result_variables）
+          - 乐观锁 revision int NOT NULL DEFAULT 1
+          - MySQL 专用索引（降序/覆盖/函数）放 mysql/ 变更集，本文件仅承载公共结构
+    -->
+
+    <!-- 流程定义注册表（PDP 自有，不依赖 Flowable RepositoryService 表） -->
+    <changeSet id="005-create-workflow-definition" author="pdp-platform">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="workflow_definition"/></not>
+        </preConditions>
+        <createTable tableName="workflow_definition">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stable_key" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bpmn_version" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="business_version" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content_hash" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bpmn_content" type="longtext">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domain_package_version_id" type="binary(16)"/>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="findings" type="json"/>
+            <column name="created_by_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by_snapshot" type="varchar(255)"/>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="approved_by_type" type="varchar(32)"/>
+            <column name="approved_by_id" type="binary(16)"/>
+            <column name="approved_by_snapshot" type="varchar(255)"/>
+            <column name="approved_at" type="datetime(6)"/>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- 同 (workspace, stable_key, business_version) 唯一：禁止重复部署同版本 -->
+        <createIndex indexName="uniq_wfdef_ws_key_version" tableName="workflow_definition" unique="true">
+            <column name="workspace_id"/>
+            <column name="stable_key"/>
+            <column name="business_version"/>
+        </createIndex>
+        <!-- findLatestDeployed：按稳定键查询最新已部署版本 -->
+        <createIndex indexName="idx_wfdef_key_status" tableName="workflow_definition">
+            <column name="stable_key"/>
+            <column name="status"/>
+        </createIndex>
+        <!-- listDefinitions：工作空间 + 状态过滤 -->
+        <createIndex indexName="idx_wfdef_ws_status" tableName="workflow_definition">
+            <column name="workspace_id"/>
+            <column name="status"/>
+        </createIndex>
+        <!-- 领域包版本关联追溯（领域包升级时定位受影响定义） -->
+        <createIndex indexName="idx_wfdef_domain_pkg" tableName="workflow_definition">
+            <column name="domain_package_version_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 部署记录（链接 PDP 定义到 Flowable 引擎 definition/deployment ID） -->
+    <changeSet id="005-create-workflow-deployment" author="pdp-platform">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="workflow_deployment"/></not>
+        </preConditions>
+        <createTable tableName="workflow_deployment">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="definition_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="engine_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="engine_definition_id" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="engine_definition_version" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deployment_id" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="database_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deployed_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deployed_by_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deployed_by_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deployed_by_snapshot" type="varchar(255)"/>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- 同引擎 definition ID 唯一：防止重复部署到同一引擎定义 -->
+        <createIndex indexName="uniq_wfdep_engine_def" tableName="workflow_deployment" unique="true">
+            <column name="engine_type"/>
+            <column name="engine_definition_id"/>
+        </createIndex>
+        <!-- findByDefinitionId：按 PDP 定义查询部署记录 -->
+        <createIndex indexName="idx_wfdep_definition" tableName="workflow_deployment">
+            <column name="definition_id"/>
+        </createIndex>
+        <!-- 工作空间部署时间线（运维监控） -->
+        <createIndex indexName="idx_wfdep_ws_deployed" tableName="workflow_deployment">
+            <column name="workspace_id"/>
+            <column name="deployed_at"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 流程实例引用（业务对象 ↔ 引擎实例关联，幂等键，状态投影） -->
+    <changeSet id="005-create-workflow-instance-ref" author="pdp-platform">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="workflow_instance_ref"/></not>
+        </preConditions>
+        <createTable tableName="workflow_instance_ref">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="definition_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deployment_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- 业务对象引用（BusinessObjectRef 扁平化：工作空间已在上方列） -->
+            <column name="business_object_type" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="business_object_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="correlation_key" type="varchar(128)"/>
+            <column name="approval_instance_id" type="binary(16)"/>
+            <!-- 引擎实例关联（引擎不可用时仍可从业务对象判断权威状态） -->
+            <column name="engine_process_instance_id" type="varchar(128)"/>
+            <column name="engine_correlation_id" type="varchar(128)"/>
+            <!-- 幂等启动：相同 (workspace, business_object, idempotency_key) 返回已有实例 -->
+            <column name="idempotency_key" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- 状态投影与诊断 -->
+            <column name="state" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_activity_keys" type="json"/>
+            <column name="started_by_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="started_by_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="started_by_snapshot" type="varchar(255)"/>
+            <column name="started_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ended_at" type="datetime(6)"/>
+            <column name="last_synced_at" type="datetime(6)"/>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- 幂等启动唯一约束：同业务对象 + 幂等键只能创建一个实例 -->
+        <createIndex indexName="uniq_wfins_ws_obj_idem" tableName="workflow_instance_ref" unique="true">
+            <column name="workspace_id"/>
+            <column name="business_object_type"/>
+            <column name="business_object_id"/>
+            <column name="idempotency_key"/>
+        </createIndex>
+        <!-- findByBusinessObject：业务模块回查编排状态 -->
+        <createIndex indexName="idx_wfins_business_object" tableName="workflow_instance_ref">
+            <column name="workspace_id"/>
+            <column name="business_object_type"/>
+            <column name="business_object_id"/>
+        </createIndex>
+        <!-- findByEngineProcessInstanceId：引擎同步回写定位 -->
+        <createIndex indexName="idx_wfins_engine_pid" tableName="workflow_instance_ref">
+            <column name="engine_process_instance_id"/>
+        </createIndex>
+        <!-- 诊断与管理：工作空间 + 状态查询（listInstancesWithIncidents） -->
+        <createIndex indexName="idx_wfins_ws_state" tableName="workflow_instance_ref">
+            <column name="workspace_id"/>
+            <column name="state"/>
+        </createIndex>
+        <!-- 按定义查询运行中实例（迁移影响预览） -->
+        <createIndex indexName="idx_wfins_definition_state" tableName="workflow_instance_ref">
+            <column name="definition_id"/>
+            <column name="state"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 异常记录（incident：OPEN → RETRYING → RESOLVED/MANUAL_ACTION/DEAD_LETTER） -->
+    <changeSet id="005-create-workflow-incident" author="pdp-platform">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="workflow_incident"/></not>
+        </preConditions>
+        <createTable tableName="workflow_incident">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="instance_ref_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="engine_job_id" type="varchar(128)"/>
+            <column name="activity_key" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="incident_type" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attempts" type="int" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_error_code" type="varchar(128)"/>
+            <column name="last_error_message" type="text"/>
+            <column name="last_error_digest" type="varchar(128)"/>
+            <column name="next_retry_at" type="datetime(6)"/>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resolution" type="varchar(512)"/>
+            <column name="resolved_by_type" type="varchar(32)"/>
+            <column name="resolved_by_id" type="binary(16)"/>
+            <column name="resolved_by_snapshot" type="varchar(255)"/>
+            <column name="resolved_at" type="datetime(6)"/>
+            <column name="occurred_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- listByInstance：按实例查询 incident 列表 -->
+        <createIndex indexName="idx_wfinc_instance_status" tableName="workflow_incident">
+            <column name="instance_ref_id"/>
+            <column name="status"/>
+        </createIndex>
+        <!-- countUnresolvedByInstance 与运维扫描：工作空间 + 状态 + 重试时间 -->
+        <createIndex indexName="idx_wfinc_ws_status_retry" tableName="workflow_incident">
+            <column name="workspace_id"/>
+            <column name="status"/>
+            <column name="next_retry_at"/>
+        </createIndex>
+        <!-- 错误摘要去重（同错误不重复登记） -->
+        <createIndex indexName="idx_wfinc_error_digest" tableName="workflow_incident">
+            <column name="last_error_digest"/>
+        </createIndex>
+        <!-- 引擎作业 ID 回查（引擎同步定位） -->
+        <createIndex indexName="idx_wfinc_engine_job" tableName="workflow_incident">
+            <column name="engine_job_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 结果事件桥接（流程终态 → 业务聚合回查验证） -->
+    <changeSet id="005-create-workflow-result-event" author="pdp-platform">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="workflow_result_event"/></not>
+        </preConditions>
+        <createTable tableName="workflow_result_event">
+            <column name="event_id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="instance_ref_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="business_object_type" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="business_object_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="outcome" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="result_variables" type="json"/>
+            <column name="failure_reason" type="text"/>
+            <column name="occurred_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- findResultEvent：按实例查询结果事件 -->
+        <createIndex indexName="idx_wfresevt_instance" tableName="workflow_result_event">
+            <column name="instance_ref_id"/>
+        </createIndex>
+        <!-- 业务模块按业务对象回查结果（聚合回查验证） -->
+        <createIndex indexName="idx_wfresevt_business_object" tableName="workflow_result_event">
+            <column name="workspace_id"/>
+            <column name="business_object_type"/>
+            <column name="business_object_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 迁移历史记录（受控迁移审计回查） -->
+    <changeSet id="005-create-workflow-migration-record" author="pdp-platform">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="workflow_migration_record"/></not>
+        </preConditions>
+        <createTable tableName="workflow_migration_record">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="migration_id" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="instance_ref_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_definition_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_definition_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="triggered_by_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="triggered_by_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="triggered_by_snapshot" type="varchar(255)"/>
+            <column name="migrated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="batch_size" type="int" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="successful" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="failure_reason" type="text"/>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- listMigrationHistory：按实例查询迁移历史（按时间倒序） -->
+        <createIndex indexName="idx_wfmig_instance_time" tableName="workflow_migration_record">
+            <column name="instance_ref_id"/>
+            <column name="migrated_at"/>
+        </createIndex>
+        <!-- 工作空间迁移审计回查 -->
+        <createIndex indexName="idx_wfmig_ws_time" tableName="workflow_migration_record">
+            <column name="workspace_id"/>
+            <column name="migrated_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

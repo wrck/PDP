@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                       https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        身份公共变更集：用户账户、外部身份绑定、用户会话。
+        UUIDv7 由应用生成，存储为 BINARY(16)。所有可修改业务表包含 revision。
+    -->
+
+    <!-- 用户账户 -->
+    <changeSet id="001-create-user-account" author="pdp-identity">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="user_account"/></not>
+        </preConditions>
+        <createTable tableName="user_account">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="display_name" type="varchar(255)"/>
+            <column name="email" type="varchar(255)"/>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="uniq_user_username" tableName="user_account" unique="true">
+            <column name="username"/>
+        </createIndex>
+        <createIndex indexName="uniq_user_email" tableName="user_account" unique="true">
+            <column name="email"/>
+        </createIndex>
+        <createIndex indexName="idx_user_status" tableName="user_account">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 外部身份绑定 -->
+    <changeSet id="001-create-external-identity" author="pdp-identity">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="external_identity"/></not>
+        </preConditions>
+        <createTable tableName="external_identity">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="issuer" type="varchar(512)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subject" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="provider_name" type="varchar(128)"/>
+            <column name="bound_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_synced_at" type="datetime(6)"/>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="uniq_ext_issuer_subject" tableName="external_identity" unique="true">
+            <column name="issuer"/>
+            <column name="subject"/>
+        </createIndex>
+        <createIndex indexName="idx_ext_user" tableName="external_identity">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 用户会话 -->
+    <changeSet id="001-create-user-session" author="pdp-identity">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="user_session"/></not>
+        </preConditions>
+        <createTable tableName="user_session">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="session_token_hash" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="refresh_token_hash" type="varchar(128)"/>
+            <column name="issued_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="datetime(6)"/>
+            <column name="revoked_at" type="datetime(6)"/>
+            <column name="revoke_reason" type="varchar(255)"/>
+            <column name="source_ip" type="varchar(64)"/>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_session_user" tableName="user_session">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="idx_session_token_hash" tableName="user_session">
+            <column name="session_token_hash"/>
+        </createIndex>
+        <createIndex indexName="idx_session_active" tableName="user_session">
+            <column name="user_id"/>
+            <column name="revoked_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -47,14 +47,14 @@
 
 - [X] T032 创建统一错误码、异常和 `application/problem+json` 响应，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/error/`
 - [X] T033 [P] 创建工作空间、操作者、链路、幂等键和审计上下文值对象，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/context/`
-- [ ] T034 创建请求上下文过滤器并强制校验工作空间边界，文件：`apps/api/src/main/java/com/pdp/api/security/RequestContextFilter.java`
-- [ ] T035 创建用户账户、外部身份、用户会话领域模型及仓储端口，文件：`modules/identity/src/main/java/com/pdp/identity/domain/`、`modules/identity/src/main/java/com/pdp/identity/port/`
-- [ ] T036 创建用户账户、身份映射和会话公共变更集，文件：`modules/public-persistence/src/main/resources/db/changelog/common/001-identity.xml`
+- [X] T034 创建请求上下文过滤器并强制校验工作空间边界，文件：`apps/api/src/main/java/com/pdp/api/security/RequestContextFilter.java`
+- [X] T035 创建用户账户、外部身份、用户会话领域模型及仓储端口，文件：`modules/identity/src/main/java/com/pdp/identity/domain/`、`modules/identity/src/main/java/com/pdp/identity/port/`
+- [X] T036 创建用户账户、身份映射和会话公共变更集，文件：`modules/public-persistence/src/main/resources/db/changelog/common/001-identity.xml`
 - [ ] T037 创建身份 Mapper、XML 和数据库适配器，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/identity/`、`modules/public-persistence/src/main/resources/mapper/identity/`
-- [ ] T038 创建 OIDC 登录、回调、用户同步和外部身份绑定适配器，文件：`modules/identity/src/main/java/com/pdp/identity/infrastructure/oidc/`
-- [ ] T039 创建用户启用、停用、离职、会话和刷新凭据撤销服务，文件：`modules/identity/src/main/java/com/pdp/identity/application/IdentityLifecycleService.java`
+- [X] T038 创建 OIDC 登录、回调、用户同步和外部身份绑定适配器，文件：`modules/identity/src/main/java/com/pdp/identity/infrastructure/oidc/`
+- [X] T039 创建用户启用、停用、离职、会话和刷新凭据撤销服务，文件：`modules/identity/src/main/java/com/pdp/identity/application/IdentityLifecycleService.java`
 - [ ] T040 创建身份生命周期 MySQL 契约测试，文件：`tests/backend/contract/identity/IdentityLifecycleDatabaseContractTest.java`
-- [ ] T041 创建统一认证、授权决策和资源范围校验服务，文件：`modules/identity/src/main/java/com/pdp/identity/application/AuthorizationService.java`
+- [X] T041 创建统一认证、授权决策和资源范围校验服务，文件：`modules/identity/src/main/java/com/pdp/identity/application/AuthorizationService.java`
 - [ ] T042 创建权限撤销时效基线测试，文件：`tests/backend/security/PermissionRevocationSlaTest.java`
 
 ### MySQL 持久化、动态数据源和连接池

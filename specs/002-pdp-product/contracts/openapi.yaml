@@ -107,6 +107,664 @@ paths:
           description: 已撤销
         '409':
           $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}:
+    get:
+      tags: [工作空间]
+      summary: 获取工作空间详情
+      operationId: getWorkspace
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+      responses:
+        '200':
+          description: 工作空间详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '404':
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [工作空间]
+      summary: 更新工作空间基本信息（名称、描述、默认语言/时区）
+      operationId: updateWorkspace
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkspaceCommand'
+      responses:
+        '200':
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/activate:
+    post:
+      tags: [工作空间]
+      summary: 激活工作空间（DRAFT/SUSPENDED → ACTIVE）
+      operationId: activateWorkspace
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: 已激活
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/suspend:
+    post:
+      tags: [工作空间]
+      summary: 暂停工作空间（ACTIVE → SUSPENDED）
+      operationId: suspendWorkspace
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonCommand'
+      responses:
+        '200':
+          description: 已暂停
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/archive:
+    post:
+      tags: [工作空间]
+      summary: 归档工作空间（ACTIVE/SUSPENDED → ARCHIVED）
+      operationId: archiveWorkspace
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonCommand'
+      responses:
+        '200':
+          description: 已归档
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/restore:
+    post:
+      tags: [工作空间]
+      summary: 恢复归档工作空间（ARCHIVED → SUSPENDED）
+      operationId: restoreWorkspace
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: 已恢复
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/owner:
+    put:
+      tags: [工作空间]
+      summary: 转移工作空间负责人
+      operationId: transferWorkspaceOwner
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferOwnerCommand'
+      responses:
+        '200':
+          description: 已转移
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/organizations:
+    get:
+      tags: [工作空间]
+      summary: 查询组织树
+      operationId: listOrganizations
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+        - name: parentId
+          in: query
+          description: 父组织 ID；不传返回顶层组织
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Uuid'
+              - type: 'null'
+      responses:
+        '200':
+          $ref: '#/components/responses/OrganizationPage'
+    post:
+      tags: [工作空间]
+      summary: 创建组织
+      operationId: createOrganization
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrganizationCommand'
+      responses:
+        '201':
+          description: 已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/organizations/{organizationId}:
+    get:
+      tags: [工作空间]
+      summary: 获取组织详情
+      operationId: getOrganization
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: 组织详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '404':
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [工作空间]
+      summary: 更新组织信息
+      operationId: updateOrganization
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrganizationCommand'
+      responses:
+        '200':
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '409':
+          $ref: '#/components/responses/Problem'
+    delete:
+      tags: [工作空间]
+      summary: 停用组织（软删除，保留子组织和历史）
+      operationId: deactivateOrganization
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '204':
+          description: 已停用
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/organizations/{organizationId}/move:
+    post:
+      tags: [工作空间]
+      summary: 调整组织层级（移动到新父组织）
+      operationId: moveOrganization
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveOrganizationCommand'
+      responses:
+        '200':
+          description: 已移动
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/members:
+    get:
+      tags: [工作空间]
+      summary: 查询工作空间成员
+      operationId: listWorkspaceMembers
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+        - name: organizationId
+          in: query
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - name: roleId
+          in: query
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ACTIVE, SUSPENDED, REMOVED]
+      responses:
+        '200':
+          $ref: '#/components/responses/WorkspaceMemberPage'
+    post:
+      tags: [工作空间]
+      summary: 添加工作空间成员
+      operationId: addWorkspaceMember
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddWorkspaceMemberCommand'
+      responses:
+        '201':
+          description: 已添加
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMember'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/members/{memberId}:
+    get:
+      tags: [工作空间]
+      summary: 获取成员详情
+      operationId: getWorkspaceMember
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: 成员详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMember'
+        '404':
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [工作空间]
+      summary: 更新成员（角色、组织归属、数据范围）
+      operationId: updateWorkspaceMember
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkspaceMemberCommand'
+      responses:
+        '200':
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMember'
+        '409':
+          $ref: '#/components/responses/Problem'
+    delete:
+      tags: [工作空间]
+      summary: 移除成员（FR-068 撤权，最长 1 分钟生效）
+      operationId: removeWorkspaceMember
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '204':
+          description: 已移除
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/members/{memberId}/suspend:
+    post:
+      tags: [工作空间]
+      summary: 暂停成员访问（ACTIVE → SUSPENDED）
+      operationId: suspendWorkspaceMember
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonCommand'
+      responses:
+        '200':
+          description: 已暂停
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMember'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/members/{memberId}/resume:
+    post:
+      tags: [工作空间]
+      summary: 恢复成员访问（SUSPENDED → ACTIVE）
+      operationId: resumeWorkspaceMember
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: 已恢复
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMember'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/roles:
+    get:
+      tags: [工作空间]
+      summary: 查询工作空间角色
+      operationId: listWorkspaceRoles
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+        - name: includeSystem
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          $ref: '#/components/responses/WorkspaceRolePage'
+    post:
+      tags: [工作空间]
+      summary: 创建自定义角色
+      operationId: createWorkspaceRole
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRoleCommand'
+      responses:
+        '201':
+          description: 已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceRole'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/roles/{roleId}:
+    get:
+      tags: [工作空间]
+      summary: 获取角色详情
+      operationId: getWorkspaceRole
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: 角色详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceRole'
+        '404':
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [工作空间]
+      summary: 更新角色（权限、数据范围、描述）
+      operationId: updateWorkspaceRole
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkspaceRoleCommand'
+      responses:
+        '200':
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceRole'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/roles/{roleId}/disable:
+    post:
+      tags: [工作空间]
+      summary: 停用角色（ACTIVE → DISABLED）
+      operationId: disableWorkspaceRole
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: 已停用
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceRole'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/data-scopes:
+    get:
+      tags: [工作空间]
+      summary: 查询数据范围定义
+      operationId: listDataScopes
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/DataScopePage'
+    post:
+      tags: [工作空间]
+      summary: 创建数据范围
+      operationId: createDataScope
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDataScopeCommand'
+      responses:
+        '201':
+          description: 已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataScope'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/data-scopes/{scopeId}:
+    patch:
+      tags: [工作空间]
+      summary: 更新数据范围
+      operationId: updateDataScope
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: scopeId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataScopeCommand'
+      responses:
+        '200':
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataScope'
+        '409':
+          $ref: '#/components/responses/Problem'
+    delete:
+      tags: [工作空间]
+      summary: 删除数据范围（需无引用）
+      operationId: deleteDataScope
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - name: scopeId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '204':
+          description: 已删除
+        '409':
+          $ref: '#/components/responses/Problem'
+  /workspaces/{workspaceId}/collaboration-grants/list:
+    get:
+      tags: [工作空间]
+      summary: 查询跨工作空间协作授权
+      operationId: listCollaborationGrants
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [DRAFT, ACTIVE, EXPIRED, REVOKED]
+        - name: direction
+          in: query
+          description: 授权方向；OUTGOING 授予他空间，INCOMING 被他空间授予
+          schema:
+            type: string
+            enum: [OUTGOING, INCOMING]
+            default: OUTGOING
+      responses:
+        '200':
+          $ref: '#/components/responses/CollaborationGrantPage'
   /domain-packages:
     get:
       tags: [领域包]
@@ -1237,6 +1895,76 @@ components:
               nextCursor:
                 type: [string, 'null']
                 description: 下一页不透明 keyset 游标；为 null 表示没有下一页
+    OrganizationPage:
+      description: 组织分页
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items, nextCursor]
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+              nextCursor:
+                type: [string, 'null']
+    WorkspaceMemberPage:
+      description: 工作空间成员分页
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items, nextCursor]
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceMember'
+              nextCursor:
+                type: [string, 'null']
+    WorkspaceRolePage:
+      description: 工作空间角色分页
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items, nextCursor]
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceRole'
+              nextCursor:
+                type: [string, 'null']
+    DataScopePage:
+      description: 数据范围分页
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items, nextCursor]
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataScope'
+              nextCursor:
+                type: [string, 'null']
+    CollaborationGrantPage:
+      description: 跨工作空间协作授权分页
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items, nextCursor]
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollaborationGrant'
+              nextCursor:
+                type: [string, 'null']
   schemas:
     Uuid:
       type: string
@@ -1371,7 +2099,7 @@ components:
           default: Asia/Shanghai
     Workspace:
       type: object
-      required: [id, code, name, status, revision]
+      required: [id, code, name, status, ownerUserId, revision, createdAt, updatedAt]
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1379,11 +2107,52 @@ components:
           type: string
         name:
           type: string
+        description:
+          type: [string, 'null']
+          maxLength: 500
         status:
           type: string
           enum: [DRAFT, ACTIVE, SUSPENDED, ARCHIVED]
+        ownerUserId:
+          $ref: '#/components/schemas/Uuid'
+        defaultLocale:
+          type: string
+          default: zh-CN
+        defaultTimezone:
+          type: string
+          default: Asia/Shanghai
         revision:
           type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    UpdateWorkspaceCommand:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        description:
+          type: [string, 'null']
+          maxLength: 500
+        defaultLocale:
+          type: string
+        defaultTimezone:
+          type: string
+    TransferOwnerCommand:
+      type: object
+      required: [newOwnerUserId, reason]
+      properties:
+        newOwnerUserId:
+          $ref: '#/components/schemas/Uuid'
+        reason:
+          type: string
+          minLength: 2
+          maxLength: 500
     CreateCollaborationGrantCommand:
       type: object
       required: [collaboratorWorkspaceId, target, roleId, allowedActions, validUntil]
@@ -1427,6 +2196,349 @@ components:
           type: string
           minLength: 2
           maxLength: 1000
+    CreateOrganizationCommand:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+          pattern: '^[A-Z][A-Z0-9_-]{1,31}$'
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        parentId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        description:
+          type: [string, 'null']
+          maxLength: 500
+    UpdateOrganizationCommand:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        description:
+          type: [string, 'null']
+          maxLength: 500
+    MoveOrganizationCommand:
+      type: object
+      required: [newParentId]
+      properties:
+        newParentId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+          description: 新父组织 ID；null 表示移动到顶层
+    Organization:
+      type: object
+      required: [id, workspaceId, code, name, status, path, depth, revision, createdAt, updatedAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        workspaceId:
+          $ref: '#/components/schemas/Uuid'
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: [string, 'null']
+        parentId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        path:
+          type: string
+          description: 物化路径，如 /root/region-a/org-x
+        depth:
+          type: integer
+          minimum: 0
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+        revision:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AddWorkspaceMemberCommand:
+      type: object
+      required: [userId, roleIds]
+      properties:
+        userId:
+          $ref: '#/components/schemas/Uuid'
+        roleIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Uuid'
+        organizationId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        dataScopeIds:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Uuid'
+          default: []
+        validUntil:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+    UpdateWorkspaceMemberCommand:
+      type: object
+      properties:
+        roleIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Uuid'
+        organizationId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        dataScopeIds:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Uuid'
+        validUntil:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+    WorkspaceMember:
+      type: object
+      required: [id, workspaceId, userId, status, roleIds, revision, createdAt, updatedAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        workspaceId:
+          $ref: '#/components/schemas/Uuid'
+        userId:
+          $ref: '#/components/schemas/Uuid'
+        userDisplayName:
+          type: string
+        userAvatarUrl:
+          type: [string, 'null']
+        organizationId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        organizationName:
+          type: [string, 'null']
+        roleIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Uuid'
+        roleNames:
+          type: array
+          items:
+            type: string
+        dataScopeIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Uuid'
+        status:
+          type: string
+          enum: [ACTIVE, SUSPENDED, REMOVED]
+        validUntil:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        revision:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateWorkspaceRoleCommand:
+      type: object
+      required: [key, name, permissions]
+      properties:
+        key:
+          type: string
+          pattern: '^[a-z][a-z0-9._-]{1,63}$'
+          description: 角色稳定键，如 workspace.admin
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        description:
+          type: [string, 'null']
+          maxLength: 500
+        permissions:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            pattern: '^[a-z][a-z0-9._-]{1,127}$'
+          description: 功能权限稳定键列表，如 project.task.create
+        dataScopeType:
+          type: string
+          enum: [WORKSPACE, ORGANIZATION, REGION, CUSTOMER, PROJECT_OWNERSHIP, PARTICIPATION, OBJECT_ATTRIBUTE]
+          default: WORKSPACE
+        isSystem:
+          type: boolean
+          default: false
+          description: 系统角色不可删除，仅可查询
+    UpdateWorkspaceRoleCommand:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        description:
+          type: [string, 'null']
+          maxLength: 500
+        permissions:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            pattern: '^[a-z][a-z0-9._-]{1,127}$'
+        dataScopeType:
+          type: string
+          enum: [WORKSPACE, ORGANIZATION, REGION, CUSTOMER, PROJECT_OWNERSHIP, PARTICIPATION, OBJECT_ATTRIBUTE]
+    WorkspaceRole:
+      type: object
+      required: [id, workspaceId, key, name, permissions, dataScopeType, status, isSystem, revision, createdAt, updatedAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        workspaceId:
+          $ref: '#/components/schemas/Uuid'
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: [string, 'null']
+        permissions:
+          type: array
+          items:
+            type: string
+        dataScopeType:
+          type: string
+          enum: [WORKSPACE, ORGANIZATION, REGION, CUSTOMER, PROJECT_OWNERSHIP, PARTICIPATION, OBJECT_ATTRIBUTE]
+        status:
+          type: string
+          enum: [ACTIVE, DISABLED]
+        isSystem:
+          type: boolean
+        revision:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateDataScopeCommand:
+      type: object
+      required: [key, name, scopeType, rules]
+      properties:
+        key:
+          type: string
+          pattern: '^[a-z][a-z0-9._-]{1,63}$'
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        description:
+          type: [string, 'null']
+          maxLength: 500
+        scopeType:
+          type: string
+          enum: [WORKSPACE, ORGANIZATION, REGION, CUSTOMER, PROJECT_OWNERSHIP, PARTICIPATION, OBJECT_ATTRIBUTE]
+        rules:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DataScopeRule'
+    UpdateDataScopeCommand:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        description:
+          type: [string, 'null']
+          maxLength: 500
+        rules:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DataScopeRule'
+    DataScopeRule:
+      type: object
+      required: [field, operator, value]
+      properties:
+        field:
+          type: string
+          description: 数据范围字段键，如 organizationId、region、customerId
+        operator:
+          type: string
+          enum: [EQ, IN, LIKE, GT, GTE, LT, LTE, BETWEEN, NOT_NULL, IS_NULL]
+        value:
+          description: 比较值；类型依字段而定（字符串、数值、数组等）
+          oneOf:
+            - type: string
+            - type: number
+            - type: integer
+            - type: boolean
+            - type: array
+              items:
+                oneOf:
+                  - type: string
+                  - type: number
+            - type: 'null'
+    DataScope:
+      type: object
+      required: [id, workspaceId, key, name, scopeType, rules, revision, createdAt, updatedAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        workspaceId:
+          $ref: '#/components/schemas/Uuid'
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: [string, 'null']
+        scopeType:
+          type: string
+          enum: [WORKSPACE, ORGANIZATION, REGION, CUSTOMER, PROJECT_OWNERSHIP, PARTICIPATION, OBJECT_ATTRIBUTE]
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataScopeRule'
+        revision:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     CreateDomainPackageCommand:
       type: object
       required: [stableKey, name, layer]

@@ -7,7 +7,7 @@
 
 | 故事/门禁 | HTTP 契约 | 事件或 Schema | 主要消费者 | 兼容与验证 |
 |---|---|---|---|---|
-| US1 工作空间治理 | `/workspaces`、协作授权及撤销 | 工作空间与授权事件 | Web、权限、审计、搜索 | US1 契约测试、撤权与隔离测试 |
+| US1 工作空间治理 | `/workspaces`、状态迁移（激活/暂停/归档/恢复）、负责人转移、`/organizations`（含移动）、`/members`（含暂停/恢复）、`/roles`（含停用）、`/data-scopes`、协作授权及撤销 | 工作空间、组织、成员、角色、数据范围与授权事件 | Web、权限、审计、搜索 | US1 契约测试、撤权与隔离测试 |
 | US2 领域包定制 | `/domain-packages`、校验、发布、影响预览 | `domain-package.schema.json`、领域包发布/迁移事件 | 设计器、运行时、迁移器 | Schema 校验、兼容差异、状态机测试 |
 | US3 模板与创建 | `/project-templates`、`/projects` | 项目创建事件 | Web、项目、计划、通知 | 模板版本、幂等和快照测试 |
 | US4 项目生命周期 | 项目详情与 `/projects/{id}/transitions` | 项目状态事件 | Web、计划、交付、审计 | 状态机、版本冲突和关闭门禁 |

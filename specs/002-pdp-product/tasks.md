@@ -92,7 +92,7 @@
 - [X] T070 创建后台作业协调器以及批量导入、导出、归档、统计、投影重建、断点恢复、进度和失败明细能力，文件：`modules/operations/src/main/java/com/pdp/operations/job/BackgroundJobCoordinator.java`、`modules/operations/src/main/java/com/pdp/operations/projection/ProjectionRebuildJob.java`
 - [ ] T071 创建批量作业暂停、取消、检查点恢复、失败明细和资源预算测试，文件：`tests/backend/integration/job/BackgroundJobLifecycleTest.java`
 - [X] T072 创建对象存储、短时签名 URL、病毒扫描和隔离适配器，文件：`modules/experience/src/main/java/com/pdp/experience/storage/`
-- [ ] T073 创建 Redis 缓存降级、失效和防击穿组件，文件：`modules/operations/src/main/java/com/pdp/operations/cache/`
+- [X] T073 创建 Redis 缓存降级、失效和防击穿组件，文件：`modules/operations/src/main/java/com/pdp/operations/cache/`
 - [ ] T074 创建日志、指标、链路追踪及 FR-165 可用性 SLI 采集，文件：`modules/operations/src/main/java/com/pdp/operations/observability/`
 - [X] T075 创建高风险操作影响预览、版本确认、不可逆点和补偿端口及公共组件；支持注册未来认证数据库切换操作类型并在 P1 返回稳定禁用原因，文件：`modules/shared-kernel/src/main/java/com/pdp/shared/operation/`、`apps/web/src/components/high-risk-operation/`
 - [ ] T076 创建影响预览过期、并发版本变化、确认和补偿通用测试，文件：`tests/backend/integration/operation/HighRiskOperationTest.java`、`tests/e2e/high-risk-operation.spec.ts`

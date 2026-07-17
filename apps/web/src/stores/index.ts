@@ -42,3 +42,15 @@ export const useAuthStore = defineStore('auth', () => {
     logout
   }
 })
+
+// 重新导出权限 store（T092、FR-063、FR-067、FR-068）
+export {
+  usePermissionStore,
+  PERMISSIONS,
+  ROLES,
+  type PermissionKey,
+  type RoleKey,
+  type DataScopeType,
+  type DataScopeContext,
+  type PermissionSnapshot,
+} from './permission'

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.pdp</groupId>
+        <artifactId>pdp-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>pdp-tests-backend</artifactId>
+    <packaging>jar</packaging>
+    <name>PDP Tests Backend</name>
+    <description>后端契约/集成/架构/安全/韧性测试工作区：依赖 pdp-api 引导完整应用上下文</description>
+
+    <properties>
+        <!--
+            测试源码根：tests/backend 本身，扫描所有子目录的 *.java。
+            maven-compiler-plugin 不强制路径-包映射；javac 按文件内 package 声明生成 .class。
+            现有测试文件（如 architecture/DependencyPolicyTest.java，package com.pdp.architecture）
+            可保留 tasks.md 文档路径约定，无需迁移到 src/test/java/com/pdp/... 标准布局。
+        -->
+    </properties>
+
+    <dependencies>
+        <!-- 被测应用：@SpringBootTest 引导完整应用上下文（聚合全部业务模块与持久化） -->
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- JUnit 5（由 spring-boot-starter-test 传递，显式声明便于版本管理） -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- AssertJ（由 spring-boot-starter-test 传递） -->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Spring Boot Test：@SpringBootTest、@DynamicPropertySource、TestRestTemplate 等 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- ArchUnit：模块边界与依赖方向架构测试 -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Testcontainers MySQL：契约测试使用真实 MySQL 8.4 LTS 容器 -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mysql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!--
+            测试源码根设为模块根目录，扫描所有子目录的 *.java。
+            javac 按文件内 package 声明生成 .class，不强制路径-包映射；
+            现有测试文件可保留 tasks.md 文档路径约定，无需迁移到 src/test/java/com/pdp/... 标准布局。
+        -->
+        <testSourceDirectory>${project.basedir}</testSourceDirectory>
+
+        <plugins>
+            <!--
+                Surefire：按类名发现测试，跳过 .gitkeep 等占位文件。
+                Testcontainers 测试在无 Docker 环境时自动禁用（@Testcontainers(disabledWithoutDocker=true)）。
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
+                        <include>**/*TestCase.java</include>
+                    </includes>
+                    <!-- 测试可能需要较长启动时间（Testcontainers MySQL 容器） -->
+                    <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
+                </configuration>
+            </plugin>
+
+            <!--
+                Compiler：测试源码扫描所有 *.java，跳过非 Java 文件（.gitkeep、pom.xml 等）。
+                显式声明 testCompilerArgument 支持 record/sealed 等 JDK 21 特性。
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <configuration>
+                            <testIncludes>
+                                <include>**/*.java</include>
+                            </testIncludes>
+                            <testExcludes>
+                                <!-- 排除构建输出与 IDE 临时目录 -->
+                                <exclude>target/**</exclude>
+                                <exclude>.idea/**</exclude>
+                                <exclude>.vscode/**</exclude>
+                            </testExcludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+                Jar 跳过：测试模块不产出可复用 jar，仅运行测试。
+                Spring Boot 插件不重新打包。
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <skipIfEmpty>true</skipIfEmpty>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

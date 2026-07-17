@@ -62,6 +62,8 @@
         <module>modules/persistence-mysql</module>
         <!-- 可部署应用：聚合业务模块、持久化、Web/Security/Actuator -->
         <module>apps/api</module>
+        <!-- 测试工作区：契约/集成/架构/安全/韧性测试，依赖 pdp-api -->
+        <module>tests/backend</module>
     </modules>
 
     <dependencyManagement>
@@ -230,6 +232,12 @@
             <dependency>
                 <groupId>com.pdp</groupId>
                 <artifactId>pdp-standarddelivery</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- 可部署应用：测试工作区通过 @SpringBootTest 引导完整应用上下文 -->
+            <dependency>
+                <groupId>com.pdp</groupId>
+                <artifactId>pdp-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

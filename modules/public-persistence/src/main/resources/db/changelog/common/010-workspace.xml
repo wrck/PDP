@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                       https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        工作空间治理公共变更集（US1）：
+        工作空间、组织、角色、成员、成员-角色、成员-数据范围、数据范围、跨空间协作授权。
+        UUIDv7 由应用生成并存储为 BINARY(16)；时间戳 datetime(6)；枚举 varchar(32)（存储 name() 稳定键）。
+        所有可修改业务表包含 revision（乐观锁）。
+    -->
+
+    <!-- 工作空间 -->
+    <changeSet id="010-create-workspace" author="pdp-workspace">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="workspace"/></not>
+        </preConditions>
+        <createTable tableName="workspace">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="code" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(500)"/>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="owner_user_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="default_locale" type="varchar(16)" defaultValue="zh-CN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="default_timezone" type="varchar(64)" defaultValue="Asia/Shanghai">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="uniq_workspace_code" tableName="workspace" unique="true">
+            <column name="code"/>
+        </createIndex>
+        <createIndex indexName="idx_workspace_owner" tableName="workspace">
+            <column name="owner_user_id"/>
+        </createIndex>
+        <createIndex indexName="idx_workspace_status" tableName="workspace">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 组织 -->
+    <changeSet id="010-create-organization" author="pdp-workspace">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="organization"/></not>
+        </preConditions>
+        <createTable tableName="organization">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(500)"/>
+            <column name="parent_id" type="binary(16)"/>
+            <column name="path" type="varchar(1024)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="depth" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="uniq_org_workspace_code" tableName="organization" unique="true">
+            <column name="workspace_id"/>
+            <column name="code"/>
+        </createIndex>
+        <createIndex indexName="idx_org_workspace_parent" tableName="organization">
+            <column name="workspace_id"/>
+            <column name="parent_id"/>
+        </createIndex>
+        <createIndex indexName="idx_org_workspace_status" tableName="organization">
+            <column name="workspace_id"/>
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 工作空间角色 -->
+    <changeSet id="010-create-workspace-role" author="pdp-workspace">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="workspace_role"/></not>
+        </preConditions>
+        <createTable tableName="workspace_role">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="key" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(500)"/>
+            <column name="permissions" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="data_scope_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_system" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="uniq_role_workspace_key" tableName="workspace_role" unique="true">
+            <column name="workspace_id"/>
+            <column name="key"/>
+        </createIndex>
+        <createIndex indexName="idx_role_workspace_status" tableName="workspace_role">
+            <column name="workspace_id"/>
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 工作空间成员 -->
+    <changeSet id="010-create-workspace-member" author="pdp-workspace">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="workspace_member"/></not>
+        </preConditions>
+        <createTable tableName="workspace_member">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="organization_id" type="binary(16)"/>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valid_until" type="datetime(6)"/>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="uniq_member_workspace_user" tableName="workspace_member" unique="true">
+            <column name="workspace_id"/>
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="idx_member_workspace_status" tableName="workspace_member">
+            <column name="workspace_id"/>
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_member_workspace_org" tableName="workspace_member">
+            <column name="workspace_id"/>
+            <column name="organization_id"/>
+        </createIndex>
+        <createIndex indexName="idx_member_user" tableName="workspace_member">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 工作空间成员-角色关联 -->
+    <changeSet id="010-create-workspace-member-role" author="pdp-workspace">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="workspace_member_role"/></not>
+        </preConditions>
+        <createTable tableName="workspace_member_role">
+            <column name="member_id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="role_id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_member_role_role" tableName="workspace_member_role">
+            <column name="role_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 工作空间成员-数据范围关联 -->
+    <changeSet id="010-create-workspace-member-data-scope" author="pdp-workspace">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="workspace_member_data_scope"/></not>
+        </preConditions>
+        <createTable tableName="workspace_member_data_scope">
+            <column name="member_id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="scope_id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- 数据范围 -->
+    <changeSet id="010-create-data-scope" author="pdp-workspace">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="data_scope"/></not>
+        </preConditions>
+        <createTable tableName="data_scope">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="key" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(500)"/>
+            <column name="scope_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rules" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="uniq_data_scope_workspace_key" tableName="data_scope" unique="true">
+            <column name="workspace_id"/>
+            <column name="key"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 跨工作空间协作授权 -->
+    <changeSet id="010-create-collaboration-grant" author="pdp-workspace">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="collaboration_grant"/></not>
+        </preConditions>
+        <createTable tableName="collaboration_grant">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="collaborator_workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_object_type" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_object_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="allowed_actions" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valid_until" type="datetime(6)"/>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="varchar(500)"/>
+            <column name="revoked_at" type="datetime(6)"/>
+            <column name="revoke_reason" type="varchar(500)"/>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_grant_workspace_status" tableName="collaboration_grant">
+            <column name="workspace_id"/>
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_grant_collaborator_status" tableName="collaboration_grant">
+            <column name="collaborator_workspace_id"/>
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

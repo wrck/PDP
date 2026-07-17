@@ -1,0 +1,126 @@
+# PDP Flowable Process Engine MySQL 版本化 DDL 清单（T080）
+#
+# 落实 ADR-0005 § 8（事务与 MySQL schema）与 § 9（升级与退出条件）：
+#   - 引擎 DDL/升级脚本版本化管理，由 Liquibase `dbms=mysql` 变更集管理
+#   - 生产关闭 Flowable 自动 schema 初始化与升级（application-workflow.yml: flowable.database-schema-update=false）
+#   - 引擎 DDL/升级脚本变更随 PDP 版本进入 MySQL 8.4 发布认证矩阵
+#   - 必须从空库与上一支持版本两条路径完成验证
+#
+# 本清单是 Flowable 引擎 schema 的版本化注册表，声明：
+#   1. 当前支持的 Flowable 版本与对应 MySQL DDL 脚本路径
+#   2. 升级路径（fromVersion → toVersion 的脚本与预期新表）
+#   3. 不支持的版本（启动预检 MUST 快速失败）
+#   4. 验证矩阵（空库初始化 / 上一版本升级 / 不支持版本快速失败）
+#
+# Flowable DDL 脚本本身由 flowable-engine JAR 内置（org/flowable/db/...），
+# 本清单只做版本化引用与认证矩阵声明，不复制 DDL 内容，避免与引擎版本漂移。
+# 引擎升级时 MUST 重新执行 verificationMatrix 全部门禁并更新本清单。
+
+schema:
+  engine: flowable-process
+  flowableVersion: 8.0.0
+  mysqlVersion: "8.4"
+  # Flowable 默认表前缀，与 PDP 业务表 pdp_ 前缀天然分离
+  tablePrefix: ACT_
+  historyTablePrefix: ACT_HI_
+  runtimeTablePrefix: ACT_RU_
+  # ACT_GE_PROPERTY 表中 schema.version 属性的期望值（启动预检据此快速失败）
+  expectedSchemaVersion: "8.0.0.0"
+
+# 初始化脚本：从空库创建 Flowable Process Engine schema
+initializations:
+  - version: 8.0.0
+    description: Flowable 8.0.0 Process Engine 初始 schema（MySQL 8.4 验证）
+    # Flowable 内置 MySQL 全量创建脚本（位于 flowable-engine JAR 内）
+    script: classpath:org/flowable/db/create/mysql/all/flowable.mysql.all.create.sql
+    # SHA-256 哈希在 CI 首次执行后填入，防止 JAR 升级时 DDL 静默变更
+    hash: ${FLOWABLE_8_0_0_MYSQL_DDL_SHA256:pending-ci-verification}
+    # 初始化后必须存在的代表性表（全量校验由 verificationMatrix.emptyDatabaseInit 执行）
+    expectedTables:
+      - ACT_GE_BYTEARRAY
+      - ACT_GE_PROPERTY
+      - ACT_RE_DEPLOYMENT
+      - ACT_RE_PROCDEF
+      - ACT_RE_MODEL
+      - ACT_RU_EXECUTION
+      - ACT_RU_TASK
+      - ACT_RU_VARIABLE
+      - ACT_RU_IDENTITYLINK
+      - ACT_RU_JOB
+      - ACT_RU_TIMER_JOB
+      - ACT_RU_SUSPENDED_JOBS
+      - ACT_RU_DEADLETTER_JOBS
+      - ACT_RU_EVENT_SUBSCR
+      - ACT_HI_PROCINST
+      - ACT_HI_ACTINST
+      - ACT_HI_TASKINST
+      - ACT_HI_VARINST
+      - ACT_HI_IDENTITYLINK
+      - ACT_HI_COMMENT
+      - ACT_HI_ATTACHMENT
+      - ACT_HI_DETAIL
+      - ACT_ID_USER
+      - ACT_ID_GROUP
+      - ACT_ID_MEMBERSHIP
+      - ACT_ID_INFO
+      - ACT_EVT_LOG
+
+# 升级路径：8.0.0 是 P1 启用的首个 Flowable 版本，无升级路径
+# 后续 Flowable 版本升级时在此追加：
+#   - fromVersion: 8.0.0
+#     toVersion: 8.1.0
+#     script: classpath:org/flowable/db/upgrade/mysql/flowable.mysql.upgrade.80to81.sql
+#     hash: ${FLOWABLE_80TO81_MYSQL_DDL_SHA256:pending-ci-verification}
+#     expectedNewTables: [...]
+#     droppedTables: []  # 显式声明，禁止静默删表
+#     requiresManualMigration: false  # true 时 MUST 通过 WorkflowAdministrationPort 提供迁移证据
+upgrades: []
+
+# 不支持的版本：任何低于 8.0.0 的 Flowable schema.version 启动预检 MUST 快速失败
+# 错误信息 MUST 包含：当前版本、不支持原因、补救指引（升级到 8.0.0 或回滚到上一 P1 支持版本）
+unsupportedVersions:
+  - "<8.0.0"
+  - "7.0.x"
+  - "7.1.x"
+  - "6.x"
+
+# 验证矩阵：随 PDP 版本进入 MySQL 8.4 发布认证矩阵（ADR-0005 § 9）
+verificationMatrix:
+  emptyDatabaseInit:
+    description: |
+      从空库执行 initializations[0].script，验证 expectedTables 全部存在且
+      ACT_GE_PROPERTY.schema_version = expectedSchemaVersion。
+      验证类：tests/backend/contract/workflow/FlowableSchemaMySqlMatrixTest.java
+      测试方法：emptyDatabaseInitCreatesAllExpectedTables
+    required: true
+
+  previousVersionUpgrade:
+    description: |
+      8.0.0 是 P1 启用的首个 Flowable 版本，无升级路径。
+      测试验证 upgrades 为空时跳过升级路径，不视为失败。
+      后续版本追加升级脚本后，必须新增测试方法验证 fromVersion → toVersion 升级
+      且不破坏既有表结构与数据。
+    required: false
+    notApplicableReason: "8.0.0 是 P1 首个支持版本，无前置版本可升级"
+
+  unsupportedVersionFastFail:
+    description: |
+      在 ACT_GE_PROPERTY 表中写入 unsupportedVersions 列出的版本号（如 7.1.0.0），
+      启动预检 MUST 抛出 FlowableSchemaVersionException 并指明不支持版本与补救指引。
+      预检 MUST 在应用接受业务流量前完成，禁止带病运行。
+      验证类：tests/backend/contract/workflow/FlowableSchemaMySqlMatrixTest.java
+      测试方法：unsupportedVersionFastFailsBeforeAcceptingTraffic
+    required: true
+
+  rollbackBoundary:
+    description: |
+      DDL 升级失败时 MUST 保留升级前备份与回退路径；回退不依赖 Flowable 内置
+      schema 回滚机制，而通过数据库备份恢复 + 重新应用上一支持版本 DDL 完成。
+      回退后 MUST 重新执行 emptyDatabaseInit 验证一致性。
+    required: true
+
+  backupRestore:
+    description: |
+      升级前 MUST 完成数据库备份；备份恢复后 MUST 验证 Flowable 引擎可正常启动
+      且代表性审批/超时/退回/加签/补偿流程回归通过。
+    required: true

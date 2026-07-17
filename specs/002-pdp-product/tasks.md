@@ -102,7 +102,7 @@
 - [X] T077 先完成平台工作流定义、部署、实例诊断和管理动作的 OpenAPI/事件契约及失败测试，文件：`specs/002-pdp-product/contracts/openapi.yaml`、`specs/002-pdp-product/contracts/events.md`、`tests/contracts/platform-workflow.spec.ts`
 - [X] T078 创建平台 `workflow` 模块以及定义、运行、人工任务和管理四类公开端口，文件：`modules/workflow/pom.xml`、`modules/workflow/src/main/java/com/pdp/workflow/`
 - [X] T079 配置 Flowable Process Engine 独立 schema/表前缀、数据库账号、HikariCP 池和本地事务管理器，关闭生产自动建表/升级和内置 REST/IDM，文件：`modules/workflow/src/main/java/com/pdp/workflow/infrastructure/flowable/FlowableEngineConfig.java`、`apps/api/src/main/resources/application-workflow.yml`
-- [ ] T080 创建 Flowable MySQL 版本化初始化与升级脚本清单，并验证空库、上一版本升级和不支持版本快速失败，文件：`modules/workflow/src/main/resources/db/flowable/mysql/`、`tests/backend/contract/workflow/FlowableSchemaMySqlMatrixTest.java`
+- [X] T080 创建 Flowable MySQL 版本化初始化与升级脚本清单，并验证空库、上一版本升级和不支持版本快速失败，文件：`modules/workflow/src/main/resources/db/flowable/mysql/`、`tests/backend/contract/workflow/FlowableSchemaMySqlMatrixTest.java`
 - [ ] T081 创建平台流程定义、部署、实例引用和异常记录公共变更集及仓储端口，文件：`modules/public-persistence/src/main/resources/db/changelog/common/005-workflow-registry.xml`、`modules/workflow/src/main/java/com/pdp/workflow/domain/`
 - [ ] T082 实现 BPMN 2.0.2 校验、稳定流程键、业务版本、内容哈希、领域包关联和受控部署服务，文件：`modules/workflow/src/main/java/com/pdp/workflow/application/WorkflowDefinitionService.java`
 - [ ] T083 实现基于 Outbox 的流程启动、推进、消息关联和结果事件桥接，禁止 XA 并确保幂等，文件：`modules/workflow/src/main/java/com/pdp/workflow/application/WorkflowRuntimeService.java`、`modules/workflow/src/main/java/com/pdp/workflow/infrastructure/event/`

@@ -8,3 +8,10 @@ spring:
 
 server:
   port: 8080
+
+# PDP 平台配置
+pdp:
+  # 迁移模式开关：仅迁移计划批准后置 true；激活历史源库与迁移目标库专用 MyBatis/事务配置。
+  # 关闭时迁移数据源仍由 dynamic-datasource 注册（initialization-fail-timeout=0），但不加载迁移 Mapper。
+  migration:
+    enabled: ${PDP_MIGRATION_ENABLED:false}

@@ -65,9 +65,9 @@
 - [X] T046 配置各数据源独立 HikariCP 容量、超时、存活检测和指标，文件：`apps/api/src/main/resources/application-datasource.yml`
 - [ ] T047 创建动态路由、只读降级和越权拦截测试，文件：`tests/backend/integration/datasource/DynamicDataSourceRoutingTest.java`
 - [ ] T048 创建连接池耗尽、连接泄漏和数据库故障恢复测试，文件：`tests/backend/integration/datasource/HikariPoolResilienceTest.java`
-- [ ] T049 创建历史 MySQL 源库专用 DataSource、SqlSessionFactory 和 Mapper 扫描，文件：`modules/datamigration/src/main/java/com/pdp/datamigration/config/LegacySourceMybatisConfig.java`
-- [ ] T050 创建迁移目标库专用 DataSource、SqlSessionFactory 和 Mapper 扫描，文件：`modules/datamigration/src/main/java/com/pdp/datamigration/config/PdpTargetMybatisConfig.java`
-- [ ] T051 创建源库只读事务管理器、目标库本地事务管理器和批次边界，文件：`modules/datamigration/src/main/java/com/pdp/datamigration/config/MigrationTransactionConfig.java`
+- [X] T049 创建历史 MySQL 源库专用 DataSource、SqlSessionFactory 和 Mapper 扫描，文件：`modules/datamigration/src/main/java/com/pdp/datamigration/config/LegacySourceMybatisConfig.java`
+- [X] T050 创建迁移目标库专用 DataSource、SqlSessionFactory 和 Mapper 扫描，文件：`modules/datamigration/src/main/java/com/pdp/datamigration/config/PdpTargetMybatisConfig.java`
+- [X] T051 创建源库只读事务管理器、目标库本地事务管理器和批次边界，文件：`modules/datamigration/src/main/java/com/pdp/datamigration/config/MigrationTransactionConfig.java`
 - [ ] T052 创建迁移源/目标连接、Mapper、事务和凭据隔离测试，文件：`tests/backend/integration/datamigration/MigrationDataSourceIsolationTest.java`
 - [X] T053 创建持久化适配器注册表、数据库能力画像、部署事实，以及产品、版本、字符集、时区、引擎和权限启动校验；P1 仅允许一个已认证适配器激活，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/provider/`、`modules/public-persistence/src/main/java/com/pdp/persistence/config/DatabaseCapabilityValidator.java`
 

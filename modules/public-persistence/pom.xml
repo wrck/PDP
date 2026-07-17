@@ -21,6 +21,15 @@
             <groupId>com.pdp</groupId>
             <artifactId>pdp-shared-kernel</artifactId>
         </dependency>
+        <!--
+            身份模块端口由本模块的 Mapper/适配器实现。
+            依赖方向：persistence 基础设施 → 业务端口契约，符合六边形架构；
+            identity 模块不反向依赖 persistence，避免循环。
+        -->
+        <dependency>
+            <groupId>com.pdp</groupId>
+            <artifactId>pdp-identity</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>

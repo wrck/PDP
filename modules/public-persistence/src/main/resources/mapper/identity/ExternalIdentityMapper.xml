@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.identity.mapper.ExternalIdentityMapper">
+
+    <!--
+        ExternalIdentity record 构造器映射。
+        字段顺序与 com.pdp.identity.domain.ExternalIdentity canonical constructor 一致：
+        id, userId, issuer, subject, providerName, boundAt, lastSyncedAt, revision。
+    -->
+    <resultMap id="externalIdentityMap" type="com.pdp.identity.domain.ExternalIdentity">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="user_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="issuer" javaType="java.lang.String"/>
+            <arg column="subject" javaType="java.lang.String"/>
+            <arg column="provider_name" javaType="java.lang.String"/>
+            <arg column="bound_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="last_synced_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="revision" javaType="int"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, user_id, issuer, subject, provider_name, bound_at, last_synced_at, revision
+    </sql>
+
+    <select id="selectByIssuerAndSubject" resultMap="externalIdentityMap">
+        SELECT <include refid="allColumns"/>
+        FROM external_identity
+        WHERE issuer = #{issuer}
+          AND subject = #{subject}
+    </select>
+
+    <select id="selectById" resultMap="externalIdentityMap">
+        SELECT <include refid="allColumns"/>
+        FROM external_identity
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByUserId" resultMap="externalIdentityMap">
+        SELECT <include refid="allColumns"/>
+        FROM external_identity
+        WHERE user_id = #{userId}
+        ORDER BY bound_at ASC, id ASC
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.identity.domain.ExternalIdentity">
+        INSERT INTO external_identity
+            (id, user_id, issuer, subject, provider_name, bound_at, last_synced_at, revision)
+        VALUES
+            (#{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{userId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{issuer},
+             #{subject},
+             #{providerName},
+             #{boundAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{lastSyncedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{revision})
+    </insert>
+
+    <!--
+        解绑（乐观锁删除）：物理删除绑定记录。
+        选择删除而非标记是为了避免 issuer+subject 唯一约束阻塞重新绑定；
+        审计由 audit_event 表独立记录绑定/解绑事件。
+    -->
+    <delete id="unbind">
+        DELETE FROM external_identity
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </delete>
+
+</mapper>

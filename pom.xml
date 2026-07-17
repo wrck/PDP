@@ -38,9 +38,9 @@
     </properties>
 
     <modules>
+        <!-- 共享内核：值对象、错误模型、分页、并发组件 -->
         <module>modules/shared-kernel</module>
-        <module>modules/public-persistence</module>
-        <module>modules/persistence-mysql</module>
+        <!-- 业务模块：声明领域模型、端口与应用服务（不依赖持久化框架） -->
         <module>modules/identity</module>
         <module>modules/workspace</module>
         <module>modules/domainconfig</module>
@@ -56,6 +56,11 @@
         <module>modules/operations</module>
         <module>modules/datamigration</module>
         <module>modules/standarddelivery</module>
+        <!-- 公共持久化：Mapper/适配器实现业务端口，依赖各业务模块的端口契约 -->
+        <module>modules/public-persistence</module>
+        <!-- MySQL 方言适配器：注册 P1 唯一激活持久化提供方 -->
+        <module>modules/persistence-mysql</module>
+        <!-- 可部署应用：聚合业务模块、持久化、Web/Security/Actuator -->
         <module>apps/api</module>
     </modules>
 

@@ -22,10 +22,6 @@
             <artifactId>pdp-shared-kernel</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.pdp</groupId>
-            <artifactId>pdp-public-persistence</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>

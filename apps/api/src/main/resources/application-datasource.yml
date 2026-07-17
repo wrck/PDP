@@ -119,3 +119,6 @@ mybatis-plus:
     map-underscore-to-camel-case: true
     default-enum-type-handler: com.pdp.persistence.typehandler.StringEnumTypeHandler
   type-handlers-package: com.pdp.persistence.typehandler
+  # 显式声明 Mapper XML 扫描路径（默认 classpath*:/mapper/**/*.xml）
+  mapper-locations:
+    - classpath*:/mapper/**/*.xml

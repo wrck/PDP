@@ -9,7 +9,7 @@
 |---|---|---|---|---|
 | US1 工作空间治理 | `/workspaces`、状态迁移、组织、成员、角色、数据范围、协作授权及撤销 | 工作空间、成员与授权事件 | Web、权限、审计、搜索、导出与附件 | US1 状态机/API 契约测试、撤权时限与跨空间隔离测试 |
 | US2 领域包定制 | `/domain-packages`、版本草稿、校验、审核、发布、退役、回滚、迁移预览与分批迁移 | `domain-package.schema.json` 1.1、领域包校验/审核/发布/退役/回滚/迁移事件 | 设计器、元数据运行时、平台工作流目录、迁移器 | 三层继承、核心字段复用、引用完整性、职责分离、兼容差异、扩展隔离、状态机、失败隔离与回滚测试 |
-| US3 模板与创建 | `/project-templates`、`/projects` | 项目创建事件 | Web、项目、计划、通知 | 模板版本、幂等和快照测试 |
+| US3 模板与创建（FR-021、FR-022、SC-002） | `/project-templates`、模板版本草稿/冻结/发布/退役/比较、`instantiation-preview`、`POST /projects` | `pdp.project.created`；`ProjectTemplateDefinition`、`ProjectInstantiationPreview`、`ProjectInstantiationResult` | Web、模板、项目、计划、交付、审批、通知 | `BLANK/TEMPLATE` 判别契约；仅已发布不可变版本可实例化；阶段、任务、负责人规则、工期、里程碑、检查项、交付件、审批和视图定义完整性；项目与默认计划原子创建、幂等返回、内容哈希/模板版本/领域包快照留存及生成对象准确率 100% |
 | US4 项目生命周期 | 项目详情与 `/projects/{id}/transitions` | 项目状态事件 | Web、计划、交付、审计 | 状态机、版本冲突和关闭门禁 |
 | US5 任务协作 | 任务创建、转换和协作接口 | 任务状态事件 | Web、进度、通知、搜索 | 状态机、并发、权限和事件兼容 |
 | US6 计划基线 | 基线创建、比较和影响预览 | 基线批准/取代事件 | Web、项目、审批 | 循环、权重、版本和差异测试 |

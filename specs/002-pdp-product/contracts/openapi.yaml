@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: PDP P1 平台 API
-  version: 1.1.0
+  version: 1.2.0
   description: |
     PDP 企业级项目交付管理平台 P1 的稳定同步接口边界。
     本契约与 coverage.md 共同覆盖全部 P1 稳定操作；领域包生成页面使用
@@ -588,7 +588,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Project'
+                $ref: '#/components/schemas/ProjectInstantiationResult'
+        '409':
+          $ref: '#/components/responses/Problem'
         '422':
           $ref: '#/components/responses/Problem'
   /projects/{projectId}:
@@ -973,10 +975,15 @@ paths:
   /project-templates:
     get:
       tags: [项目模板]
-      summary: 获取当前工作空间可用的项目模板版本
+      summary: 查询当前工作空间的项目模板
       operationId: listProjectTemplates
       parameters:
         - $ref: '#/components/parameters/WorkspaceHeader'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ACTIVE, ARCHIVED]
         - $ref: '#/components/parameters/Cursor'
         - $ref: '#/components/parameters/PageSize'
       responses:
@@ -986,6 +993,255 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProjectTemplatePage'
+    post:
+      tags: [项目模板]
+      summary: 创建项目模板及首个版本草稿
+      operationId: createProjectTemplate
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectTemplateCommand'
+      responses:
+        '201':
+          description: 模板及首个版本草稿已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTemplateVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /project-templates/{templateId}/versions:
+    get:
+      tags: [项目模板]
+      summary: 查询项目模板版本
+      operationId: listProjectTemplateVersions
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/TemplateIdPath'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 模板版本分页
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTemplateVersionPage'
+        '404':
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [项目模板]
+      summary: 基于现有版本创建新版本草稿
+      operationId: createProjectTemplateVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/TemplateIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectTemplateVersionCommand'
+      responses:
+        '201':
+          description: 版本草稿已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTemplateVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /project-templates/{templateId}/versions/{templateVersionId}:
+    get:
+      tags: [项目模板]
+      summary: 获取项目模板版本及完整定义
+      operationId: getProjectTemplateVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/TemplateIdPath'
+        - $ref: '#/components/parameters/TemplateVersionIdPath'
+      responses:
+        '200':
+          description: 模板版本详情
+          headers:
+            ETag:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTemplateVersion'
+        '404':
+          $ref: '#/components/responses/Problem'
+    put:
+      tags: [项目模板]
+      summary: 更新项目模板版本草稿
+      operationId: updateProjectTemplateVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/TemplateIdPath'
+        - $ref: '#/components/parameters/TemplateVersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectTemplateVersionCommand'
+      responses:
+        '200':
+          description: 草稿已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTemplateVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /project-templates/{templateId}/versions/{templateVersionId}/freeze:
+    post:
+      tags: [项目模板]
+      summary: 校验并冻结项目模板版本
+      operationId: freezeProjectTemplateVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/TemplateIdPath'
+        - $ref: '#/components/parameters/TemplateVersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonCommand'
+      responses:
+        '200':
+          description: 版本已冻结且内容哈希固定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTemplateVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /project-templates/{templateId}/versions/{templateVersionId}/publish:
+    post:
+      tags: [项目模板]
+      summary: 发布已冻结的项目模板版本
+      operationId: publishProjectTemplateVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/TemplateIdPath'
+        - $ref: '#/components/parameters/TemplateVersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonCommand'
+      responses:
+        '200':
+          description: 版本已批准发布且不可修改
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTemplateVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /project-templates/{templateId}/versions/{templateVersionId}/retire:
+    post:
+      tags: [项目模板]
+      summary: 退役项目模板版本
+      operationId: retireProjectTemplateVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/TemplateIdPath'
+        - $ref: '#/components/parameters/TemplateVersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonCommand'
+      responses:
+        '200':
+          description: 版本已退役；既有项目快照不受影响
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTemplateVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /project-templates/{templateId}/versions/{templateVersionId}/comparison:
+    get:
+      tags: [项目模板]
+      summary: 比较两个项目模板版本
+      operationId: compareProjectTemplateVersions
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/TemplateIdPath'
+        - $ref: '#/components/parameters/TemplateVersionIdPath'
+        - name: baseVersionId
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: 结构化版本差异
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTemplateVersionComparison'
+        '404':
+          $ref: '#/components/responses/Problem'
+  /project-templates/{templateId}/versions/{templateVersionId}/instantiation-preview:
+    post:
+      tags: [项目模板]
+      summary: 预览项目模板实例化计划
+      operationId: previewProjectTemplateInstantiation
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/TemplateIdPath'
+        - $ref: '#/components/parameters/TemplateVersionIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectInstantiationInputs'
+      responses:
+        '200':
+          description: 实例化计划与校验结果；不创建业务对象
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectInstantiationPreview'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
   /projects/{projectId}/saved-views:
     get:
       tags: [项目]
@@ -1528,6 +1784,18 @@ components:
         $ref: '#/components/schemas/Uuid'
     VersionIdPath:
       name: versionId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    TemplateIdPath:
+      name: templateId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    TemplateVersionIdPath:
+      name: templateVersionId
       in: path
       required: true
       schema:
@@ -2138,13 +2406,18 @@ components:
           type: integer
           minimum: 0
     CreateProjectCommand:
+      oneOf:
+        - $ref: '#/components/schemas/CreateBlankProjectCommand'
+        - $ref: '#/components/schemas/CreateProjectFromTemplateCommand'
+      discriminator:
+        propertyName: creationMode
+        mapping:
+          BLANK: '#/components/schemas/CreateBlankProjectCommand'
+          TEMPLATE: '#/components/schemas/CreateProjectFromTemplateCommand'
+    ProjectInstantiationInputs:
       type: object
       required: [name, managerId, plannedStart, plannedEnd]
       properties:
-        templateVersionId:
-          oneOf:
-            - $ref: '#/components/schemas/Uuid'
-            - type: 'null'
         name:
           type: string
           minLength: 2
@@ -2167,6 +2440,44 @@ components:
         extensionData:
           type: object
           additionalProperties: true
+        ownerAssignments:
+          type: array
+          description: 模板负责人规则所需的显式绑定；未命中的必填规则使预览或创建失败
+          items:
+            type: object
+            required: [ruleKey, principalId]
+            properties:
+              ruleKey:
+                type: string
+                minLength: 1
+                maxLength: 100
+              principalId:
+                $ref: '#/components/schemas/Uuid'
+        parameterValues:
+          type: object
+          description: 模板声明的实例化参数值；服务端只接受模板版本中已声明的键
+          additionalProperties: true
+    CreateBlankProjectCommand:
+      allOf:
+        - $ref: '#/components/schemas/ProjectInstantiationInputs'
+        - type: object
+          required: [creationMode]
+          properties:
+            creationMode:
+              type: string
+              const: BLANK
+    CreateProjectFromTemplateCommand:
+      allOf:
+        - $ref: '#/components/schemas/ProjectInstantiationInputs'
+        - type: object
+          required: [creationMode, templateVersionId]
+          properties:
+            creationMode:
+              type: string
+              const: TEMPLATE
+            templateVersionId:
+              $ref: '#/components/schemas/Uuid'
+              description: 只能引用当前工作空间可用的 PUBLISHED 不可变版本
     Project:
       type: object
       required: [id, projectNo, name, lifecycle, domainStageKey, progress, revision]
@@ -2191,11 +2502,93 @@ components:
         progressCalculatedAt:
           type: [string, 'null']
           format: date-time
+        templateVersionId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        domainPackageSnapshotId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
         extensionData:
           type: object
           additionalProperties: true
         revision:
           type: integer
+    ProjectInstantiationResult:
+      type: object
+      required:
+        - project
+        - creationMode
+        - templateVersionId
+        - templateContentHash
+        - domainPackageSnapshotId
+        - instantiationRecordId
+        - generatedSummary
+        - generatedObjects
+      properties:
+        project:
+          $ref: '#/components/schemas/Project'
+        creationMode:
+          type: string
+          enum: [BLANK, TEMPLATE]
+        templateVersionId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        templateContentHash:
+          type: [string, 'null']
+          description: 模板创建时固定为已发布版本的内容哈希；空白创建为 null
+        domainPackageSnapshotId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        instantiationRecordId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        generatedSummary:
+          $ref: '#/components/schemas/ProjectInstantiationSummary'
+        generatedObjects:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeneratedProjectObjectRef'
+    ProjectInstantiationSummary:
+      type: object
+      required: [stages, tasks, milestones, checklistItems, deliverables, approvals, views]
+      properties:
+        stages:
+          type: integer
+          minimum: 0
+        tasks:
+          type: integer
+          minimum: 0
+        milestones:
+          type: integer
+          minimum: 0
+        checklistItems:
+          type: integer
+          minimum: 0
+        deliverables:
+          type: integer
+          minimum: 0
+        approvals:
+          type: integer
+          minimum: 0
+        views:
+          type: integer
+          minimum: 0
+    GeneratedProjectObjectRef:
+      type: object
+      required: [componentKey, objectType, objectId]
+      properties:
+        componentKey:
+          type: string
+        objectType:
+          type: string
+          enum: [STAGE, TASK, MILESTONE, CHECKLIST_ITEM, DELIVERABLE, APPROVAL, VIEW]
+        objectId:
+          $ref: '#/components/schemas/Uuid'
     ProjectPage:
       type: object
       required: [items, nextCursor]
@@ -2428,7 +2821,7 @@ components:
           type: integer
     ProjectTemplatePage:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       properties:
         items:
           type: array
@@ -2438,21 +2831,250 @@ components:
           type: [string, 'null']
     ProjectTemplate:
       type: object
-      required: [id, stableKey, name, version, domainPackageVersionId, status]
+      required: [id, stableKey, name, status, currentPublishedVersionId, revision]
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
         stableKey:
           type: string
+          pattern: '^[a-z][a-z0-9.-]{2,99}$'
         name:
           type: string
+          minLength: 2
+          maxLength: 200
+        status:
+          type: string
+          enum: [ACTIVE, ARCHIVED]
+        currentPublishedVersionId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        revision:
+          type: integer
+          minimum: 0
+    CreateProjectTemplateCommand:
+      type: object
+      required: [stableKey, name, version, domainPackageVersionId, definition]
+      properties:
+        stableKey:
+          type: string
+          pattern: '^[a-z][a-z0-9.-]{2,99}$'
+        name:
+          type: string
+          minLength: 2
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
         version:
           type: string
+          pattern: '^\d+\.\d+\.\d+$'
+        domainPackageVersionId:
+          $ref: '#/components/schemas/Uuid'
+        definition:
+          $ref: '#/components/schemas/ProjectTemplateDefinition'
+    CreateProjectTemplateVersionCommand:
+      type: object
+      required: [version, baseVersionId, domainPackageVersionId, definition, changeSummary]
+      properties:
+        version:
+          type: string
+          pattern: '^\d+\.\d+\.\d+$'
+        baseVersionId:
+          $ref: '#/components/schemas/Uuid'
+        domainPackageVersionId:
+          $ref: '#/components/schemas/Uuid'
+        definition:
+          $ref: '#/components/schemas/ProjectTemplateDefinition'
+        changeSummary:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    UpdateProjectTemplateVersionCommand:
+      type: object
+      required: [domainPackageVersionId, definition, changeSummary]
+      properties:
+        domainPackageVersionId:
+          $ref: '#/components/schemas/Uuid'
+        definition:
+          $ref: '#/components/schemas/ProjectTemplateDefinition'
+        changeSummary:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    ProjectTemplateVersionPage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectTemplateVersion'
+        nextCursor:
+          type: [string, 'null']
+    ProjectTemplateVersion:
+      type: object
+      required:
+        - id
+        - templateId
+        - version
+        - domainPackageVersionId
+        - status
+        - contentHash
+        - definition
+        - revision
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        templateId:
+          $ref: '#/components/schemas/Uuid'
+        version:
+          type: string
+          pattern: '^\d+\.\d+\.\d+$'
+        baseVersionId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
         domainPackageVersionId:
           $ref: '#/components/schemas/Uuid'
         status:
           type: string
-          enum: [DRAFT, PUBLISHED, RETIRED]
+          enum: [DRAFT, FROZEN, PUBLISHED, RETIRED]
+          description: 仅 DRAFT 可编辑；FROZEN、PUBLISHED 和 RETIRED 内容均不可变
+        contentHash:
+          type: [string, 'null']
+          description: 冻结时生成，冻结前为 null
+        definition:
+          $ref: '#/components/schemas/ProjectTemplateDefinition'
+        revision:
+          type: integer
+          minimum: 0
+    ProjectTemplateDefinition:
+      type: object
+      required:
+        - stages
+        - tasks
+        - ownerRules
+        - durationRules
+        - milestones
+        - checklistItems
+        - deliverables
+        - approvals
+        - views
+      properties:
+        stages:
+          $ref: '#/components/schemas/ProjectTemplateComponentList'
+        tasks:
+          $ref: '#/components/schemas/ProjectTemplateComponentList'
+        ownerRules:
+          $ref: '#/components/schemas/ProjectTemplateComponentList'
+        durationRules:
+          $ref: '#/components/schemas/ProjectTemplateComponentList'
+        milestones:
+          $ref: '#/components/schemas/ProjectTemplateComponentList'
+        checklistItems:
+          $ref: '#/components/schemas/ProjectTemplateComponentList'
+        deliverables:
+          $ref: '#/components/schemas/ProjectTemplateComponentList'
+        approvals:
+          $ref: '#/components/schemas/ProjectTemplateComponentList'
+        views:
+          $ref: '#/components/schemas/ProjectTemplateComponentList'
+    ProjectTemplateComponentList:
+      type: array
+      items:
+        $ref: '#/components/schemas/ProjectTemplateComponentDefinition'
+    ProjectTemplateComponentDefinition:
+      type: object
+      required: [componentKey, name, sequence, configuration]
+      properties:
+        componentKey:
+          type: string
+          pattern: '^[a-z][a-z0-9._-]{1,99}$'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        sequence:
+          type: integer
+          minimum: 0
+        parentComponentKey:
+          type: [string, 'null']
+        configuration:
+          type: object
+          additionalProperties: true
+    ProjectTemplateVersionComparison:
+      type: object
+      required: [baseVersionId, targetVersionId, changes]
+      properties:
+        baseVersionId:
+          $ref: '#/components/schemas/Uuid'
+        targetVersionId:
+          $ref: '#/components/schemas/Uuid'
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectTemplateVersionDifference'
+    ProjectTemplateVersionDifference:
+      type: object
+      required: [changeType, componentType, componentKey]
+      properties:
+        changeType:
+          type: string
+          enum: [ADDED, MODIFIED, REMOVED, REORDERED]
+        componentType:
+          type: string
+          enum: [STAGE, TASK, OWNER_RULE, DURATION_RULE, MILESTONE, CHECKLIST_ITEM, DELIVERABLE, APPROVAL, VIEW]
+        componentKey:
+          type: string
+        before:
+          type: [object, 'null']
+          additionalProperties: true
+        after:
+          type: [object, 'null']
+          additionalProperties: true
+    ProjectInstantiationPreview:
+      type: object
+      required:
+        - templateVersionId
+        - templateStatus
+        - templateContentHash
+        - domainPackageVersionId
+        - generatedSummary
+        - validationIssues
+        - creatable
+      properties:
+        templateVersionId:
+          $ref: '#/components/schemas/Uuid'
+        templateStatus:
+          type: string
+          enum: [DRAFT, FROZEN, PUBLISHED, RETIRED]
+        templateContentHash:
+          type: [string, 'null']
+          description: 草稿预览可为 null；仅 PUBLISHED 版本可用于实际创建
+        domainPackageVersionId:
+          $ref: '#/components/schemas/Uuid'
+        generatedSummary:
+          $ref: '#/components/schemas/ProjectInstantiationSummary'
+        validationIssues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectInstantiationValidationIssue'
+        creatable:
+          type: boolean
+    ProjectInstantiationValidationIssue:
+      type: object
+      required: [code, severity, path, message]
+      properties:
+        code:
+          type: string
+        severity:
+          type: string
+          enum: [ERROR, WARNING]
+        path:
+          type: string
+        message:
+          type: string
     CreateSavedViewCommand:
       type: object
       required: [name, viewType, definition, visibility]

@@ -53,9 +53,9 @@
 - [X] T037 创建身份 Mapper、XML 和数据库适配器，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/identity/`、`modules/public-persistence/src/main/resources/mapper/identity/`
 - [X] T038 创建 OIDC 登录、回调、用户同步和外部身份绑定适配器，文件：`modules/identity/src/main/java/com/pdp/identity/infrastructure/oidc/`
 - [X] T039 创建用户启用、停用、离职、会话和刷新凭据撤销服务，文件：`modules/identity/src/main/java/com/pdp/identity/application/IdentityLifecycleService.java`
-- [ ] T040 创建身份生命周期 MySQL 契约测试，文件：`tests/backend/contract/identity/IdentityLifecycleDatabaseContractTest.java`
+- [X] T040 创建身份生命周期 MySQL 契约测试，文件：`tests/backend/contract/identity/IdentityLifecycleDatabaseContractTest.java`
 - [X] T041 创建统一认证、授权决策和资源范围校验服务，文件：`modules/identity/src/main/java/com/pdp/identity/application/AuthorizationService.java`
-- [ ] T042 创建权限撤销时效基线测试，文件：`tests/backend/security/PermissionRevocationSlaTest.java`
+- [X] T042 创建权限撤销时效基线测试，文件：`tests/backend/security/PermissionRevocationSlaTest.java`
 
 ### MySQL 持久化、动态数据源和连接池
 

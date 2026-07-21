@@ -777,6 +777,11 @@ paths:
           schema:
             type: string
             enum: [PLATFORM_STANDARD, INDUSTRY, WORKSPACE_CUSTOMER]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [DRAFT, ACTIVE, DEPRECATED, RETIRED]
         - $ref: '#/components/parameters/Cursor'
         - $ref: '#/components/parameters/PageSize'
       responses:
@@ -802,20 +807,166 @@ paths:
       responses:
         '201':
           description: 已创建
+          headers:
+            Location:
+              schema:
+                type: string
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DomainPackage'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}:
+    get:
+      tags: [领域包]
+      summary: 获取领域包详情
+      operationId: getDomainPackage
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+      responses:
+        '200':
+          description: 领域包详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackage'
+        '404':
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [领域包]
+      summary: 更新领域包基本信息（仅 DRAFT 状态）
+      operationId: updateDomainPackage
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDomainPackageCommand'
+      responses:
+        '200':
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackage'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions:
+    get:
+      tags: [领域包]
+      summary: 查询领域包版本列表
+      operationId: listDomainPackageVersions
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [DRAFT, VALIDATING, REVIEW_PENDING, PUBLISHED, REJECTED, DEPRECATED, RETIRED]
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 版本分页
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersionPage'
+    post:
+      tags: [领域包]
+      summary: 创建新版本草稿（基于 manifest 文件）
+      operationId: createDomainPackageVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDomainPackageVersionCommand'
+      responses:
+        '201':
+          description: 已创建版本草稿
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}:
+    get:
+      tags: [领域包]
+      summary: 获取领域包版本详情（含 manifest 内容）
+      operationId: getDomainPackageVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+      responses:
+        '200':
+          description: 版本详情
+          headers:
+            ETag:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersionDetail'
+        '404':
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [领域包]
+      summary: 更新版本草稿 manifest（仅 DRAFT/REJECTED 状态）
+      operationId: updateDomainPackageVersionDraft
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDomainPackageVersionDraftCommand'
+      responses:
+        '200':
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
   /domain-packages/{packageId}/versions/{versionId}/validate:
     post:
       tags: [领域包]
-      summary: 校验领域包版本
+      summary: 触发领域包版本结构化校验（异步作业）
       operationId: validateDomainPackageVersion
       parameters:
         - $ref: '#/components/parameters/WorkspaceHeader'
         - $ref: '#/components/parameters/PackageIdPath'
         - $ref: '#/components/parameters/VersionIdPath'
         - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '202':
           description: 校验作业已创建
@@ -827,16 +978,94 @@ paths:
           $ref: '#/components/responses/Problem'
         '422':
           $ref: '#/components/responses/Problem'
-  /domain-packages/{packageId}/versions/{versionId}/publish:
+  /domain-packages/{packageId}/versions/{versionId}/validation-result:
+    get:
+      tags: [领域包]
+      summary: 获取最新校验结果
+      operationId: getDomainPackageValidationResult
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+      responses:
+        '200':
+          description: 校验结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageValidationResult'
+        '404':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/submit:
     post:
       tags: [领域包]
-      summary: 审核并发布领域包版本
-      operationId: publishDomainPackageVersion
+      summary: 提交版本进入审核（DRAFT/REJECTED → REVIEW_PENDING）
+      operationId: submitDomainPackageVersion
+      description: |
+        设计者提交候选版本进入审核。
+        设计者与发布者必须为不同主体（FR-167、US2 验收场景 3）。
       parameters:
         - $ref: '#/components/parameters/WorkspaceHeader'
         - $ref: '#/components/parameters/PackageIdPath'
         - $ref: '#/components/parameters/VersionIdPath'
         - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitReviewCommand'
+      responses:
+        '200':
+          description: 已提交审核
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/reject:
+    post:
+      tags: [领域包]
+      summary: 审核拒绝版本（REVIEW_PENDING → REJECTED）
+      operationId: rejectDomainPackageVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectReviewCommand'
+      responses:
+        '200':
+          description: 已拒绝
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/publish:
+    post:
+      tags: [领域包]
+      summary: 审核并发布领域包版本（REVIEW_PENDING → PUBLISHED）
+      operationId: publishDomainPackageVersion
+      description: |
+        独立发布者完成测试和影响审核后发布生产版本。
+        发布前必须通过结构、引用、状态、规则、权限、迁移和回滚校验（FR-015、SC-013、SC-014）。
+        发布时生成运行时版本快照（FR-018）。
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -854,6 +1083,372 @@ paths:
           $ref: '#/components/responses/Problem'
         '422':
           $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/freeze:
+    post:
+      tags: [领域包]
+      summary: 冻结已发布版本（PUBLISHED → FROZEN，阻止运行实例升级）
+      operationId: freezeDomainPackageVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonCommand'
+      responses:
+        '200':
+          description: 已冻结
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/rollback:
+    post:
+      tags: [领域包]
+      summary: 回滚到上一已发布版本（高风险操作）
+      operationId: rollbackDomainPackageVersion
+      description: |
+        回滚运行实例到上一已发布版本快照。
+        属于高风险操作（FR-168），必须先调用 impact-preview 获取预览并通过确认。
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RollbackVersionCommand'
+      responses:
+        '200':
+          description: 已回滚
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/deprecate:
+    post:
+      tags: [领域包]
+      summary: 弃用版本（PUBLISHED → DEPRECATED）
+      operationId: deprecateDomainPackageVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateVersionCommand'
+      responses:
+        '200':
+          description: 已弃用
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/retire:
+    post:
+      tags: [领域包]
+      summary: 退役版本（DEPRECATED → RETIRED，运行实例必须先迁移完毕）
+      operationId: retireDomainPackageVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonCommand'
+      responses:
+        '200':
+          description: 已退役
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainPackageVersion'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/impact-preview:
+    post:
+      tags: [领域包]
+      summary: 升级影响预览（FR-168 高风险操作前置预览）
+      operationId: previewDomainPackageImpact
+      description: |
+        预览从当前生产版本升级到候选版本的影响范围：
+        受影响对象、运行实例数量、冲突项、不可逆变更和迁移批次建议。
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImpactPreviewRequest'
+      responses:
+        '200':
+          description: 影响预览结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImpactPreviewResult'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/diff:
+    post:
+      tags: [领域包]
+      summary: 版本差异分析（与指定基线版本对比）
+      operationId: diffDomainPackageVersion
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionDiffRequest'
+      responses:
+        '200':
+          description: 差异结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionDiffResult'
+  /domain-packages/{packageId}/versions/{versionId}/conflicts:
+    post:
+      tags: [领域包]
+      summary: 冲突检测（对象、字段、状态、规则、权限、集成）
+      operationId: detectDomainPackageConflicts
+      description: |
+        FR-015 领域包组合和升级必须检测对象、字段、状态、规则、权限和集成冲突。
+        SC-013 领域包无效引用、不可达状态、循环规则、权限越界和覆盖冲突的发布前识别率 100%。
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+      responses:
+        '200':
+          description: 冲突检测结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictDetectionResult'
+  /domain-packages/{packageId}/versions/{versionId}/snapshot:
+    get:
+      tags: [领域包]
+      summary: 获取版本运行时快照（FR-018）
+      operationId: getDomainPackageVersionSnapshot
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+      responses:
+        '200':
+          description: 运行时快照
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuntimeSnapshot'
+        '404':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/versions/{versionId}/migration-plans:
+    get:
+      tags: [领域包]
+      summary: 查询版本迁移计划列表
+      operationId: listDomainPackageMigrationPlans
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 迁移计划分页
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MigrationPlanPage'
+    post:
+      tags: [领域包]
+      summary: 创建迁移计划（高风险操作前置）
+      operationId: createDomainPackageMigrationPlan
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/VersionIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMigrationPlanCommand'
+      responses:
+        '201':
+          description: 已创建迁移计划
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MigrationPlan'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/migration-plans/{planId}/execute:
+    post:
+      tags: [领域包]
+      summary: 执行迁移计划（分批迁移作业）
+      operationId: executeDomainPackageMigrationPlan
+      description: |
+        启动分批迁移作业；FR-168 高风险操作，支持失败隔离、断点恢复和回滚。
+        迁移部分失败时失败实例保持可恢复（spec.md §617）。
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - name: planId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '202':
+          description: 迁移作业已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAccepted'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/migration-plans/{planId}/rollback:
+    post:
+      tags: [领域包]
+      summary: 回滚迁移计划（仅在可回滚时间窗内）
+      operationId: rollbackDomainPackageMigrationPlan
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - name: planId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonCommand'
+      responses:
+        '202':
+          description: 回滚作业已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAccepted'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/{packageId}/workflow-bindings:
+    get:
+      tags: [领域包]
+      summary: 查询领域包版本化工作流绑定列表
+      operationId: listWorkflowBindings
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 工作流绑定分页
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowBindingPage'
+    post:
+      tags: [领域包]
+      summary: 创建或更新工作流绑定（FR-173 平台工作流复用）
+      operationId: upsertWorkflowBinding
+      description: |
+        实现领域包对平台流程定义的版本化绑定、变量映射、启动条件、权限声明和迁移校验。
+        不允许领域包嵌入 Flowable 专有 API（plan.md 关键设计规则）。
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - $ref: '#/components/parameters/PackageIdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertWorkflowBindingCommand'
+      responses:
+        '201':
+          description: 已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowBinding'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /domain-packages/core-field-catalog:
+    get:
+      tags: [领域包]
+      summary: 查询平台统一核心字段目录（FR-132、SC-025）
+      operationId: listCoreFieldCatalog
+      description: |
+        平台维护统一核心字段目录；领域包扩展字段必须声明与核心字段的复用或差异关系。
+        已发布领域包中与核心字段重复或语义冲突的扩展字段数量为 0（SC-025）。
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceHeader'
+        - name: coreObjectType
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 核心字段目录分页
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoreFieldCatalogPage'
   /projects:
     get:
       tags: [项目]
@@ -2541,7 +3136,7 @@ components:
           format: date-time
     CreateDomainPackageCommand:
       type: object
-      required: [stableKey, name, layer]
+      required: [stableKey, name, layer, designerPrincipalId]
       properties:
         stableKey:
           type: string
@@ -2549,6 +3144,9 @@ components:
         name:
           type: string
           maxLength: 100
+        description:
+          type: string
+          maxLength: 2000
         layer:
           type: string
           enum: [PLATFORM_STANDARD, INDUSTRY, WORKSPACE_CUSTOMER]
@@ -2556,17 +3154,125 @@ components:
           oneOf:
             - $ref: '#/components/schemas/Uuid'
             - type: 'null'
+        designerPrincipalId:
+          type: string
+          maxLength: 128
+          description: 设计者主体 ID；与发布者必须不同（FR-167、US2 验收场景 3）。
+        designerPrincipalType:
+          type: string
+          enum: [USER, SERVICE_ACCOUNT, GOVERNANCE_ROLE]
+          default: USER
+    UpdateDomainPackageCommand:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 2000
     DomainPackage:
-      allOf:
-        - $ref: '#/components/schemas/CreateDomainPackageCommand'
-        - type: object
-          required: [id, status]
+      type: object
+      required: [id, stableKey, name, layer, status, designer, publisher, revision]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        stableKey:
+          type: string
+          pattern: '^[a-z][a-z0-9.-]{2,99}$'
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 2000
+        layer:
+          type: string
+          enum: [PLATFORM_STANDARD, INDUSTRY, WORKSPACE_CUSTOMER]
+        parentPackageId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, DEPRECATED, RETIRED]
+        designer:
+          $ref: '#/components/schemas/PrincipalRef'
+        publisher:
+          $ref: '#/components/schemas/PrincipalRef'
+        currentPublishedVersionId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        revision:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PrincipalRef:
+      type: object
+      required: [principalType, principalId]
+      properties:
+        principalType:
+          type: string
+          enum: [USER, SERVICE_ACCOUNT, GOVERNANCE_ROLE]
+        principalId:
+          type: string
+          maxLength: 128
+        displayLabel:
+          type: string
+          maxLength: 200
+    CreateDomainPackageVersionCommand:
+      type: object
+      required: [semanticVersion, manifest]
+      properties:
+        semanticVersion:
+          type: string
+          pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+        manifest:
+          type: object
+          additionalProperties: true
+          description: |
+            符合 domain-package.schema.json 的 manifest 内容；
+            发布前必须通过结构、引用、状态、规则、权限、迁移和回滚校验。
+        parentSnapshotId:
+          oneOf:
+            - type: string
+            - type: 'null'
+        extendsVersionRange:
+          type: string
+          maxLength: 50
+    UpdateDomainPackageVersionDraftCommand:
+      type: object
+      required: [manifest]
+      properties:
+        manifest:
+          type: object
+          additionalProperties: true
+        compatibilityStatement:
+          type: object
+          additionalProperties: false
+          required: [compatibilityLevel, consumerImpact]
           properties:
-            id:
-              $ref: '#/components/schemas/Uuid'
-            status:
+            compatibilityLevel:
               type: string
-              enum: [DRAFT, ACTIVE, DEPRECATED, RETIRED]
+              enum: [MAJOR_BREAKING, MINOR_BREAKING, ADDITIVE, PATCH_ONLY]
+            consumerImpact:
+              type: string
+              maxLength: 2000
+            deprecationWindow:
+              type: object
+              additionalProperties: false
+              properties:
+                deprecatedAt:
+                  type: string
+                  format: date-time
+                sunsetAt:
+                  type: string
+                  format: date-time
     DomainPackageVersion:
       type: object
       required: [id, packageId, semanticVersion, contentHash, status, revision]
@@ -2582,9 +3288,49 @@ components:
           type: string
         status:
           type: string
-          enum: [DRAFT, VALIDATING, REVIEW_PENDING, PUBLISHED, REJECTED, DEPRECATED, RETIRED]
+          enum: [DRAFT, VALIDATING, REVIEW_PENDING, PUBLISHED, REJECTED, DEPRECATED, RETIRED, FROZEN]
+        parentSnapshotId:
+          oneOf:
+            - type: string
+            - type: 'null'
+        runtimeSnapshotId:
+          oneOf:
+            - type: string
+            - type: 'null'
         revision:
           type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    DomainPackageVersionDetail:
+      allOf:
+        - $ref: '#/components/schemas/DomainPackageVersion'
+        - type: object
+          required: [manifest]
+          properties:
+            manifest:
+              type: object
+              additionalProperties: true
+            compatibilityStatement:
+              type: object
+              additionalProperties: true
+            lastValidationResult:
+              oneOf:
+                - $ref: '#/components/schemas/DomainPackageValidationResult'
+                - type: 'null'
+    DomainPackageVersionPage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DomainPackageVersion'
+        nextCursor:
+          type: [string, 'null']
     DomainPackagePage:
       type: object
       required: [items, nextCursor]
@@ -2596,6 +3342,26 @@ components:
         nextCursor:
           type: [string, 'null']
           description: 下一页不透明 keyset 游标；为 null 表示没有下一页
+    SubmitReviewCommand:
+      type: object
+      required: [reviewComment]
+      properties:
+        reviewComment:
+          type: string
+          minLength: 2
+          maxLength: 1000
+        validationJobId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+    RejectReviewCommand:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 2
+          maxLength: 1000
     PublishPackageCommand:
       type: object
       required: [validationJobId, reviewComment]
@@ -2606,6 +3372,443 @@ components:
           type: string
           minLength: 2
           maxLength: 1000
+        impactPreviewId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+          description: 升级影响预览 ID；高风险发布必须先产生预览（FR-168）。
+    RollbackVersionCommand:
+      type: object
+      required: [targetVersionId, reason]
+      properties:
+        targetVersionId:
+          $ref: '#/components/schemas/Uuid'
+          description: 回滚目标版本 ID（必须为已发布状态）。
+        reason:
+          type: string
+          minLength: 2
+          maxLength: 1000
+        impactPreviewId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+    DeprecateVersionCommand:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 2
+          maxLength: 1000
+        sunsetAt:
+          type: string
+          format: date-time
+          description: 弃用截止日期；超过此日期可申请退役。
+    DomainPackageValidationResult:
+      type: object
+      required: [versionId, status, passed, items]
+      properties:
+        versionId:
+          $ref: '#/components/schemas/Uuid'
+        jobId:
+          $ref: '#/components/schemas/Uuid'
+        status:
+          type: string
+          enum: [PENDING, RUNNING, COMPLETED, FAILED]
+        passed:
+          type: boolean
+        items:
+          type: array
+          items:
+            type: object
+            required: [code, severity, category, message]
+            properties:
+              code:
+                type: string
+              severity:
+                type: string
+                enum: [INFO, WARNING, ERROR, BLOCKER]
+              category:
+                type: string
+                enum: [STRUCTURE, REFERENCE, STATE_MACHINE, RULE, PERMISSION, MIGRATION, CORE_FIELD, COMPATIBILITY]
+              message:
+                type: string
+              objectKey:
+                type: string
+              fieldKey:
+                type: string
+        validatedAt:
+          type: string
+          format: date-time
+    ImpactPreviewRequest:
+      type: object
+      required: [currentVersionId]
+      properties:
+        currentVersionId:
+          $ref: '#/components/schemas/Uuid'
+          description: 当前生产版本 ID。
+        objectTypes:
+          type: array
+          items:
+            type: string
+          description: 限定预览的对象类型；为空表示全部。
+        includeRunningInstances:
+          type: boolean
+          default: true
+    ImpactPreviewResult:
+      type: object
+      required: [previewId, currentVersionId, candidateVersionId, affectedObjects, breakingChanges, irreversibleChanges, migrationBatches, generatedAt]
+      properties:
+        previewId:
+          $ref: '#/components/schemas/Uuid'
+        currentVersionId:
+          $ref: '#/components/schemas/Uuid'
+        candidateVersionId:
+          $ref: '#/components/schemas/Uuid'
+        affectedObjects:
+          type: array
+          items:
+            type: object
+            required: [objectKey, instanceCount]
+            properties:
+              objectKey:
+                type: string
+              instanceCount:
+                type: integer
+              breakingChangeCount:
+                type: integer
+        breakingChanges:
+          type: array
+          items:
+            type: object
+            required: [category, description]
+            properties:
+              category:
+                type: string
+                enum: [FIELD_REMOVED, FIELD_TYPE_CHANGED, STATE_REMOVED, TRANSITION_REMOVED, PERMISSION_REVOKED, RULE_REMOVED, WORKFLOW_BINDING_CHANGED]
+              description:
+                type: string
+              objectKey:
+                type: string
+              fieldKey:
+                type: string
+        irreversibleChanges:
+          type: array
+          items:
+            type: object
+            required: [description]
+            properties:
+              description:
+                type: string
+              compensationHint:
+                type: string
+        migrationBatches:
+          type: array
+          items:
+            type: object
+            required: [batchIndex, batchSize, estimatedObjectCount]
+            properties:
+              batchIndex:
+                type: integer
+              batchSize:
+                type: integer
+              estimatedObjectCount:
+                type: integer
+              strategy:
+                type: string
+                enum: [SEQUENTIAL, PARALLEL_WITH_FAILURE_ISOLATION]
+        expiresAt:
+          type: string
+          format: date-time
+          description: 预览过期时间；FR-168 预览必须有时效。
+        generatedAt:
+          type: string
+          format: date-time
+    VersionDiffRequest:
+      type: object
+      required: [baselineVersionId]
+      properties:
+        baselineVersionId:
+          $ref: '#/components/schemas/Uuid'
+        includeUnchanged:
+          type: boolean
+          default: false
+    VersionDiffResult:
+      type: object
+      required: [baselineVersionId, candidateVersionId, changes]
+      properties:
+        baselineVersionId:
+          $ref: '#/components/schemas/Uuid'
+        candidateVersionId:
+          $ref: '#/components/schemas/Uuid'
+        changes:
+          type: array
+          items:
+            type: object
+            required: [path, changeType]
+            properties:
+              path:
+                type: string
+              changeType:
+                type: string
+                enum: [ADDED, REMOVED, MODIFIED, MOVED]
+              oldValue:
+                type: string
+              newValue:
+                type: string
+              category:
+                type: string
+                enum: [OBJECT, FIELD, RELATION, STATE, TRANSITION, RULE, PERMISSION, PAGE, VIEW, WORKFLOW_BINDING, EXTENSION, OVERRIDE, MIGRATION]
+    ConflictDetectionResult:
+      type: object
+      required: [versionId, conflicts]
+      properties:
+        versionId:
+          $ref: '#/components/schemas/Uuid'
+        conflicts:
+          type: array
+          items:
+            type: object
+            required: [category, severity, code, message]
+            properties:
+              category:
+                type: string
+                enum: [OBJECT, FIELD, STATE, RULE, PERMISSION, INTEGRATION, CORE_FIELD, OVERRIDE]
+              severity:
+                type: string
+                enum: [INFO, WARNING, ERROR, BLOCKER]
+              code:
+                type: string
+              message:
+                type: string
+              targetStableKey:
+                type: string
+              resolutionHint:
+                type: string
+    RuntimeSnapshot:
+      type: object
+      required: [snapshotId, snapshotVersion, contentHash, createdAt]
+      properties:
+        snapshotId:
+          type: string
+        snapshotVersion:
+          type: string
+          pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+        contentHash:
+          type: string
+        parentSnapshotId:
+          oneOf:
+            - type: string
+            - type: 'null'
+        createdAt:
+          type: string
+          format: date-time
+        resolvedObjects:
+          type: array
+          description: 三层继承合并后的对象快照。
+          items:
+            type: object
+            additionalProperties: true
+    CreateMigrationPlanCommand:
+      type: object
+      required: [fromVersionId, toVersionId, batchStrategy, failureIsolation]
+      properties:
+        fromVersionId:
+          $ref: '#/components/schemas/Uuid'
+        toVersionId:
+          $ref: '#/components/schemas/Uuid'
+        batchStrategy:
+          type: object
+          additionalProperties: false
+          required: [batchSize, mode]
+          properties:
+            batchSize:
+              type: integer
+              minimum: 1
+              maximum: 10000
+            mode:
+              type: string
+              enum: [SEQUENTIAL, PARALLEL_WITH_FAILURE_ISOLATION]
+            pauseBetweenBatchesMs:
+              type: integer
+              minimum: 0
+              maximum: 600000
+        failureIsolation:
+          type: string
+          enum: [ABORT_ALL, ISOLATE_FAILED_KEEP_OTHERS, MANUAL_REVIEW]
+          default: ISOLATE_FAILED_KEEP_OTHERS
+        impactPreviewId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        reason:
+          type: string
+          maxLength: 1000
+    MigrationPlan:
+      type: object
+      required: [id, packageId, fromVersionId, toVersionId, status, batchStrategy, failureIsolation, revision]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        packageId:
+          $ref: '#/components/schemas/Uuid'
+        fromVersionId:
+          $ref: '#/components/schemas/Uuid'
+        toVersionId:
+          $ref: '#/components/schemas/Uuid'
+        status:
+          type: string
+          enum: [DRAFT, READY, RUNNING, PAUSED, COMPLETED, FAILED, ROLLED_BACK]
+        batchStrategy:
+          type: object
+          additionalProperties: true
+        failureIsolation:
+          type: string
+          enum: [ABORT_ALL, ISOLATE_FAILED_KEEP_OTHERS, MANUAL_REVIEW]
+        totalBatches:
+          type: integer
+        completedBatches:
+          type: integer
+        failedInstances:
+          type: integer
+        impactPreviewId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        rollbackWindowExpiresAt:
+          type: string
+          format: date-time
+          description: 可回滚时间窗截止；超过后只能前向修复。
+        revision:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    MigrationPlanPage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MigrationPlan'
+        nextCursor:
+          type: [string, 'null']
+    UpsertWorkflowBindingCommand:
+      type: object
+      required: [stableKey, processDefinitionKey, businessVersion, bpmnResource, trigger, authorizationPolicyKey]
+      properties:
+        stableKey:
+          type: string
+          pattern: '^[a-z][a-z0-9.-]{2,99}$'
+        processDefinitionKey:
+          type: string
+          pattern: '^[a-z][a-z0-9.-]{2,99}$'
+        businessVersion:
+          type: string
+          pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+        bpmnResource:
+          type: string
+          maxLength: 300
+        trigger:
+          type: string
+          enum: [MANUAL, OBJECT_CREATED, STATE_TRANSITION, DOMAIN_EVENT]
+        objectTypeKey:
+          type: string
+        eventType:
+          type: string
+          maxLength: 150
+        authorizationPolicyKey:
+          type: string
+        variableMappings:
+          type: object
+          additionalProperties:
+            type: string
+        startupConditionRuleKey:
+          oneOf:
+            - type: string
+            - type: 'null'
+        declaredPermissions:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+        instanceMigrationPolicy:
+          type: string
+          enum: [PINNED, MANUAL_REVIEW, BATCH_MIGRATABLE]
+          default: PINNED
+        migrationValidationRuleKey:
+          oneOf:
+            - type: string
+            - type: 'null'
+    WorkflowBinding:
+      allOf:
+        - $ref: '#/components/schemas/UpsertWorkflowBindingCommand'
+        - type: object
+          required: [id, packageId, revision]
+          properties:
+            id:
+              $ref: '#/components/schemas/Uuid'
+            packageId:
+              $ref: '#/components/schemas/Uuid'
+            revision:
+              type: integer
+            createdAt:
+              type: string
+              format: date-time
+    WorkflowBindingPage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowBinding'
+        nextCursor:
+          type: [string, 'null']
+    CoreFieldCatalogEntry:
+      type: object
+      required: [stableKey, label, dataType, coreObjectType, semantics]
+      properties:
+        stableKey:
+          type: string
+          pattern: '^[a-z][a-z0-9.-]{2,99}$'
+        label:
+          type: string
+        dataType:
+          type: string
+          enum: [TEXT, LONG_TEXT, INTEGER, DECIMAL, BOOLEAN, DATE, DATETIME, ENUM, USER_REF, ORG_REF, OBJECT_REF, FILE_REF, GEO_POINT, JSON]
+        coreObjectType:
+          type: string
+          description: 所属平台核心对象稳定键。
+        semantics:
+          type: string
+          description: 字段业务语义定义；不得被领域包扩展字段重复或改变。
+        allowedOverride:
+          type: boolean
+          default: false
+          description: 是否允许领域包通过声明式 override 修改该字段的展示等次要属性。
+        source:
+          type: string
+          enum: [ISO_21500, PMI_LEXICON, BPMN_2_0_2, PDP_EXTENSION]
+        aliases:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+    CoreFieldCatalogPage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoreFieldCatalogEntry'
+        nextCursor:
+          type: [string, 'null']
     CreateProjectCommand:
       type: object
       required: [name, managerId, plannedStart, plannedEnd]

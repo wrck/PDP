@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://pdp.example.com/schemas/domain-package/v1.json",
   "title": "PDP 领域包清单",
-  "description": "用于平台标准包、行业领域包和工作空间客户包的声明式配置交换与发布校验。",
+  "description": "用于平台标准包、行业领域包和工作空间客户包的声明式配置交换与发布校验。覆盖 FR-007~FR-020、FR-130~FR-134、FR-167、FR-168、FR-172：三层继承、核心字段复用、状态机、规则、权限、受治理扩展、版本快照、影响预览、迁移与回滚。",
   "type": "object",
   "required": [
     "schemaVersion",
@@ -10,7 +10,9 @@
     "name",
     "layer",
     "version",
-    "objects"
+    "objects",
+    "designer",
+    "publisher"
   ],
   "additionalProperties": false,
   "properties": {
@@ -55,8 +57,35 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 50
+        },
+        "parentSnapshotId": {
+          "description": "继承自父包的运行时快照标识；发布前必须与父包已发布版本一致。",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/stableKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
+    },
+    "designer": {
+      "description": "设计者（提交候选版本），与 publisher 必须不同（FR-167、US2 验收场景 3）。",
+      "$ref": "#/$defs/principalRef"
+    },
+    "publisher": {
+      "description": "独立发布者（完成测试与影响审核后发布），与 designer 必须不同。",
+      "$ref": "#/$defs/principalRef"
+    },
+    "coreFieldReuse": {
+      "type": "array",
+      "description": "声明本包扩展字段与平台核心字段目录的复用或差异关系；FR-132、FR-134。",
+      "items": {
+        "$ref": "#/$defs/coreFieldReuseDeclaration"
+      },
+      "default": []
     },
     "objects": {
       "type": "array",
@@ -119,12 +148,116 @@
         "$ref": "#/$defs/migrationDefinition"
       },
       "default": []
+    },
+    "runtimeSnapshot": {
+      "description": "发布时生成的运行时版本快照；运行实例默认绑定此快照，FR-018。",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/runtimeSnapshot"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "compatibilityStatement": {
+      "description": "本版本相对父包的兼容性声明；用于 FR-172 兼容影响记录。",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "compatibilityLevel",
+        "consumerImpact"
+      ],
+      "properties": {
+        "compatibilityLevel": {
+          "enum": [
+            "MAJOR_BREAKING",
+            "MINOR_BREAKING",
+            "ADDITIVE",
+            "PATCH_ONLY"
+          ]
+        },
+        "consumerImpact": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "deprecationWindow": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "deprecatedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "sunsetAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        }
+      }
     }
   },
   "$defs": {
     "stableKey": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9.-]{2,99}$"
+    },
+    "principalRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "principalType",
+        "principalId"
+      ],
+      "properties": {
+        "principalType": {
+          "enum": [
+            "USER",
+            "SERVICE_ACCOUNT",
+            "GOVERNANCE_ROLE"
+          ]
+        },
+        "principalId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "displayLabel": {
+          "type": "string",
+          "maxLength": 200
+        }
+      }
+    },
+    "coreFieldReuseDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coreFieldKey",
+        "disposition"
+      ],
+      "properties": {
+        "coreFieldKey": {
+          "$ref": "#/$defs/stableKey",
+          "description": "平台核心字段目录中的稳定键。"
+        },
+        "disposition": {
+          "enum": [
+            "REUSE",
+            "DIFFERENTIATE",
+            "AUGMENT"
+          ],
+          "description": "REUSE 直接复用核心字段；DIFFERENTIATE 创建语义差异字段并必须声明理由；AUGMENT 在核心字段基础上增加受控扩展。"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 1000
+        },
+        "extensionFieldKey": {
+          "$ref": "#/$defs/stableKey"
+        }
+      }
     },
     "localizedText": {
       "type": "object",
@@ -268,6 +401,17 @@
           ],
           "default": "NONE"
         },
+        "coreFieldKey": {
+          "description": "若该字段直接复用平台核心字段目录中的字段，填写对应 stableKey；FR-132、FR-134 发布前检测重名/语义/标识/数据来源冲突。",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/stableKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "defaultValue": {},
         "validation": {
           "type": "object",
@@ -396,6 +540,17 @@
         },
         "workflowBindingKey": {
           "$ref": "#/$defs/stableKey"
+        },
+        "reversible": {
+          "type": "boolean",
+          "default": true
+        },
+        "auditLevel": {
+          "enum": [
+            "STANDARD",
+            "HIGH_RISK"
+          ],
+          "default": "STANDARD"
         }
       }
     },
@@ -453,6 +608,26 @@
           },
           "default": {}
         },
+        "startupConditionRuleKey": {
+          "description": "启动条件规则键；启动前必须满足该规则。",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/stableKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "declaredPermissions": {
+          "type": "array",
+          "description": "声明本绑定所需权限；不允许提升当前用户权限。",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
         "instanceMigrationPolicy": {
           "enum": [
             "PINNED",
@@ -460,6 +635,17 @@
             "BATCH_MIGRATABLE"
           ],
           "default": "PINNED"
+        },
+        "migrationValidationRuleKey": {
+          "description": "迁移校验规则键；版本化绑定升级前必须通过该校验。",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/stableKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -587,6 +773,11 @@
             "ASYNCHRONOUS"
           ],
           "default": "ASYNCHRONOUS"
+        },
+        "cycleDetectionKey": {
+          "description": "循环规则检测分组键；SC-013 发布前必须识别循环规则。",
+          "type": "string",
+          "maxLength": 100
         }
       }
     },
@@ -667,6 +858,22 @@
         },
         "signature": {
           "type": "string"
+        },
+        "isolationPolicy": {
+          "enum": [
+            "STRICT_SANDBOX",
+            "SERVICE_ACCOUNT",
+            "EVENT_BRIDGE"
+          ],
+          "default": "STRICT_SANDBOX"
+        },
+        "failurePolicy": {
+          "enum": [
+            "FAIL_FAST",
+            "DEGRADE_GRACEFULLY",
+            "QUARANTINE"
+          ],
+          "default": "FAIL_FAST"
         }
       }
     },
@@ -685,7 +892,8 @@
         },
         "propertyPath": {
           "type": "string",
-          "pattern": "^/"
+          "pattern": "^/",
+          "description": "覆盖路径；必须在父包声明的允许覆盖白名单内，否则发布校验失败。"
         },
         "oldValue": {},
         "newValue": {},
@@ -693,6 +901,17 @@
           "type": "string",
           "minLength": 2,
           "maxLength": 1000
+        },
+        "approvedBy": {
+          "description": "覆盖批准人；客户包覆盖行业包必须经批准。",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/principalRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -711,6 +930,40 @@
         },
         "toVersion": {
           "type": "string"
+        },
+        "batchStrategy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "batchSize",
+            "mode"
+          ],
+          "properties": {
+            "batchSize": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            },
+            "mode": {
+              "enum": [
+                "SEQUENTIAL",
+                "PARALLEL_WITH_FAILURE_ISOLATION"
+              ]
+            },
+            "pauseBetweenBatchesMs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 600000
+            }
+          }
+        },
+        "failureIsolation": {
+          "enum": [
+            "ABORT_ALL",
+            "ISOLATE_FAILED_KEEP_OTHERS",
+            "MANUAL_REVIEW"
+          ],
+          "default": "ISOLATE_FAILED_KEEP_OTHERS"
         },
         "steps": {
           "type": "array",
@@ -735,6 +988,12 @@
               "parameters": {
                 "type": "object",
                 "additionalProperties": true
+              },
+              "idempotencyKey": {
+                "description": "步骤级幂等键；FR-168 高风险操作必须可重放。",
+                "type": "string",
+                "minLength": 16,
+                "maxLength": 128
               }
             },
             "additionalProperties": false
@@ -742,7 +1001,70 @@
         },
         "rollback": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "required": [
+            "strategy"
+          ],
+          "properties": {
+            "strategy": {
+              "enum": [
+                "SNAPSHOT_RESTORE",
+                "COMPENSATING_ACTION",
+                "MANUAL"
+              ]
+            },
+            "maxReversibleWindow": {
+              "description": "可回滚时间窗（秒）；超过此窗口只能前向修复。",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 604800
+            }
+          }
+        }
+      }
+    },
+    "runtimeSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshotId",
+        "snapshotVersion",
+        "createdAt",
+        "contentHash"
+      ],
+      "properties": {
+        "snapshotId": {
+          "$ref": "#/$defs/stableKey"
+        },
+        "snapshotVersion": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "contentHash": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+        },
+        "parentSnapshotId": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/stableKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resolvedObjects": {
+          "type": "array",
+          "description": "三层继承合并后的对象快照；运行实例绑定此快照。",
+          "items": {
+            "$ref": "#/$defs/objectDefinition"
+          }
         }
       }
     }

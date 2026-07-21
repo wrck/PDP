@@ -142,7 +142,7 @@
 
 ## 阶段 4：US2 领域包与深度定制（P1）
 
-- [ ] T111 [US2] 先更新领域包 API、Schema、状态机、影响预览和扩展兼容契约，文件：`specs/002-pdp-product/contracts/openapi.yaml`、`specs/002-pdp-product/contracts/domain-package.schema.json`、`specs/002-pdp-product/contracts/coverage.md`
+- [X] T111 [US2] 先更新领域包 API、Schema、状态机、影响预览和扩展兼容契约，文件：`specs/002-pdp-product/contracts/openapi.yaml`、`specs/002-pdp-product/contracts/domain-package.schema.json`、`specs/002-pdp-product/contracts/coverage.md`
 - [ ] T112 [P] [US2] 编写领域包草稿、校验、审核、发布、退役、回滚和迁移状态机 API 契约测试，文件：`tests/contracts/us2-domain-package.spec.ts`
 - [ ] T113 [P] [US2] 编写对象、字段、关系、页面、状态、规则和权限设计端到端测试，文件：`tests/e2e/us2-domain-package.spec.ts`
 - [ ] T114 [US2] 创建核心字段目录、领域包、版本、对象、字段、关系、页面、状态、规则、动作和迁移计划公共变更集，文件：`modules/public-persistence/src/main/resources/db/changelog/common/020-domain-package.xml`

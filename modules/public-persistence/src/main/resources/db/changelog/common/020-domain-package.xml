@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                       https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        领域包与深度定制公共变更集（US2 / T114）：
+        核心字段目录、领域包、版本、对象/字段/关系/状态/迁移、页面、视图、规则、权限、扩展、覆盖、
+        工作流绑定、迁移计划、运行时快照、影响预览、校验结果、核心字段复用声明。
+        实现 FR-007~FR-020、FR-130~FR-134、FR-167、FR-168、FR-172、SC-013、SC-014、SC-022、SC-025。
+        UUIDv7 由应用生成并存储为 BINARY(16)；时间戳 datetime(6)；枚举 varchar(32)（存储 name() 稳定键）；
+        manifest/JSON 内容存储为 JSON 列；可修改业务表包含 revision（乐观锁）。
+    -->
+
+    <!-- 核心字段目录（FR-132、SC-025） -->
+    <changeSet id="020-create-core-field-catalog" author="pdp-domainconfig">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="core_field_catalog"/></not>
+        </preConditions>
+        <createTable tableName="core_field_catalog">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="stable_key" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="core_object_type" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="label" type="varchar(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="data_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="semantics" type="varchar(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="allowed_override" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="aliases" type="json"/>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="uniq_core_field_key_object" tableName="core_field_catalog" unique="true">
+            <column name="stable_key"/>
+            <column name="core_object_type"/>
+        </createIndex>
+        <createIndex indexName="idx_core_field_object" tableName="core_field_catalog">
+            <column name="core_object_type"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 领域包 -->
+    <changeSet id="020-create-domain-package" author="pdp-domainconfig">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="domain_package"/></not>
+        </preConditions>
+        <createTable tableName="domain_package">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workspace_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stable_key" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(2000)"/>
+            <column name="layer" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="parent_package_id" type="binary(16)"/>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="designer_principal_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="designer_principal_id" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="designer_display_label" type="varchar(200)"/>
+            <column name="publisher_principal_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="publisher_principal_id" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="publisher_display_label" type="varchar(200)"/>
+            <column name="current_published_version_id" type="binary(16)"/>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="uniq_domain_package_ws_key" tableName="domain_package" unique="true">
+            <column name="workspace_id"/>
+            <column name="stable_key"/>
+        </createIndex>
+        <createIndex indexName="idx_domain_package_ws_layer" tableName="domain_package">
+            <column name="workspace_id"/>
+            <column name="layer"/>
+        </createIndex>
+        <createIndex indexName="idx_domain_package_status" tableName="domain_package">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_domain_package_parent" tableName="domain_package">
+            <column name="parent_package_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 领域包版本 -->
+    <changeSet id="020-create-domain-package-version" author="pdp-domainconfig">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="domain_package_version"/></not>
+        </preConditions>
+        <createTable tableName="domain_package_version">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="package_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="semantic_version" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content_hash" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="parent_snapshot_id" type="varchar(100)"/>
+            <column name="runtime_snapshot_id" type="varchar(100)"/>
+            <column name="manifest" type="json">
+                <constraints nullable="false"/>
+            </column>
+            <column name="compatibility_statement" type="json"/>
+            <column name="extends_version_range" type="varchar(50)"/>
+            <column name="submitted_by" type="varchar(128)"/>
+            <column name="submitted_at" type="datetime(6)"/>
+            <column name="published_by" type="varchar(128)"/>
+            <column name="published_at" type="datetime(6)"/>
+            <column name="rejected_by" type="varchar(128)"/>
+            <column name="rejected_at" type="datetime(6)"/>
+            <column name="reject_reason" type="varchar(1000)"/>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="uniq_domain_package_version" tableName="domain_package_version" unique="true">
+            <column name="package_id"/>
+            <column name="semantic_version"/>
+        </createIndex>
+        <createIndex indexName="idx_domain_package_version_status" tableName="domain_package_version">
+            <column name="package_id"/>
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_domain_package_version_snapshot" tableName="domain_package_version">
+            <column name="runtime_snapshot_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 运行时版本快照（FR-018） -->
+    <changeSet id="020-create-domain-package-runtime-snapshot" author="pdp-domainconfig">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="domain_package_runtime_snapshot"/></not>
+        </preConditions>
+        <createTable tableName="domain_package_runtime_snapshot">
+            <column name="id" type="varchar(100)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="version_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="package_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="snapshot_version" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content_hash" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="parent_snapshot_id" type="varchar(100)"/>
+            <column name="resolved_objects" type="json">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_runtime_snapshot_version" tableName="domain_package_runtime_snapshot">
+            <column name="version_id"/>
+        </createIndex>
+        <createIndex indexName="idx_runtime_snapshot_package" tableName="domain_package_runtime_snapshot">
+            <column name="package_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 校验结果 -->
+    <changeSet id="020-create-domain-package-validation-result" author="pdp-domainconfig">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="domain_package_validation_result"/></not>
+        </preConditions>
+        <createTable tableName="domain_package_validation_result">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="version_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="job_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="passed" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="items" type="json">
+                <constraints nullable="false"/>
+            </column>
+            <column name="validated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_validation_result_version" tableName="domain_package_validation_result">
+            <column name="version_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 影响预览（FR-168） -->
+    <changeSet id="020-create-domain-package-impact-preview" author="pdp-domainconfig">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="domain_package_impact_preview"/></not>
+        </preConditions>
+        <createTable tableName="domain_package_impact_preview">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="package_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="candidate_version_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_version_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="result" type="json">
+                <constraints nullable="false"/>
+            </column>
+            <column name="generated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="confirmed_by" type="varchar(128)"/>
+            <column name="confirmed_at" type="datetime(6)"/>
+        </createTable>
+        <createIndex indexName="idx_impact_preview_candidate" tableName="domain_package_impact_preview">
+            <column name="candidate_version_id"/>
+        </createIndex>
+        <createIndex indexName="idx_impact_preview_expires" tableName="domain_package_impact_preview">
+            <column name="expires_at"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 迁移计划（FR-168 高风险操作） -->
+    <changeSet id="020-create-domain-package-migration-plan" author="pdp-domainconfig">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="domain_package_migration_plan"/></not>
+        </preConditions>
+        <createTable tableName="domain_package_migration_plan">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="package_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="from_version_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="to_version_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="batch_strategy" type="json">
+                <constraints nullable="false"/>
+            </column>
+            <column name="failure_isolation" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_batches" type="int" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_batches" type="int" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="failed_instances" type="int" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="impact_preview_id" type="binary(16)"/>
+            <column name="job_id" type="binary(16)"/>
+            <column name="rollback_window_expires_at" type="datetime(6)"/>
+            <column name="reason" type="varchar(1000)"/>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_migration_plan_package" tableName="domain_package_migration_plan">
+            <column name="package_id"/>
+        </createIndex>
+        <createIndex indexName="idx_migration_plan_status" tableName="domain_package_migration_plan">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_migration_plan_versions" tableName="domain_package_migration_plan">
+            <column name="from_version_id"/>
+            <column name="to_version_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 工作流绑定（FR-173 平台工作流复用） -->
+    <changeSet id="020-create-domain-package-workflow-binding" author="pdp-domainconfig">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="domain_package_workflow_binding"/></not>
+        </preConditions>
+        <createTable tableName="domain_package_workflow_binding">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="package_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version_id" type="binary(16)"/>
+            <column name="stable_key" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="process_definition_key" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="business_version" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bpmn_resource" type="varchar(300)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trigger" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="object_type_key" type="varchar(100)"/>
+            <column name="event_type" type="varchar(150)"/>
+            <column name="authorization_policy_key" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="variable_mappings" type="json"/>
+            <column name="startup_condition_rule_key" type="varchar(100)"/>
+            <column name="declared_permissions" type="json"/>
+            <column name="instance_migration_policy" type="varchar(32)" defaultValue="PINNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="migration_validation_rule_key" type="varchar(100)"/>
+            <column name="revision" type="int" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="uniq_workflow_binding_key" tableName="domain_package_workflow_binding" unique="true">
+            <column name="package_id"/>
+            <column name="stable_key"/>
+        </createIndex>
+        <createIndex indexName="idx_workflow_binding_process" tableName="domain_package_workflow_binding">
+            <column name="process_definition_key"/>
+            <column name="business_version"/>
+        </createIndex>
+        <createIndex indexName="idx_workflow_binding_object_trigger" tableName="domain_package_workflow_binding">
+            <column name="object_type_key"/>
+            <column name="trigger"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 核心字段复用声明（FR-134） -->
+    <changeSet id="020-create-domain-package-core-field-reuse" author="pdp-domainconfig">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="domain_package_core_field_reuse"/></not>
+        </preConditions>
+        <createTable tableName="domain_package_core_field_reuse">
+            <column name="id" type="binary(16)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="version_id" type="binary(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="core_field_key" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="core_object_type" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="disposition" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="varchar(1000)"/>
+            <column name="extension_field_key" type="varchar(100)"/>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_core_field_reuse_version" tableName="domain_package_core_field_reuse">
+            <column name="version_id"/>
+        </createIndex>
+        <createIndex indexName="idx_core_field_reuse_field" tableName="domain_package_core_field_reuse">
+            <column name="core_field_key"/>
+            <column name="core_object_type"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

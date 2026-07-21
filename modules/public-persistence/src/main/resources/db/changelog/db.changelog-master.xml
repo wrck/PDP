@@ -15,6 +15,7 @@
     <include file="db/changelog/common/002-platform-foundation.xml" relativeToChangelogFile="true"/>
     <include file="db/changelog/common/005-workflow-registry.xml" relativeToChangelogFile="true"/>
     <include file="db/changelog/common/010-workspace.xml" relativeToChangelogFile="true"/>
+    <include file="db/changelog/common/020-domain-package.xml" relativeToChangelogFile="true"/>
     <include file="db/changelog/mysql/001-platform-indexes.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

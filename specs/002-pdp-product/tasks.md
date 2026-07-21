@@ -149,7 +149,7 @@
 - [X] T115 [US2] 创建领域包和版本聚合模型，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/domain/packageversion/`
 - [X] T116 [US2] 创建统一核心字段目录以及动态对象、字段、关系和页面元模型，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/domain/metamodel/`
 - [X] T117 [US2] 创建状态、规则、动作、权限和受治理扩展模型，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/domain/behavior/`
-- [ ] T118 [US2] 创建领域包、元模型、扩展和迁移仓储端口，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/port/`
+- [X] T118 [US2] 创建领域包、元模型、扩展和迁移仓储端口，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/port/`
 - [ ] T119 [US2] 创建领域包 Mapper、XML 和数据库适配器，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/domainconfig/`、`modules/public-persistence/src/main/resources/mapper/domainconfig/`
 - [ ] T120 [US2] 创建 JSON、版本、唯一性、继承、核心字段冲突和分页 MySQL 契约测试，文件：`tests/backend/contract/domainconfig/DomainPackageDatabaseContractTest.java`
 - [ ] T121 [US2] 实现核心字段复用、顶层生命周期映射、元模型、规则引用、权限和兼容性校验服务，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/application/DomainPackageValidationService.java`

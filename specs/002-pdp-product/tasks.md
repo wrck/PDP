@@ -136,7 +136,7 @@
 - [X] T105 [US1] 实现工作空间、组织、成员、角色和数据范围管理服务，文件：`modules/workspace/src/main/java/com/pdp/workspace/application/WorkspaceGovernanceService.java`
 - [X] T106 [US1] 实现跨工作空间授权、到期和撤销服务，文件：`modules/workspace/src/main/java/com/pdp/workspace/application/CollaborationGrantService.java`
 - [X] T107 [US1] 实现工作空间治理控制器，文件：`apps/api/src/main/java/com/pdp/api/workspace/WorkspaceController.java`
-- [ ] T108 [US1] 实现工作空间选择、组织、成员、角色和授权页面，文件：`apps/web/src/views/workspace/`
+- [X] T108 [US1] 实现工作空间选择、组织、成员、角色和授权页面，文件：`apps/web/src/views/workspace/`
 - [ ] T109 [US1] 验证查询、搜索、导出和附件跨空间隔离，文件：`tests/backend/security/WorkspaceIsolationSecurityTest.java`
 - [ ] T110 [US1] 记录 US1 独立验收、状态机、撤权、日志指标追踪和 MySQL 闭环证据，文件：`specs/002-pdp-product/evidence/us1-workspace-governance.md`
 

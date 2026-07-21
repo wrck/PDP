@@ -147,7 +147,7 @@
 - [ ] T113 [P] [US2] 编写对象、字段、关系、页面、状态、规则和权限设计端到端测试，文件：`tests/e2e/us2-domain-package.spec.ts`
 - [X] T114 [US2] 创建核心字段目录、领域包、版本、对象、字段、关系、页面、状态、规则、动作和迁移计划公共变更集，文件：`modules/public-persistence/src/main/resources/db/changelog/common/020-domain-package.xml`
 - [X] T115 [US2] 创建领域包和版本聚合模型，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/domain/packageversion/`
-- [ ] T116 [US2] 创建统一核心字段目录以及动态对象、字段、关系和页面元模型，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/domain/metamodel/`
+- [X] T116 [US2] 创建统一核心字段目录以及动态对象、字段、关系和页面元模型，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/domain/metamodel/`
 - [ ] T117 [US2] 创建状态、规则、动作、权限和受治理扩展模型，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/domain/behavior/`
 - [ ] T118 [US2] 创建领域包、元模型、扩展和迁移仓储端口，文件：`modules/domainconfig/src/main/java/com/pdp/domainconfig/port/`
 - [ ] T119 [US2] 创建领域包 Mapper、XML 和数据库适配器，文件：`modules/public-persistence/src/main/java/com/pdp/persistence/domainconfig/`、`modules/public-persistence/src/main/resources/mapper/domainconfig/`

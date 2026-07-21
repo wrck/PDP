@@ -3,10 +3,14 @@ name: CI
 # PDP 持续集成矩阵（对应任务 T025、plan.md“测试”与“目标平台”章节）
 # 覆盖后端 verify、前端 typecheck/build、契约校验以及 MySQL 8.4 持久化矩阵。
 # 注意："on" 加引号以避免 YAML 1.1 将裸 on/off/yes/no 解析为布尔值（GitHub Actions 同样接受裸 on:）。
-"on":
-  push:
-    branches: [trae, master]
-  pull_request:
+#
+# 已禁用自动触发（按用户指示"CI相关的内容不执行，优先保障功能的实现"）。
+# 如需恢复，将下方 "on": {} 替换为：
+#   "on":
+#     push:
+#       branches: [trae, master]
+#     pull_request:
+"on": {}
 
 # 取消同一分支/PR 上被取代的旧运行
 concurrency:

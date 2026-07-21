@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.domainconfig.mapper.DomainPackageVersionMapper">
+
+    <resultMap id="versionRowMap" type="com.pdp.persistence.domainconfig.adapter.DomainPackageVersionRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="package_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="semantic_version" javaType="java.lang.String"/>
+            <arg column="content_hash" javaType="java.lang.String"/>
+            <arg column="status" javaType="com.pdp.domainconfig.domain.packageversion.DomainPackageVersionStatus"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="parent_snapshot_id" javaType="java.lang.String"/>
+            <arg column="runtime_snapshot_id" javaType="java.lang.String"/>
+            <arg column="manifest" javaType="java.lang.String"/>
+            <arg column="compatibility_statement" javaType="java.lang.String"/>
+            <arg column="extends_version_range" javaType="java.lang.String"/>
+            <arg column="submitted_by" javaType="java.lang.String"/>
+            <arg column="submitted_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="published_by" javaType="java.lang.String"/>
+            <arg column="published_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="rejected_by" javaType="java.lang.String"/>
+            <arg column="rejected_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="reject_reason" javaType="java.lang.String"/>
+            <arg column="revision" javaType="int"/>
+            <arg column="created_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="updated_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, package_id, semantic_version, content_hash, status, parent_snapshot_id, runtime_snapshot_id,
+        manifest, compatibility_statement, extends_version_range,
+        submitted_by, submitted_at, published_by, published_at, rejected_by, rejected_at, reject_reason,
+        revision, created_at, updated_at
+    </sql>
+
+    <select id="selectById" resultMap="versionRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_version
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </select>
+
+    <select id="selectByPackageAndSemanticVersion" resultMap="versionRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_version
+        WHERE package_id = #{packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND semantic_version = #{semanticVersion}
+    </select>
+
+    <select id="selectByFilter" resultMap="versionRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_version
+        <where>
+            <if test="filter.packageId != null">
+                AND package_id = #{filter.packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </if>
+            <if test="filter.status != null">
+                AND status = #{filter.status}
+            </if>
+            <if test="filter.semanticVersionLike != null and filter.semanticVersionLike != ''">
+                AND semantic_version LIKE CONCAT('%', #{filter.semanticVersionLike}, '%')
+            </if>
+            <if test="lastId != null">
+                AND id &gt; #{lastId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </if>
+        </where>
+        ORDER BY id ASC
+        LIMIT #{size}
+    </select>
+
+    <select id="selectCurrentPublished" resultMap="versionRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_version
+        WHERE package_id = #{packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND status IN ('PUBLISHED', 'FROZEN')
+        ORDER BY published_at DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectLatestDraft" resultMap="versionRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_version
+        WHERE package_id = #{packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND status IN ('DRAFT', 'REJECTED')
+        ORDER BY created_at DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.persistence.domainconfig.adapter.DomainPackageVersionRow">
+        INSERT INTO domain_package_version
+            (id, package_id, semantic_version, content_hash, status, parent_snapshot_id, runtime_snapshot_id,
+             manifest, compatibility_statement, extends_version_range,
+             submitted_by, submitted_at, published_by, published_at, rejected_by, rejected_at, reject_reason,
+             revision, created_at, updated_at)
+        VALUES
+            (#{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{semanticVersion},
+             #{contentHash},
+             #{status, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{parentSnapshotId},
+             #{runtimeSnapshotId},
+             #{manifestJson},
+             #{compatibilityStatementJson},
+             #{extendsVersionRange},
+             #{submittedBy},
+             #{submittedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{publishedBy},
+             #{publishedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{rejectedBy},
+             #{rejectedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{rejectReason},
+             #{revision},
+             #{createdAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{updatedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+    </insert>
+
+    <update id="updateDraft">
+        UPDATE domain_package_version
+        SET manifest = #{manifestJson},
+            content_hash = #{contentHash},
+            compatibility_statement = #{compatibilityStatementJson},
+            extends_version_range = #{extendsVersionRange},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE domain_package_version
+        SET status = #{newStatus, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+    <update id="submitForReview">
+        UPDATE domain_package_version
+        SET status = 'REVIEW_PENDING',
+            submitted_by = #{submittedBy},
+            submitted_at = #{submittedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+          AND status IN ('DRAFT', 'REJECTED')
+    </update>
+
+    <update id="reject">
+        UPDATE domain_package_version
+        SET status = 'REJECTED',
+            rejected_by = #{rejectedBy},
+            rejected_at = #{rejectedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            reject_reason = #{rejectReason},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+          AND status = 'REVIEW_PENDING'
+    </update>
+
+    <update id="publish">
+        UPDATE domain_package_version
+        SET status = 'PUBLISHED',
+            published_by = #{publishedBy},
+            published_at = #{publishedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            runtime_snapshot_id = #{runtimeSnapshotId},
+            parent_snapshot_id = #{parentSnapshotId},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+          AND status = 'REVIEW_PENDING'
+    </update>
+
+    <update id="freeze">
+        UPDATE domain_package_version
+        SET status = 'FROZEN',
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+          AND status = 'PUBLISHED'
+    </update>
+
+    <update id="deprecate">
+        UPDATE domain_package_version
+        SET status = 'DEPRECATED',
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+          AND status IN ('PUBLISHED', 'FROZEN')
+    </update>
+
+    <update id="retire">
+        UPDATE domain_package_version
+        SET status = 'RETIRED',
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+          AND status = 'DEPRECATED'
+    </update>
+
+    <update id="rollback">
+        UPDATE domain_package_version
+        SET status = 'FROZEN',
+            rejected_by = #{rolledBackBy},
+            rejected_at = #{rolledBackAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            reject_reason = #{rollbackReason},
+            updated_at = #{rolledBackAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+          AND status = 'PUBLISHED'
+    </update>
+
+</mapper>

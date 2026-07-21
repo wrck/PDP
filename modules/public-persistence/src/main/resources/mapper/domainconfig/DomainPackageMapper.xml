@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.domainconfig.mapper.DomainPackageMapper">
+
+    <!--
+        DomainPackageRow record 构造器映射。
+        字段顺序与 DomainPackageRow canonical constructor 一致：
+        id, workspaceId, stableKey, name, description, layer, parentPackageId, status,
+        designerPrincipalType, designerPrincipalId, designerDisplayLabel,
+        publisherPrincipalType, publisherPrincipalId, publisherDisplayLabel,
+        currentPublishedVersionId, revision, createdAt, updatedAt。
+    -->
+    <resultMap id="packageRowMap" type="com.pdp.persistence.domainconfig.adapter.DomainPackageRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="workspace_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="stable_key" javaType="java.lang.String"/>
+            <arg column="name" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="layer" javaType="com.pdp.domainconfig.domain.packageversion.DomainPackageLayer"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="parent_package_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="status" javaType="com.pdp.domainconfig.domain.packageversion.DomainPackageStatus"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="designer_principal_type" javaType="com.pdp.domainconfig.domain.packageversion.PrincipalType"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="designer_principal_id" javaType="java.lang.String"/>
+            <arg column="designer_display_label" javaType="java.lang.String"/>
+            <arg column="publisher_principal_type" javaType="com.pdp.domainconfig.domain.packageversion.PrincipalType"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="publisher_principal_id" javaType="java.lang.String"/>
+            <arg column="publisher_display_label" javaType="java.lang.String"/>
+            <arg column="current_published_version_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="revision" javaType="int"/>
+            <arg column="created_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="updated_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, workspace_id, stable_key, name, description, layer, parent_package_id, status,
+        designer_principal_type, designer_principal_id, designer_display_label,
+        publisher_principal_type, publisher_principal_id, publisher_display_label,
+        current_published_version_id, revision, created_at, updated_at
+    </sql>
+
+    <select id="selectById" resultMap="packageRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </select>
+
+    <select id="selectByWorkspaceAndKey" resultMap="packageRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package
+        WHERE stable_key = #{stableKey}
+        <if test="workspaceId != null">
+            AND workspace_id = #{workspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        </if>
+        <if test="workspaceId == null">
+            AND layer = 'PLATFORM_STANDARD'
+        </if>
+    </select>
+
+    <select id="selectByParentPackage" resultMap="packageRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package
+        WHERE parent_package_id = #{parentPackageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        <if test="lastId != null">
+            AND id &gt; #{lastId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        </if>
+        ORDER BY id ASC
+        LIMIT #{size}
+    </select>
+
+    <!--
+        按过滤条件分页查询。
+        filter.layer != null 时按 layer 过滤；filter.status != null 时按 status 过滤；
+        filter.workspaceId != null 时按 workspace 过滤（PLATFORM_STANDARD 包跨工作空间共享，
+        filter.workspaceId=null 时不按工作空间过滤）；
+        filter.parentPackageId != null 时按父包过滤；
+        filter.stableKeyLike / filter.nameLike 模糊匹配。
+        游标分页：id > #{lastId}，UUIDv7 时间有序。
+    -->
+    <select id="selectByFilter" resultMap="packageRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package
+        <where>
+            <if test="filter.workspaceId != null">
+                AND workspace_id = #{filter.workspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </if>
+            <if test="filter.layer != null">
+                AND layer = #{filter.layer}
+            </if>
+            <if test="filter.status != null">
+                AND status = #{filter.status}
+            </if>
+            <if test="filter.parentPackageId != null">
+                AND parent_package_id = #{filter.parentPackageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </if>
+            <if test="filter.stableKeyLike != null and filter.stableKeyLike != ''">
+                AND stable_key LIKE CONCAT('%', #{filter.stableKeyLike}, '%')
+            </if>
+            <if test="filter.nameLike != null and filter.nameLike != ''">
+                AND name LIKE CONCAT('%', #{filter.nameLike}, '%')
+            </if>
+            <if test="lastId != null">
+                AND id &gt; #{lastId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </if>
+        </where>
+        ORDER BY id ASC
+        LIMIT #{size}
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.persistence.domainconfig.adapter.DomainPackageRow">
+        INSERT INTO domain_package
+            (id, workspace_id, stable_key, name, description, layer, parent_package_id, status,
+             designer_principal_type, designer_principal_id, designer_display_label,
+             publisher_principal_type, publisher_principal_id, publisher_display_label,
+             current_published_version_id, revision, created_at, updated_at)
+        VALUES
+            (#{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{workspaceId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{stableKey},
+             #{name},
+             #{description},
+             #{layer, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{parentPackageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{status, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{designerPrincipalType, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{designerPrincipalId},
+             #{designerDisplayLabel},
+             #{publisherPrincipalType, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{publisherPrincipalId},
+             #{publisherDisplayLabel},
+             #{currentPublishedVersionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{revision},
+             #{createdAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{updatedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+    </insert>
+
+    <update id="updateBasicInfo">
+        UPDATE domain_package
+        SET name = #{name},
+            description = #{description},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE domain_package
+        SET status = #{newStatus, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+    <update id="updateCurrentPublishedVersion">
+        UPDATE domain_package
+        SET current_published_version_id = #{currentPublishedVersionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+</mapper>

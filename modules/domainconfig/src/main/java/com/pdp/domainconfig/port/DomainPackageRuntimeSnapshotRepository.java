@@ -28,8 +28,10 @@ public interface DomainPackageRuntimeSnapshotRepository {
      *
      * <p>快照 ID 由应用层生成；同 ID 重复插入由主键约束拒绝。
      * {@code resolvedObjectsJson} 为三层继承合并后的完整对象图 JSON。
+     * {@code versionId} 与 {@code packageId} 为快照关联的领域包版本与包，
+     * 由持久化层写入 {@code version_id}/{@code package_id} 列以支持反向查询。
      */
-    void save(RuntimeSnapshot snapshot, String resolvedObjectsJson);
+    void save(RuntimeSnapshot snapshot, UUID versionId, UUID packageId, String resolvedObjectsJson);
 
     /** 加载完整 resolvedObjects JSON（用于运行时与迁移服务）。 */
     Optional<String> findResolvedObjectsJson(String snapshotId);

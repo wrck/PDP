@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.domainconfig.mapper.DomainPackageImpactPreviewMapper">
+
+    <!--
+        ImpactPreviewRow record 构造器映射。
+        字段顺序：id, packageId, candidateVersionId, currentVersionId, resultJson,
+        generatedAt, expiresAt, confirmedBy, confirmedAt。
+    -->
+    <resultMap id="previewRowMap" type="com.pdp.persistence.domainconfig.adapter.ImpactPreviewRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="package_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="candidate_version_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="current_version_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="result" javaType="java.lang.String"/>
+            <arg column="generated_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="expires_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="confirmed_by" javaType="java.lang.String"/>
+            <arg column="confirmed_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, package_id, candidate_version_id, current_version_id, result,
+        generated_at, expires_at, confirmed_by, confirmed_at
+    </sql>
+
+    <select id="selectById" resultMap="previewRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_impact_preview
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </select>
+
+    <select id="selectLatestByCandidateVersion" resultMap="previewRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_impact_preview
+        WHERE candidate_version_id = #{candidateVersionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        ORDER BY generated_at DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectLatestByPackageAndVersionPair" resultMap="previewRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_impact_preview
+        WHERE package_id = #{packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND current_version_id = #{currentVersionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND candidate_version_id = #{candidateVersionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        ORDER BY generated_at DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.persistence.domainconfig.adapter.ImpactPreviewRow">
+        INSERT INTO domain_package_impact_preview
+            (id, package_id, candidate_version_id, current_version_id, result,
+             generated_at, expires_at, confirmed_by, confirmed_at)
+        VALUES
+            (#{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{candidateVersionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{currentVersionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{resultJson},
+             #{generatedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{expiresAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{confirmedBy},
+             #{confirmedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+    </insert>
+
+    <!--
+        确认预览：仅未过期且未确认的记录可被确认。
+        FR-168 明确确认要求：confirmed_by 与 confirmed_at 必须由独立发布者提供。
+    -->
+    <update id="confirm">
+        UPDATE domain_package_impact_preview
+        SET confirmed_by = #{confirmedBy},
+            confirmed_at = #{confirmedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler}
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND confirmed_by IS NULL
+          AND confirmed_at IS NULL
+          AND expires_at &gt; #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler}
+    </update>
+
+    <delete id="deleteExpired">
+        DELETE FROM domain_package_impact_preview
+        WHERE expires_at &lt; #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler}
+    </delete>
+
+</mapper>

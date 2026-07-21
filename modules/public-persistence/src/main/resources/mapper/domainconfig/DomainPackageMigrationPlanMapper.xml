@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.domainconfig.mapper.DomainPackageMigrationPlanMapper">
+
+    <!--
+        MigrationPlanRow record 构造器映射。
+        字段顺序：id, packageId, fromVersionId, toVersionId, status, batchStrategyJson,
+        failureIsolation, totalBatches, completedBatches, failedInstances,
+        impactPreviewId, jobId, rollbackWindowExpiresAt, reason, revision, createdAt, updatedAt。
+    -->
+    <resultMap id="planRowMap" type="com.pdp.persistence.domainconfig.adapter.MigrationPlanRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="package_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="from_version_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="to_version_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="status" javaType="com.pdp.domainconfig.domain.packageversion.MigrationPlanStatus"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="batch_strategy" javaType="java.lang.String"/>
+            <arg column="failure_isolation" javaType="com.pdp.domainconfig.domain.packageversion.MigrationFailureIsolation"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="total_batches" javaType="int"/>
+            <arg column="completed_batches" javaType="int"/>
+            <arg column="failed_instances" javaType="int"/>
+            <arg column="impact_preview_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="job_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="rollback_window_expires_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="reason" javaType="java.lang.String"/>
+            <arg column="revision" javaType="int"/>
+            <arg column="created_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="updated_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, package_id, from_version_id, to_version_id, status, batch_strategy,
+        failure_isolation, total_batches, completed_batches, failed_instances,
+        impact_preview_id, job_id, rollback_window_expires_at, reason, revision,
+        created_at, updated_at
+    </sql>
+
+    <select id="selectById" resultMap="planRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_migration_plan
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </select>
+
+    <!--
+        按过滤条件分页查询。
+        filter.packageId / status / fromVersionId / toVersionId 均可为 null。
+    -->
+    <select id="selectByFilter" resultMap="planRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_migration_plan
+        <where>
+            <if test="filter.packageId != null">
+                AND package_id = #{filter.packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </if>
+            <if test="filter.status != null">
+                AND status = #{filter.status}
+            </if>
+            <if test="filter.fromVersionId != null">
+                AND from_version_id = #{filter.fromVersionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </if>
+            <if test="filter.toVersionId != null">
+                AND to_version_id = #{filter.toVersionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </if>
+            <if test="lastId != null">
+                AND id &gt; #{lastId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </if>
+        </where>
+        ORDER BY id ASC
+        LIMIT #{size}
+    </select>
+
+    <!--
+        查找包下活跃的迁移计划（status IN ('READY', 'RUNNING', 'PAUSED')）。
+    -->
+    <select id="selectActiveByPackage" resultMap="planRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_migration_plan
+        WHERE package_id = #{packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND status IN ('READY', 'RUNNING', 'PAUSED')
+        ORDER BY created_at DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectActiveByVersionPair" resultMap="planRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_migration_plan
+        WHERE from_version_id = #{fromVersionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND to_version_id = #{toVersionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND status IN ('READY', 'RUNNING', 'PAUSED')
+        ORDER BY created_at DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.persistence.domainconfig.adapter.MigrationPlanRow">
+        INSERT INTO domain_package_migration_plan
+            (id, package_id, from_version_id, to_version_id, status, batch_strategy,
+             failure_isolation, total_batches, completed_batches, failed_instances,
+             impact_preview_id, job_id, rollback_window_expires_at, reason, revision,
+             created_at, updated_at)
+        VALUES
+            (#{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{fromVersionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{toVersionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{status, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{batchStrategyJson},
+             #{failureIsolation, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{totalBatches},
+             #{completedBatches},
+             #{failedInstances},
+             #{impactPreviewId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{jobId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{rollbackWindowExpiresAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{reason},
+             #{revision},
+             #{createdAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{updatedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE domain_package_migration_plan
+        SET status = #{newStatus, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+    <update id="updateProgress">
+        UPDATE domain_package_migration_plan
+        SET completed_batches = #{completedBatches},
+            failed_instances = #{failedInstances},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+    <!--
+        markReady：状态从 DRAFT 迁移到 READY，并绑定影响预览与作业 ID。
+        状态前置条件：仅 DRAFT 状态可迁移。
+    -->
+    <update id="markReady">
+        UPDATE domain_package_migration_plan
+        SET status = 'READY',
+            impact_preview_id = #{impactPreviewId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+            job_id = #{jobId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+          AND status = 'DRAFT'
+    </update>
+
+    <update id="updateRollbackWindow">
+        UPDATE domain_package_migration_plan
+        SET rollback_window_expires_at = #{rollbackWindowExpiresAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+</mapper>

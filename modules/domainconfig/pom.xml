@@ -17,13 +17,14 @@
     <description>领域包、元模型、版本与迁移</description>
 
     <dependencies>
+        <!--
+            领域包模块仅依赖共享内核与工作流端口契约：领域模型、端口与应用服务不依赖任何持久化框架。
+            适配器位于 pdp-public-persistence（反向依赖本模块端口），符合六边形架构与 ADR 0001。
+            FR-173 领域包通过 WorkflowBinding 引用平台工作流定义，不嵌入 Flowable 专有 API。
+        -->
         <dependency>
             <groupId>com.pdp</groupId>
             <artifactId>pdp-shared-kernel</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.pdp</groupId>
-            <artifactId>pdp-public-persistence</artifactId>
         </dependency>
         <dependency>
             <groupId>com.pdp</groupId>

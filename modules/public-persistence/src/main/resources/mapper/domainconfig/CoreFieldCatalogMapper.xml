@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.domainconfig.mapper.CoreFieldCatalogMapper">
+
+    <!--
+        CoreFieldCatalogRow record 构造器映射。
+        字段顺序：id, stableKey, coreObjectType, label, dataType, semantics, allowedOverride,
+        source, aliasesJson, revision, createdAt, updatedAt。
+    -->
+    <resultMap id="catalogRowMap" type="com.pdp.persistence.domainconfig.adapter.CoreFieldCatalogRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="stable_key" javaType="java.lang.String"/>
+            <arg column="core_object_type" javaType="java.lang.String"/>
+            <arg column="label" javaType="java.lang.String"/>
+            <arg column="data_type" javaType="com.pdp.domainconfig.domain.metamodel.DataType"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="semantics" javaType="java.lang.String"/>
+            <arg column="allowed_override" javaType="boolean"/>
+            <arg column="source" javaType="com.pdp.domainconfig.domain.metamodel.CoreFieldSource"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="aliases" javaType="java.lang.String"/>
+            <arg column="revision" javaType="int"/>
+            <arg column="created_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="updated_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, stable_key, core_object_type, label, data_type, semantics, allowed_override,
+        source, aliases, revision, created_at, updated_at
+    </sql>
+
+    <select id="selectById" resultMap="catalogRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM core_field_catalog
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </select>
+
+    <select id="selectByStableKeyAndObjectType" resultMap="catalogRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM core_field_catalog
+        WHERE stable_key = #{stableKey}
+          AND core_object_type = #{coreObjectType}
+    </select>
+
+    <select id="selectByObjectType" resultMap="catalogRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM core_field_catalog
+        WHERE core_object_type = #{coreObjectType}
+        <if test="lastId != null">
+            AND id &gt; #{lastId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        </if>
+        ORDER BY id ASC
+        LIMIT #{size}
+    </select>
+
+    <select id="selectBySource" resultMap="catalogRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM core_field_catalog
+        WHERE source = #{source}
+        <if test="lastId != null">
+            AND id &gt; #{lastId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        </if>
+        ORDER BY id ASC
+        LIMIT #{size}
+    </select>
+
+    <select id="selectAll" resultMap="catalogRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM core_field_catalog
+        <where>
+            <if test="lastId != null">
+                id &gt; #{lastId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </if>
+        </where>
+        ORDER BY id ASC
+        LIMIT #{size}
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.persistence.domainconfig.adapter.CoreFieldCatalogRow">
+        INSERT INTO core_field_catalog
+            (id, stable_key, core_object_type, label, data_type, semantics, allowed_override,
+             source, aliases, revision, created_at, updated_at)
+        VALUES
+            (#{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{stableKey},
+             #{coreObjectType},
+             #{label},
+             #{dataType, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{semantics},
+             #{allowedOverride},
+             #{source, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{aliasesJson},
+             #{revision},
+             #{createdAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{updatedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+    </insert>
+
+    <update id="update">
+        UPDATE core_field_catalog
+        SET label = #{label},
+            semantics = #{semantics},
+            allowed_override = #{allowedOverride},
+            aliases = #{aliasesJson},
+            data_type = #{dataType, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+</mapper>

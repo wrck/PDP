@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.domainconfig.mapper.DomainPackageWorkflowBindingMapper">
+
+    <!--
+        WorkflowBindingRow record 构造器映射。
+        字段顺序：id, packageId, versionId, stableKey, processDefinitionKey, businessVersion,
+        bpmnResource, trigger, objectTypeKey, eventType, authorizationPolicyKey,
+        variableMappingsJson, startupConditionRuleKey, declaredPermissionsJson,
+        instanceMigrationPolicy, migrationValidationRuleKey, revision, createdAt, updatedAt。
+    -->
+    <resultMap id="bindingRowMap" type="com.pdp.persistence.domainconfig.adapter.WorkflowBindingRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="package_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="version_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="stable_key" javaType="java.lang.String"/>
+            <arg column="process_definition_key" javaType="java.lang.String"/>
+            <arg column="business_version" javaType="java.lang.String"/>
+            <arg column="bpmn_resource" javaType="java.lang.String"/>
+            <arg column="trigger" javaType="com.pdp.domainconfig.domain.behavior.WorkflowBindingTrigger"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="object_type_key" javaType="java.lang.String"/>
+            <arg column="event_type" javaType="java.lang.String"/>
+            <arg column="authorization_policy_key" javaType="java.lang.String"/>
+            <arg column="variable_mappings" javaType="java.lang.String"/>
+            <arg column="startup_condition_rule_key" javaType="java.lang.String"/>
+            <arg column="declared_permissions" javaType="java.lang.String"/>
+            <arg column="instance_migration_policy" javaType="com.pdp.domainconfig.domain.behavior.InstanceMigrationPolicy"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="migration_validation_rule_key" javaType="java.lang.String"/>
+            <arg column="revision" javaType="int"/>
+            <arg column="created_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+            <arg column="updated_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, package_id, version_id, stable_key, process_definition_key, business_version,
+        bpmn_resource, trigger, object_type_key, event_type, authorization_policy_key,
+        variable_mappings, startup_condition_rule_key, declared_permissions,
+        instance_migration_policy, migration_validation_rule_key, revision, created_at, updated_at
+    </sql>
+
+    <select id="selectById" resultMap="bindingRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_workflow_binding
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </select>
+
+    <select id="selectByPackageAndKey" resultMap="bindingRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_workflow_binding
+        WHERE package_id = #{packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND stable_key = #{stableKey}
+    </select>
+
+    <!--
+        按过滤条件分页查询。
+        filter.packageId 必填；filter.versionId 可为 null（包级绑定）；
+        filter.trigger 与 filter.processDefinitionKey 可为 null。
+    -->
+    <select id="selectByFilter" resultMap="bindingRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_workflow_binding
+        <where>
+            <if test="filter.packageId != null">
+                AND package_id = #{filter.packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </if>
+            <if test="filter.versionId != null">
+                AND version_id = #{filter.versionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </if>
+            <if test="filter.trigger != null">
+                AND trigger = #{filter.trigger}
+            </if>
+            <if test="filter.processDefinitionKey != null and filter.processDefinitionKey != ''">
+                AND process_definition_key = #{filter.processDefinitionKey}
+            </if>
+            <if test="lastId != null">
+                AND id &gt; #{lastId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+            </if>
+        </where>
+        ORDER BY id ASC
+        LIMIT #{size}
+    </select>
+
+    <!--
+        查找包内有效绑定：包级绑定（version_id IS NULL）+ 指定版本绑定（version_id = #{versionId}）。
+        用于运行时绑定查询，不分页。
+    -->
+    <select id="selectEffectiveByPackage" resultMap="bindingRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_workflow_binding
+        WHERE package_id = #{packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND (version_id IS NULL
+               <if test="versionId != null">
+                   OR version_id = #{versionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+               </if>
+              )
+        ORDER BY created_at ASC
+    </select>
+
+    <select id="selectByProcessDefinition" resultMap="bindingRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_workflow_binding
+        WHERE process_definition_key = #{processDefinitionKey}
+          AND business_version = #{businessVersion}
+        <if test="lastId != null">
+            AND id &gt; #{lastId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        </if>
+        ORDER BY id ASC
+        LIMIT #{size}
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.persistence.domainconfig.adapter.WorkflowBindingRow">
+        INSERT INTO domain_package_workflow_binding
+            (id, package_id, version_id, stable_key, process_definition_key, business_version,
+             bpmn_resource, trigger, object_type_key, event_type, authorization_policy_key,
+             variable_mappings, startup_condition_rule_key, declared_permissions,
+             instance_migration_policy, migration_validation_rule_key, revision, created_at, updated_at)
+        VALUES
+            (#{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{versionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{stableKey},
+             #{processDefinitionKey},
+             #{businessVersion},
+             #{bpmnResource},
+             #{trigger, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{objectTypeKey},
+             #{eventType},
+             #{authorizationPolicyKey},
+             #{variableMappingsJson},
+             #{startupConditionRuleKey},
+             #{declaredPermissionsJson},
+             #{instanceMigrationPolicy, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{migrationValidationRuleKey},
+             #{revision},
+             #{createdAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+             #{updatedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+    </insert>
+
+    <!--
+        更新绑定：不允许修改 processDefinitionKey 与 businessVersion。
+        FR-173：流程定义升级必须通过新建绑定版本实现。
+    -->
+    <update id="update">
+        UPDATE domain_package_workflow_binding
+        SET bpmn_resource = #{bpmnResource},
+            authorization_policy_key = #{authorizationPolicyKey},
+            variable_mappings = #{variableMappingsJson},
+            startup_condition_rule_key = #{startupConditionRuleKey},
+            declared_permissions = #{declaredPermissionsJson},
+            instance_migration_policy = #{instanceMigrationPolicy, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+            migration_validation_rule_key = #{migrationValidationRuleKey},
+            updated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler},
+            revision = revision + 1
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND revision = #{expectedRevision}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM domain_package_workflow_binding
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </delete>
+
+</mapper>

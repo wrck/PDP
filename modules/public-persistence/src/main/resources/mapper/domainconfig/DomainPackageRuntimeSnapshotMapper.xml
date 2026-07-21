@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.domainconfig.mapper.DomainPackageRuntimeSnapshotMapper">
+
+    <!--
+        RuntimeSnapshotRow record 构造器映射。
+        字段顺序：snapshotId, versionId, packageId, snapshotVersion, contentHash,
+        parentSnapshotId, resolvedObjectsJson, createdAt。
+    -->
+    <resultMap id="snapshotRowMap" type="com.pdp.persistence.domainconfig.adapter.RuntimeSnapshotRow">
+        <constructor>
+            <idArg column="id" javaType="java.lang.String"/>
+            <arg column="version_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="package_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="snapshot_version" javaType="java.lang.String"/>
+            <arg column="content_hash" javaType="java.lang.String"/>
+            <arg column="parent_snapshot_id" javaType="java.lang.String"/>
+            <arg column="resolved_objects" javaType="java.lang.String"/>
+            <arg column="created_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, version_id, package_id, snapshot_version, content_hash,
+        parent_snapshot_id, resolved_objects, created_at
+    </sql>
+
+    <select id="selectById" resultMap="snapshotRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_runtime_snapshot
+        WHERE id = #{snapshotId}
+    </select>
+
+    <select id="selectByVersionId" resultMap="snapshotRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_runtime_snapshot
+        WHERE version_id = #{versionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        ORDER BY created_at DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectLatestByPackageId" resultMap="snapshotRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_runtime_snapshot
+        WHERE package_id = #{packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        ORDER BY created_at DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.persistence.domainconfig.adapter.RuntimeSnapshotRow">
+        INSERT INTO domain_package_runtime_snapshot
+            (id, version_id, package_id, snapshot_version, content_hash,
+             parent_snapshot_id, resolved_objects, created_at)
+        VALUES
+            (#{snapshotId},
+             #{versionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{packageId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{snapshotVersion},
+             #{contentHash},
+             #{parentSnapshotId},
+             #{resolvedObjectsJson},
+             #{createdAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+    </insert>
+
+    <select id="selectResolvedObjectsJson" resultType="java.lang.String">
+        SELECT resolved_objects
+        FROM domain_package_runtime_snapshot
+        WHERE id = #{snapshotId}
+    </select>
+
+</mapper>

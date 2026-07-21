@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.domainconfig.mapper.DomainPackageCoreFieldReuseMapper">
+
+    <!--
+        CoreFieldReuseRow record 构造器映射。
+        字段顺序：id, versionId, coreFieldKey, coreObjectType, disposition, reason,
+        extensionFieldKey, createdAt。
+    -->
+    <resultMap id="reuseRowMap" type="com.pdp.persistence.domainconfig.adapter.CoreFieldReuseRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="version_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="core_field_key" javaType="java.lang.String"/>
+            <arg column="core_object_type" javaType="java.lang.String"/>
+            <arg column="disposition" javaType="com.pdp.domainconfig.domain.packageversion.CoreFieldReuseDisposition"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="reason" javaType="java.lang.String"/>
+            <arg column="extension_field_key" javaType="java.lang.String"/>
+            <arg column="created_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, version_id, core_field_key, core_object_type, disposition, reason,
+        extension_field_key, created_at
+    </sql>
+
+    <select id="selectByVersion" resultMap="reuseRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_core_field_reuse
+        WHERE version_id = #{versionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        ORDER BY core_field_key ASC
+    </select>
+
+    <select id="selectByCoreField" resultMap="reuseRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_core_field_reuse
+        WHERE core_field_key = #{coreFieldKey}
+          AND core_object_type = #{coreObjectType}
+        ORDER BY created_at ASC
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.persistence.domainconfig.adapter.CoreFieldReuseRow">
+        INSERT INTO domain_package_core_field_reuse
+            (id, version_id, core_field_key, core_object_type, disposition, reason,
+             extension_field_key, created_at)
+        VALUES
+            (#{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{versionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{coreFieldKey},
+             #{coreObjectType},
+             #{disposition, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{reason},
+             #{extensionFieldKey},
+             #{createdAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+    </insert>
+
+    <!-- 批量插入：用于版本草稿提交时一次性写入所有复用声明。 -->
+    <insert id="insertAll" parameterType="java.util.List">
+        INSERT INTO domain_package_core_field_reuse
+            (id, version_id, core_field_key, core_object_type, disposition, reason,
+             extension_field_key, created_at)
+        VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{row.versionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{row.coreFieldKey},
+             #{row.coreObjectType},
+             #{row.disposition, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{row.reason},
+             #{row.extensionFieldKey},
+             #{row.createdAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+        </foreach>
+    </insert>
+
+    <delete id="deleteByVersion">
+        DELETE FROM domain_package_core_field_reuse
+        WHERE version_id = #{versionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </delete>
+
+</mapper>

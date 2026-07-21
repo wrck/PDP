@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdp.persistence.domainconfig.mapper.DomainPackageValidationResultMapper">
+
+    <!--
+        ValidationResultRow record 构造器映射。
+        字段顺序：id, versionId, jobId, status, passed, itemsJson, validatedAt。
+    -->
+    <resultMap id="resultRowMap" type="com.pdp.persistence.domainconfig.adapter.ValidationResultRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"
+                   typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="version_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="job_id" javaType="java.util.UUID"
+                 typeHandler="com.pdp.persistence.typehandler.UuidBinaryTypeHandler"/>
+            <arg column="status" javaType="com.pdp.domainconfig.domain.packageversion.ValidationResultStatus"
+                 typeHandler="com.pdp.persistence.typehandler.StringEnumTypeHandler"/>
+            <arg column="passed" javaType="boolean"/>
+            <arg column="items" javaType="java.lang.String"/>
+            <arg column="validated_at" javaType="java.time.Instant"
+                 typeHandler="com.pdp.persistence.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="allColumns">
+        id, version_id, job_id, status, passed, items, validated_at
+    </sql>
+
+    <select id="selectById" resultMap="resultRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_validation_result
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </select>
+
+    <select id="selectByVersionAndJob" resultMap="resultRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_validation_result
+        WHERE version_id = #{versionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+          AND job_id = #{jobId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </select>
+
+    <select id="selectLatestByVersion" resultMap="resultRowMap">
+        SELECT <include refid="allColumns"/>
+        FROM domain_package_validation_result
+        WHERE version_id = #{versionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+        ORDER BY validated_at DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insert" parameterType="com.pdp.persistence.domainconfig.adapter.ValidationResultRow">
+        INSERT INTO domain_package_validation_result
+            (id, version_id, job_id, status, passed, items, validated_at)
+        VALUES
+            (#{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{versionId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{jobId, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler},
+             #{status, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+             #{passed},
+             #{itemsJson},
+             #{validatedAt, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE domain_package_validation_result
+        SET status = #{newStatus, typeHandler=com.pdp.persistence.typehandler.StringEnumTypeHandler},
+            passed = #{passed},
+            validated_at = #{now, typeHandler=com.pdp.persistence.typehandler.InstantTypeHandler}
+        WHERE id = #{id, typeHandler=com.pdp.persistence.typehandler.UuidBinaryTypeHandler}
+    </update>
+
+</mapper>
